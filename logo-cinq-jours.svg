@@ -1,0 +1,25 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cinq Jours logo">
+  <defs>
+    <linearGradient id="body" x1="32" y1="84" x2="208" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6C5CE7"/>
+      <stop offset="1" stop-color="#4834D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Speech-bubble tail (bottom-right) -->
+  <path d="M170 200 L206 200 L200 236 Z" fill="url(#body)"/>
+
+  <!-- Calendar body -->
+  <rect x="32" y="84" width="176" height="116" rx="16" fill="url(#body)"/>
+
+  <!-- Binding bar -->
+  <rect x="32" y="64" width="176" height="22" rx="11" fill="#A29BFE"/>
+
+  <!-- Ring holes -->
+  <circle cx="64" cy="64" r="6" fill="#FFFFFF"/>
+  <circle cx="120" cy="64" r="6" fill="#FFFFFF"/>
+  <circle cx="176" cy="64" r="6" fill="#FFFFFF"/>
+
+  <!-- Number 5 (stroke) -->
+  <path d="M146 112 H92 V136 C92 162 116 178 140 178 H92" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
