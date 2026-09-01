@@ -18,9 +18,7 @@ export const LANGUAGES: Record<LangCode, LangMeta> = {
 };
 
 /** Languages whose UI chrome is translated (first release: fr, en). */
-export const UI_LANGUAGES: LangCode[] = (Object.keys(LANGUAGES) as LangCode[]).filter(
-  (c) => LANGUAGES[c].uiReady
-);
+export const UI_LANGUAGES: LangCode[] = ["en", "fr", "de", "zh"];
 
 export const TARGET_LANGUAGES: LangCode[] = Object.keys(LANGUAGES) as LangCode[];
 export const TRANSLATION_LANGUAGES: LangCode[] = Object.keys(LANGUAGES) as LangCode[];

@@ -71,8 +71,8 @@ export function OnboardingModal() {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#171B22]/90 p-4">
       <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl">
-        <h2 className="cj-display text-2xl text-[#262220]">{tp("onboarding.title", "Bienvenue dans Cinq jours")}</h2>
-        <p className="mt-1 text-sm text-[#6b665e]">{tp("onboarding.subtitle", "Choisissez vos langues pour commencer")}</p>
+        <h2 className="cj-display text-2xl text-[#262220]">{tp("onboarding.title", "Welcome to Cinq jours")}</h2>
+        <p className="mt-1 text-sm text-[#6b665e]">{tp("onboarding.subtitle", "A five-day language learning routine that turns your favourite content into a structured curriculum.")}</p>
 
         <div className="mt-5 space-y-4">
           <Field label={tp("onboarding.ui", "Langue de l'interface")}>
@@ -114,7 +114,7 @@ export function OnboardingModal() {
           }
           className="mt-6 w-full rounded-full bg-[#5C7A5A] py-3 text-sm font-medium text-white shadow-lg transition hover:bg-[#4f6b4e]"
         >
-          {tp("onboarding.continue", "Commencer")}
+          {tp("onboarding.continue", "Let's Begin")}
         </button>
       </div>
     </div>
