@@ -883,11 +883,19 @@ function SourceView(props: SourceViewProps) {
   const handleMouseUp = useCallback(() => {
     const sel = window.getSelection();
     const text = sel && sel.toString().trim();
-    if (text && text.length > 1 && text.split(/\s+/).length > 1) {
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      setSentencePopup({ text, x: rect.left + rect.width / 2, y: rect.top });
-      setSelNoteEditing(false);
+    if (text && text.length > 1) {
+      const targetLang = getLangCodes().targetLang;
+      const isMultiWord = targetLang === "zh"
+        ? Array.from(new Intl.Segmenter("zh", { granularity: "word" }).segment(text)).length > 1
+        : text.split(/\s+/).length > 1;
+      if (isMultiWord) {
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSentencePopup({ text, x: rect.left + rect.width / 2, y: rect.top });
+        setSelNoteEditing(false);
+      } else {
+        setSentencePopup(null);
+      }
     } else {
       setSentencePopup(null);
     }
@@ -1145,36 +1153,62 @@ function SourceView(props: SourceViewProps) {
                 <div key={i} className="flex items-start gap-1">
                   <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>
                   <p className="flex-1 leading-relaxed text-[#262220]">
-                    {line.text.split(/(\s+)/).map((token, j) => {
-                      if (token.trim() === "") {
-                        const inSavedRun = savedIdx.has(wordPos - 1) && savedIdx.has(wordPos);
-                        const inNotedRun = notedIdx.has(wordPos - 1) && notedIdx.has(wordPos);
+                    {targetLang === "zh" ? (
+                      Array.from(new Intl.Segmenter("zh", { granularity: "word" }).segment(line.text)).map(
+                        ({ segment }, j) => {
+                          const idx = wordPos++;
+                          const isSavedWord = savedWords.has(stripPunct(segment));
+                          const hasNote = notes[stripPunct(segment)];
+                          const inSavedSentence = savedIdx.has(idx);
+                          const inNotedSentence = notedIdx.has(idx);
+                          let cls = "";
+                          if (isSavedWord) cls = "bg-[#B08D5755]";
+                          else if (hasNote) cls = "bg-[#4A90D955]";
+                          else if (inSavedSentence) cls = "bg-[#B08D5733]";
+                          else if (inNotedSentence) cls = "bg-[#4A90D933]";
+                          return (
+                            <span
+                              key={j}
+                              onClick={(e) => onWordClick(e, segment, line.text)}
+                              className={`cursor-pointer transition hover:bg-[#C1974B33] ${cls}`}
+                            >
+                              {segment}
+                            </span>
+                          );
+                        }
+                      )
+                    ) : (
+                      line.text.split(/(\s+)/).map((token, j) => {
+                        if (token.trim() === "") {
+                          const inSavedRun = savedIdx.has(wordPos - 1) && savedIdx.has(wordPos);
+                          const inNotedRun = notedIdx.has(wordPos - 1) && notedIdx.has(wordPos);
+                          return (
+                            <span key={j} className={inSavedRun ? "bg-[#B08D5733]" : inNotedRun ? "bg-[#4A90D933]" : ""}>
+                              {token}
+                            </span>
+                          );
+                        }
+                        const idx = wordPos++;
+                        const isSavedWord = savedWords.has(stripPunct(token));
+                        const hasNote = notes[stripPunct(token)];
+                        const inSavedSentence = savedIdx.has(idx);
+                        const inNotedSentence = notedIdx.has(idx);
+                        let cls = "";
+                        if (isSavedWord) cls = "bg-[#B08D5755]";
+                        else if (hasNote) cls = "bg-[#4A90D955]";
+                        else if (inSavedSentence) cls = "bg-[#B08D5733]";
+                        else if (inNotedSentence) cls = "bg-[#4A90D933]";
                         return (
-                          <span key={j} className={inSavedRun ? "bg-[#B08D5733]" : inNotedRun ? "bg-[#4A90D933]" : ""}>
+                          <span
+                            key={j}
+                            onClick={(e) => onWordClick(e, token, line.text)}
+                            className={`cursor-pointer transition hover:bg-[#C1974B33] ${cls}`}
+                          >
                             {token}
                           </span>
                         );
-                      }
-                      const idx = wordPos++;
-                      const isSavedWord = savedWords.has(stripPunct(token));
-                      const hasNote = notes[stripPunct(token)];
-                      const inSavedSentence = savedIdx.has(idx);
-                      const inNotedSentence = notedIdx.has(idx);
-                      let cls = "";
-                      if (isSavedWord) cls = "bg-[#B08D5755]";
-                      else if (hasNote) cls = "bg-[#4A90D955]";
-                      else if (inSavedSentence) cls = "bg-[#B08D5733]";
-                      else if (inNotedSentence) cls = "bg-[#4A90D933]";
-                      return (
-                        <span
-                          key={j}
-                          onClick={(e) => onWordClick(e, token, line.text)}
-                          className={`cursor-pointer transition hover:bg-[#C1974B33] ${cls}`}
-                        >
-                          {token}
-                        </span>
-                      );
-                    })}
+                      })
+                    )}
                   </p>
                 </div>
               );
