@@ -1149,6 +1149,7 @@ function SourceView(props: SourceViewProps) {
               const savedIdx = getSavedSentenceIndices(line.text, savedSentences);
               const notedIdx = getSavedSentenceIndices(line.text, notedSentences);
               let wordPos = 0;
+              const targetLang = getLangCodes().targetLang;
               return (
                 <div key={i} className="flex items-start gap-1">
                   <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>
