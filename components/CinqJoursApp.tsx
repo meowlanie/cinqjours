@@ -1974,7 +1974,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level }: { voc
       const res = await fetch("/api/exercises", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceText, previous: questions.map((q) => ({ type: q.type, q: q.q, answer: q.answer })), target: getUiLocale(), translation: getUiLocale(), level }),
+        body: JSON.stringify({ source: sourceText, previous: questions.map((q) => ({ type: q.type, q: q.q, answer: q.answer })), target: getLangCodes().targetLang, translation: getLangCodes().translationLang, level }),
       });
       if (requestId !== generateId.current) return;
       const data = await res.json().catch(() => ({}));
