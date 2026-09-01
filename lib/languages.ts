@@ -20,8 +20,8 @@ export const LANGUAGES: Record<LangCode, LangMeta> = {
 /** Languages whose UI chrome is translated (first release: fr, en). */
 export const UI_LANGUAGES: LangCode[] = ["en", "fr", "de", "zh"];
 
-export const TARGET_LANGUAGES: LangCode[] = Object.keys(LANGUAGES) as LangCode[];
-export const TRANSLATION_LANGUAGES: LangCode[] = Object.keys(LANGUAGES) as LangCode[];
+export const TARGET_LANGUAGES: LangCode[] = ["en", "fr", "de", "zh"];
+export const TRANSLATION_LANGUAGES: LangCode[] = ["en", "fr", "de", "zh"];
 
 export const LEVELS: Level[] = ["beginner", "intermediate", "advanced"];
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { aiChat, parseJson } from "@/lib/ai";
 import { llmName, inLang, apiMessage, type LangCode } from "@/lib/languages";
+import { getUiLocale } from "@/lib/settings";
 
 export const runtime = "nodejs";
 
@@ -108,6 +109,7 @@ export async function POST(req: Request) {
 ${prevText}
 
         Crée 10 exercices de ${llmName(target)} langue étrangère, ${levelPhrase}, directement basés sur ce texte :
+PRINCIPE FONDAMENTAL : Tous les exercices doivent TESTER la connaissance de la ${llmName(target)}. Utilise des mots, expressions et structures GRAMMATICALES directement tirés du texte source. Les questions peuvent être posées en ${llmName(getUiLocale())} pour aider, mais le contenu à étudier (mots, phrases, concepts) doit toujours être en ${llmName(target)}.
 - 5 exercices de VOCABULAIRE (category="vocab")
 - 5 exercices de GRAMMAIRE (category="grammar")
 
@@ -117,7 +119,7 @@ Règle de diversification STRICTE : Chaque fois que tu génères des exercices (
 
 Pour "qcm", "error_detection" et "collocation" : mets 3 à 4 options dans "options" et la réponse exacte dans "answer" (l'answer doit figurer exactement dans options). Pour tous les autres types : laisse "options" vide et mets la réponse modèle dans "answer".
 
-        Chaque exercice doit être exigeant (${levelPhrase}), avec une explication claire ${inLang(translation)} dans "explain".
+        Chaque exercice doit être exigeant (${levelPhrase}), avec une explication claire ${inLang(getUiLocale())} dans "explain".
 
 Réponds UNIQUEMENT en JSON : {"questions":[...]}`,
           },
