@@ -11,8 +11,10 @@ import { extractYouTubeId, fetchTranscriptClient } from "@/lib/transcript";
 import { saveVocab } from "@/lib/supabase";
 import { putAudio, getAudio, deleteAudio } from "@/lib/journalStore";
 import { useSettings, t, getLangCodes, getUiLocale } from "@/lib/settings";
+import { type Level } from "@/lib/languages";
 import { localeOf, typeLabels } from "@/lib/languages";
 import { dictProviderForTarget } from "@/lib/dictProviders";
+import { pinyin } from "pinyin-pro";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SettingsModal } from "@/components/SettingsModal";
 import { Logo } from "@/components/Logo";
@@ -724,7 +726,12 @@ interface SourceViewProps {
   onStartReadingMode: () => void;
   videoWidth: number;
   setVideoWidth: React.Dispatch<React.SetStateAction<number>>;
+  level: Level;
 }
+
+
+
+
 
 interface PopupEntry {
   word: string;
@@ -747,6 +754,7 @@ function SourceView(props: SourceViewProps) {
     importing, importError, vocabCount, addVocab, onImport,
     onPasteTranscript, notes, setNote, savedWords, savedSentences, removeVocabByWord,
     isTextSource, textModeVersion, onStartReadingMode, videoWidth, setVideoWidth,
+    level,
   } = props;
 
   const notedSentences = useMemo(
@@ -759,6 +767,8 @@ function SourceView(props: SourceViewProps) {
     [transcript]
   );
   const sourceFits = sourceWordCount < 500;
+
+  const [showPinyin, setShowPinyin] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -1114,6 +1124,14 @@ function SourceView(props: SourceViewProps) {
                 {!isTextSource && transcript.length === 0 ? t("v35", "Coller une transcription") : t("v201", "Modifier")}
               </button>
             )}
+            {getLangCodes().targetLang === "zh" && !pasting && !editing && (
+              <button
+                onClick={() => setShowPinyin(!showPinyin)}
+                className="flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2.5 py-1 text-xs text-[#7a5f30] transition hover:bg-[#B08D5728]"
+              >
+                {getUiLocale() === "zh" ? (showPinyin ? "隐藏拼音" : "拼音") : (showPinyin ? t("pinyin.hide", "Hide Pinyin") : t("pinyin.toggle", "Pinyin"))}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1168,12 +1186,18 @@ function SourceView(props: SourceViewProps) {
                           else if (inSavedSentence) cls = "bg-[#B08D5733]";
                           else if (inNotedSentence) cls = "bg-[#4A90D933]";
                           return (
-                            <span
-                              key={j}
-                              onClick={(e) => onWordClick(e, segment, line.text)}
-                              className={`cursor-pointer transition hover:bg-[#C1974B33] ${cls}`}
-                            >
-                              {segment}
+                            <span key={j} className="inline-flex flex-col items-center">
+                              {showPinyin && (
+                                <span className="text-[10px] text-[#6b665e] leading-none">
+                                  {pinyin(segment, { toneType: "symbol", type: "string" })}
+                                </span>
+                              )}
+                              <span
+                                onClick={(e) => onWordClick(e, segment, line.text)}
+                                className={`cursor-pointer transition hover:bg-[#C1974B33] ${cls}`}
+                              >
+                                {segment}
+                              </span>
                             </span>
                           );
                         }
@@ -1974,7 +1998,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level }: { voc
       const res = await fetch("/api/exercises", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceText, previous: questions.map((q) => ({ type: q.type, q: q.q, answer: q.answer })), target: getLangCodes().targetLang, translation: getLangCodes().translationLang, level }),
+        body: JSON.stringify({ source: sourceText, previous: questions.map((q) => ({ type: q.type, q: q.q, answer: q.answer })), target: getLangCodes().targetLang, translation: getLangCodes().translationLang, ui: getUiLocale(), level }),
       });
       if (requestId !== generateId.current) return;
       const data = await res.json().catch(() => ({}));
@@ -4512,6 +4536,7 @@ export function CinqJoursApp(props: {
               textModeVersion={textModeVersion}
               videoWidth={videoWidth}
               setVideoWidth={setVideoWidth}
+              level={level}
               onStartReadingMode={() => {
                 if (videoId) saveDayState(videoId);
                 setVideoId(null);

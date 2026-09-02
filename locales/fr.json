@@ -215,5 +215,7 @@
   "v251": "Entraînez votre expression orale à partir du sujet généré.",
   "v252": "Écrivez librement une entrée de journal ou cliquez sur « Générer un sujet » pour vous inspirer.",
   "v253": "Corriger mon entrée",
-  "v254": "caractères"
+  "v254": "caractères",
+  "pinyin.toggle": "Pinyin",
+  "pinyin.hide": "Masquer Pinyin"
 }
