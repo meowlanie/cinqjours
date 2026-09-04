@@ -419,7 +419,7 @@ function wordDiff(original: string, corrected: string): DiffToken[] {
   return tokens;
 }
 
-function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes }: { result: CorrectResult; onAddToCarnet?: (s: Segment) => void; compact?: boolean; hideNotes?: boolean }) {
+function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrections, removeVocabByWord }: { result: CorrectResult; onAddToCarnet?: (s: Segment) => void; compact?: boolean; hideNotes?: boolean; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { segments } = result;
   const [view, setView] = useState<"annotated" | "corrected">("annotated");
   const flagged = segments.filter((s) => s.flagged && s.correction && s.correction !== s.text);
@@ -491,15 +491,27 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes }: { result: 
                 {s.note?.label || t("v220", "Correction")}
               </span>
               <span className="flex-1 italic">"{s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text}" — {s.note?.comment || t("v17", "Correction effectuée.")}</span>
-              {onAddToCarnet && (
-                <button
-                  onClick={() => onAddToCarnet(s)}
-                  className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
-                  title={t("v18", "Ajouter au carnet")}
-                >
-                  <Plus size={11} />  {t("v19", "Carnet")}
-                </button>
-              )}
+              {onAddToCarnet && (() => {
+                const textToCheck = (s.correction || s.text).toLowerCase();
+                const isSaved = savedCorrections?.has(textToCheck);
+                return isSaved ? (
+                  <button
+                    onClick={() => removeVocabByWord?.(textToCheck)}
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
+                    title={t("v18", "Ajouter au carnet")}
+                  >
+                    <Check size={11} />  {t("v19", "Carnet")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onAddToCarnet(s)}
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+                    title={t("v18", "Ajouter au carnet")}
+                  >
+                    <Plus size={11} />  {t("v19", "Carnet")}
+                  </button>
+                );
+              })()}
             </div>
           ))}
           {suggested.map((s, i) => (
@@ -508,15 +520,27 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes }: { result: 
                 {t("v222", "Style")}
               </span>
               <span className="flex-1 italic">"{s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text}" → {s.suggestion}</span>
-              {onAddToCarnet && (
-                <button
-                  onClick={() => onAddToCarnet(s)}
-                  className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
-                  title={t("v18", "Ajouter au carnet")}
-                >
-                  <Plus size={11} />  {t("v19", "Carnet")}
-                </button>
-              )}
+              {onAddToCarnet && (() => {
+                const textToCheck = (s.correction || s.text).toLowerCase();
+                const isSaved = savedCorrections?.has(textToCheck);
+                return isSaved ? (
+                  <button
+                    onClick={() => removeVocabByWord?.(textToCheck)}
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
+                    title={t("v18", "Ajouter au carnet")}
+                  >
+                    <Check size={11} />  {t("v19", "Carnet")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onAddToCarnet(s)}
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+                    title={t("v18", "Ajouter au carnet")}
+                  >
+                    <Plus size={11} />  {t("v19", "Carnet")}
+                  </button>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -1346,7 +1370,7 @@ function SourceView(props: SourceViewProps) {
             ) : (
               <button
                 onClick={saveSentenceToCarnet}
-                className="mt-3 flex items-center gap-1.5 rounded-full bg-[#B08D57] px-3 py-1.5 text-xs font-medium text-[#171B22] hover:bg-[#c4a06a]"
+                className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
               >
                 <Plus size={13} />  {t("v18", "Ajouter au carnet")}
               </button>
@@ -1436,7 +1460,7 @@ function SourceView(props: SourceViewProps) {
               <button
                 onClick={savePopupWord}
                 disabled={popupLoading}
-                className="mt-3 flex items-center gap-1.5 rounded-full bg-[#B08D57] px-3 py-1.5 text-xs font-medium text-[#171B22] hover:bg-[#c4a06a] disabled:opacity-50"
+                className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728] disabled:opacity-50"
               >
                 <Plus size={13} />  {t("v18", "Ajouter au carnet")}
               </button>
@@ -1552,7 +1576,7 @@ function ResourcesView({ resources, onSelect, onDelete }: {
 /* ---------------------------------------------------------------
    DAY 1 — SUMMARY
 --------------------------------------------------------------- */
-function DayOne({ sourceText, addVocab }: { sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void }) {
+function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord }: { sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { text, setText, result, loading, correct, clear, notice } = useCorrection("summary", 80, 120, sourceText);
 
   const [toast, setToast] = useState<string | null>(null);
@@ -1703,7 +1727,7 @@ function DayOne({ sourceText, addVocab }: { sourceText: string; addVocab: (e: { 
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
-          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} />
+          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
         </div>
       )}
 
@@ -1725,7 +1749,7 @@ function DayOne({ sourceText, addVocab }: { sourceText: string; addVocab: (e: { 
                 {t("v65", "Corriger mon enregistrement")}
               </button>
             ) : (
-              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} />
+              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
             )}
           </div>
         )}
@@ -1906,7 +1930,7 @@ function Flashcard({ idx, flipped, setFlipped, front, back, frontBg, backBg, pad
   );
 }
 
-function DayThree({ vocab, sourceText, addVocab, currentSourceId, level }: { vocab: { word: string; def: string; translation?: string; type?: string; sourceId?: string }[]; sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; currentSourceId: string | null; level: string }) {
+function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCorrections, removeVocabByWord }: { vocab: { word: string; def: string; translation?: string; type?: string; sourceId?: string }[]; sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; currentSourceId: string | null; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [generating, setGenerating] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -2174,12 +2198,25 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level }: { voc
                       {!isCorrect(i) && (
                         <div className="mt-1.5 flex items-center justify-between gap-2">
                           <span className="text-xs text-[#3f5a3d]">{t("v84", "Réponse :")} {q.answer}</span>
-                          <button
-                            onClick={() => { addVocab({ word: q.answer, def: q.explain, context: q.q, type: "correction" }); setToast(t("v48", "Ajouté au carnet")); }}
-                            className="flex items-center gap-1 text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
-                          >
-                            <Plus size={11} />  {t("v18", "Ajouter au carnet")}
-                          </button>
+                          {(() => {
+                            const answerText = q.answer.toLowerCase();
+                            const isSaved = savedCorrections?.has(answerText);
+                            return isSaved ? (
+                              <button
+                                onClick={() => { removeVocabByWord?.(answerText); setToast(t("v106", "Supprimer")); }}
+                                className="flex items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] hover:bg-[#5C7A5A28]"
+                              >
+                                <Check size={11} />  {t("v19", "Carnet")}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => { addVocab({ word: q.answer, def: q.explain, context: q.q, type: "correction" }); setToast(t("v48", "Ajouté au carnet")); }}
+                                className="flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
+                              >
+                                <Plus size={11} />  {t("v19", "Carnet")}
+                              </button>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -2318,7 +2355,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level }: { voc
 /* ---------------------------------------------------------------
    DAY 4 — WRITING
 --------------------------------------------------------------- */
-function DayFour({ sourceText, sourceTitle, addVocab, level }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string }) {
+function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { text, setText, result, loading, correct, clear, notice } = useCorrection("writing", 120, 180, sourceText);
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -2487,7 +2524,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level }: { sourceText: str
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
-          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} />
+          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
         </div>
       )}
 
@@ -2514,7 +2551,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level }: { sourceText: str
 /* ---------------------------------------------------------------
    DAY 5 — SPEAKING
 --------------------------------------------------------------- */
-function DayFive({ sourceText, sourceTitle, addVocab, level }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string }) {
+function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const audioResultKey = "cj-correction-day5";
   const [hasRecording, setHasRecording] = useState(false);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
@@ -2675,7 +2712,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level }: { sourceText: str
               {t("v65", "Corriger mon enregistrement")}
             </button>
           ) : (
-            <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} />
+            <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
           )}
         </div>
       )}
@@ -2721,12 +2758,14 @@ function firstSentence(text: string): string {
   return m ? m[0].trim() : cleaned;
 }
 
-function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, addToCarnet }: {
+function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, addToCarnet, savedCorrections, removeVocabByWord }: {
   entry: JournalEntry;
   audioSrc?: string;
   showCorrection: boolean;
   setShowCorrection: (v: boolean) => void;
   addToCarnet: (s: Segment) => void;
+  savedCorrections?: Set<string>;
+  removeVocabByWord?: (word: string) => void;
 }) {
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
@@ -2771,7 +2810,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, a
         <div className="p-4" onClick={(e) => e.stopPropagation()}>
           {entry.correction && (
             <div className="text-[12px] leading-relaxed">
-              <CorrectedCopy result={entry.correction} onAddToCarnet={addToCarnet} hideNotes />
+              <CorrectedCopy result={entry.correction} onAddToCarnet={addToCarnet} hideNotes savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
             </div>
           )}
         </div>
@@ -2780,7 +2819,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, a
   );
 }
 
-function JournalView({ sourceText, sourceTitle, addVocab, level }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string }) {
+function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, sourceText);
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -3072,7 +3111,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level }: { sourceText:
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
-          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} />
+          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
         </div>
       )}
 
@@ -3093,7 +3132,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level }: { sourceText:
                 {t("v65", "Corriger mon enregistrement")}
               </button>
             ) : (
-              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} />
+              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
             )}
           </div>
         )}
@@ -3180,7 +3219,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level }: { sourceText:
               <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{openEntry.date}</p>
             </div>
 
-            <JournalFlipCard entry={openEntry} audioSrc={audioMap[openEntry.id] || openEntry.audio} showCorrection={showCorrection} setShowCorrection={setShowCorrection} addToCarnet={addToCarnet} />
+            <JournalFlipCard entry={openEntry} audioSrc={audioMap[openEntry.id] || openEntry.audio} showCorrection={showCorrection} setShowCorrection={setShowCorrection} addToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
 
             <div className="mt-4 flex items-center justify-between gap-2">
               {openEntry.correction ? (
@@ -4224,6 +4263,7 @@ export function CinqJoursApp(props: {
     return s;
   }, [vocab]);
   const savedSentences = useMemo(() => vocab.filter((v) => v.word.split(/\s+/).length > 1).map((v) => v.word.toLowerCase()), [vocab]);
+  const savedCorrections = useMemo(() => new Set(vocab.filter((v) => v.type === "correction").map((v) => v.word.toLowerCase())), [vocab]);
   const carnetSidebarCount = useMemo(
     () => vocab.filter((v) => v.type !== "correction" && (videoId ? v.sourceId === videoId : false)).length,
     [vocab, videoId]
@@ -4556,15 +4596,15 @@ export function CinqJoursApp(props: {
             const langKey = `${getLangCodes().targetLang}-${getLangCodes().translationLang}-${getUiLocale()}`;
             return (
               <>
-                {view === 1 && <DayOne key={langKey} sourceText={sourceText} addVocab={addVocab} />}
-                {view === 4 && <DayFour key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} />}
-                {view === "journal" && <JournalView key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} />}
+                {view === 1 && <DayOne key={langKey} sourceText={sourceText} addVocab={addVocab} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+                {view === 4 && <DayFour key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+                {view === "journal" && <JournalView key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
               </>
             );
           })()}
           {view === 2 && <DayTwo transcript={transcript} videoId={videoId} isTextSource={sourceType === "text"} />}
-          {view === 3 && <DayThree vocab={vocab} sourceText={sourceText} addVocab={addVocab} currentSourceId={videoId} level={level} />}
-          {view === 5 && <DayFive sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} />}
+          {view === 3 && <DayThree vocab={vocab} sourceText={sourceText} addVocab={addVocab} currentSourceId={videoId} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+          {view === 5 && <DayFive sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
           {view === "carnet" && <CarnetView vocab={vocab} notes={notes} setNote={setNote} removeVocab={removeVocab} frdic={{ connected: frdicConnected, mode: frdicMode, busy: frdicBusy, enabled: !!activeDict, name: activeDict?.name ?? "", authUrl: activeDict?.authUrl ?? "", onConnect: frdicConnect, onSave: frdicSave, onDisconnect: frdicDisconnect, onSync: frdicSync }} />}
           </div>
 
