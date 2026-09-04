@@ -498,7 +498,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                   <button
                     onClick={() => removeVocabByWord?.(textToCheck)}
                     className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
-                    title={t("v18", "Ajouter au carnet")}
+                    title={t("v106", "Supprimer")}
                   >
                     <Check size={11} />  {t("v19", "Carnet")}
                   </button>
@@ -527,7 +527,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                   <button
                     onClick={() => removeVocabByWord?.(textToCheck)}
                     className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
-                    title={t("v18", "Ajouter au carnet")}
+                    title={t("v106", "Supprimer")}
                   >
                     <Check size={11} />  {t("v19", "Carnet")}
                   </button>
@@ -2201,18 +2201,20 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                           {(() => {
                             const answerText = q.answer.toLowerCase();
                             const isSaved = savedCorrections?.has(answerText);
-                            return isSaved ? (
-                              <button
-                                onClick={() => { removeVocabByWord?.(answerText); setToast(t("v106", "Supprimer")); }}
-                                className="flex items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] hover:bg-[#5C7A5A28]"
-                              >
-                                <Check size={11} />  {t("v19", "Carnet")}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => { addVocab({ word: q.answer, def: q.explain, context: q.q, type: "correction" }); setToast(t("v48", "Ajouté au carnet")); }}
-                                className="flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
-                              >
+                              return isSaved ? (
+                               <button
+                                 onClick={() => { removeVocabByWord?.(answerText); setToast(t("v106", "Supprimer")); }}
+                                 className="flex items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] hover:bg-[#5C7A5A28]"
+                                 title={t("v106", "Supprimer")}
+                               >
+                                 <Check size={11} />  {t("v19", "Carnet")}
+                               </button>
+                             ) : (
+                               <button
+                                 onClick={() => { addVocab({ word: q.answer, def: q.explain, context: q.q, type: "correction" }); setToast(t("v48", "Ajouté au carnet")); }}
+                                 className="flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
+                                 title={t("v18", "Ajouter au carnet")}
+                               >
                                 <Plus size={11} />  {t("v19", "Carnet")}
                               </button>
                             );
@@ -4090,6 +4092,10 @@ export function CinqJoursApp(props: {
     setVocab((v) => v.filter((_, idx) => idx !== i));
     if (entry) deleteWordFromFrdic(entry.word);
   };
+  const removeVocabByWord = (word: string) => {
+    const idx = vocab.findIndex((v) => v.word.toLowerCase() === word.toLowerCase());
+    if (idx !== -1) removeVocab(idx);
+  };
 
   const deleteWordFromFrdic = async (word: string) => {
     if (!frdicConnectedRef.current || !activeId) return;
@@ -4568,10 +4574,7 @@ export function CinqJoursApp(props: {
               setNote={setNote}
               savedWords={savedWords}
               savedSentences={savedSentences}
-              removeVocabByWord={(word: string) => {
-                const idx = vocab.findIndex((v) => v.word.toLowerCase() === word.toLowerCase());
-                if (idx !== -1) removeVocab(idx);
-              }}
+              removeVocabByWord={removeVocabByWord}
               isTextSource={sourceType === "text"}
               textModeVersion={textModeVersion}
               videoWidth={videoWidth}
