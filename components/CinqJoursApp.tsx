@@ -654,11 +654,16 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
 /* ---------------------------------------------------------------
    SHARED TEXT CORRECTION HOOK (Days 1 & 4)
 --------------------------------------------------------------- */
- function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: number, rangeHigh: number, sourceText: string) {
+ function resourceSegment(sourceId: string | null): string {
+  return sourceId || "none";
+}
+
+function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: number, rangeHigh: number, sourceText: string, sourceId: string | null = null) {
   const lc = getLangCodes();
   const ui = getUiLocale();
-  const resultKey = `cj-correction-${taskName}-${lc.targetLang}-${ui}`;
-  const textKey = `cj-text-${taskName}-${lc.targetLang}-${ui}`;
+  const resourceSeg = resourceSegment(sourceId);
+  const resultKey = `cj-correction-${taskName}-${lc.targetLang}-${ui}-${resourceSeg}`;
+  const textKey = `cj-text-${taskName}-${lc.targetLang}-${ui}-${resourceSeg}`;
 
   const [text, setText] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -1576,8 +1581,8 @@ function ResourcesView({ resources, onSelect, onDelete }: {
 /* ---------------------------------------------------------------
    DAY 1 — SUMMARY
 --------------------------------------------------------------- */
-function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord }: { sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
-  const { text, setText, result, loading, correct, clear, notice } = useCorrection("summary", 80, 120, sourceText);
+function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
+  const { text, setText, result, loading, correct, clear, notice } = useCorrection("summary", 80, 120, sourceText, sourceId);
 
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -1598,7 +1603,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord }: {
   const [selfLoading, setSelfLoading] = useState(false);
   const [selfKey, setSelfKey] = useState(0);
 
-  const audioResultKey = "cj-correction-audio-v2";
+  const audioResultKey = `cj-correction-audio-v2-${resourceSegment(sourceId)}`;
   const [hasRecording, setHasRecording] = useState(false);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
     if (typeof window === "undefined") return null;
@@ -1734,7 +1739,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord }: {
       <div className="rounded-lg border border-[#26222014] bg-[#17182206] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v62", "Résumé oral (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v63", "Enregistrez votre résumé à voix haute.")}</p>
-        <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey="cj-recording-day1" onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey={`cj-recording-day1-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
 
         {hasRecording && (
           <div className="mt-4 border-t border-[#26222014] pt-4">
@@ -1975,7 +1980,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
   const loadedSaved = useRef(false);
   const generateId = useRef(0);
 
-  const STORAGE_KEY = "cj-jour3-v2";
+  const STORAGE_KEY = `cj-jour3-v2-${resourceSegment(currentSourceId)}`;
 
   useEffect(() => {
     loadedSaved.current = false;
@@ -1998,14 +2003,14 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         }
       }
     } catch { /* ignore */ }
-  }, [sourceText]);
+  }, [sourceText, STORAGE_KEY]);
 
   useEffect(() => {
     if (!loadedSaved.current) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sourceText, questions, answers, checked }));
     } catch { /* ignore */ }
-  }, [sourceText, questions, answers, checked]);
+  }, [sourceText, questions, answers, checked, STORAGE_KEY]);
 
   const generate = async (manual = false) => {
     if (!sourceText.trim()) return;
@@ -2357,8 +2362,8 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
 /* ---------------------------------------------------------------
    DAY 4 — WRITING
 --------------------------------------------------------------- */
-function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
-  const { text, setText, result, loading, correct, clear, notice } = useCorrection("writing", 120, 180, sourceText);
+function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
+  const { text, setText, result, loading, correct, clear, notice } = useCorrection("writing", 120, 180, sourceText, sourceId);
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
   useEffect(() => {
@@ -2412,7 +2417,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
   const [topicLoading, setTopicLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
 
-  const TOPIC_KEY = "cj-topic-writing";
+  const TOPIC_KEY = `cj-topic-writing-${resourceSegment(sourceId)}`;
 
   const fallbackTopic = `${t("v150","En vous inspirant du texte source")}${sourceTitle ? ` (« ${sourceTitle} »)` : ""}${t("v151",", écrivez un texte de 120 à 180 mots où vous donnez votre propre avis sur le sujet. Justifiez avec un exemple personnel ou observé.")}`;
 
@@ -2553,8 +2558,8 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
 /* ---------------------------------------------------------------
    DAY 5 — SPEAKING
 --------------------------------------------------------------- */
-function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
-  const audioResultKey = "cj-correction-day5";
+function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
+  const audioResultKey = `cj-correction-day5-${resourceSegment(sourceId)}`;
   const [hasRecording, setHasRecording] = useState(false);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
     if (typeof window === "undefined") return null;
@@ -2583,7 +2588,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
   const [topicLoading, setTopicLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
 
-  const TOPIC_KEY = "cj-topic-speaking";
+  const TOPIC_KEY = `cj-topic-speaking-${resourceSegment(sourceId)}`;
 
   const fallbackTopic = `${t("v152","Enregistrez une mini-présentation d'une à deux minutes sur le sujet")}${sourceTitle ? ` (« ${sourceTitle} »)` : ""}${t("v153"," : présentez-le comme à un ami, puis donnez votre opinion personnelle.")}`;
 
@@ -2698,7 +2703,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       <div className="rounded-lg bg-[#17182208] p-5">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v95", "Votre présentation")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
-        <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey="cj-recording-day5" onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={`cj-recording-day5-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
       </div>
 
       {hasRecording && (
@@ -2821,8 +2826,10 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, a
   );
 }
 
-function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
-  const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, sourceText);
+function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
+  const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, sourceText, sourceId);
+  const journalPromptKey = `cj-journal-prompt-${resourceSegment(sourceId)}`;
+  const journalRecordingKey = `cj-journal-recording-${resourceSegment(sourceId)}`;
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
   useEffect(() => {
@@ -2833,7 +2840,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
 
   const [prompt, setPrompt] = useState<string>(() => {
     if (typeof window === "undefined") return "";
-    try { return window.localStorage.getItem("cj-journal-prompt") || ""; } catch { return ""; }
+    try { return window.localStorage.getItem(journalPromptKey) || ""; } catch { return ""; }
   });
   const [generating, setGenerating] = useState(false);
   const [histView, setHistView] = useState<"cards" | "cal">("cards");
@@ -2847,10 +2854,10 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
   const [audioData, setAudioData] = useState<string | null>(null);
 
   useEffect(() => {
-    getAudio("cj-journal-recording")
+    getAudio(journalRecordingKey)
       .then((d) => { if (d) { setAudioData(d); setHasRecording(true); } })
       .catch(() => {});
-  }, []);
+  }, [journalRecordingKey]);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [recorderKey, setRecorderKey] = useState(0);
@@ -2900,7 +2907,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         const data = await res.json();
         if (data.topic) {
           setPrompt(data.topic);
-          try { window.localStorage.setItem("cj-journal-prompt", data.topic); } catch { /* ignore */ }
+          try { window.localStorage.setItem(journalPromptKey, data.topic); } catch { /* ignore */ }
           setGenerating(false);
           return;
         }
@@ -2916,7 +2923,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
 
   const deletePrompt = () => {
     setPrompt("");
-    try { window.localStorage.removeItem("cj-journal-prompt"); } catch { /* ignore */ }
+    try { window.localStorage.removeItem(journalPromptKey); } catch { /* ignore */ }
   };
 
   const startSelfCorrect = async () => {
@@ -3120,7 +3127,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       <div className="rounded-lg border border-[#26222014] bg-[#17182206] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v108", "Entrée orale (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
-        <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey="cj-journal-recording" onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey={journalRecordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
         {hasRecording && (
           <div className="mt-4 border-t border-[#26222014] pt-4">
             {!audioResult ? (
@@ -4350,7 +4357,6 @@ export function CinqJoursApp(props: {
 
   const handleImport = async (sourceUrl: string) => {
     const id = extractYouTubeId(sourceUrl);
-    if (videoId) saveDayState(videoId);
     if (id) {
       setVideoId(id);
     }
@@ -4359,7 +4365,6 @@ export function CinqJoursApp(props: {
     setImportError(null);
     setTranscript([]);
     setVideoTitle(null);
-    clearDayState();
     try {
       const clientTitleP = fetchTitleClient(sourceUrl);
 
@@ -4439,39 +4444,7 @@ export function CinqJoursApp(props: {
     }
   };
 
-  const DAY_STATE_KEYS = [
-    "cj-correction-audio-v2", "cj-correction-day5",
-    "cj-correction-summary", "cj-correction-writing",
-    "cj-text-summary", "cj-text-writing",
-    "cj-jour3-v2", "cj-topic-writing", "cj-topic-speaking",
-  ];
-
-  const saveDayState = (sourceId: string) => {
-    try {
-      const snapshot: Record<string, string | null> = {};
-      for (const k of DAY_STATE_KEYS) snapshot[k] = window.localStorage.getItem(k);
-      window.localStorage.setItem(`cj-daystate-${sourceId}`, JSON.stringify(snapshot));
-    } catch { /* ignore */ }
-  };
-
-  const restoreDayState = (sourceId: string) => {
-    try {
-      const raw = window.localStorage.getItem(`cj-daystate-${sourceId}`);
-      if (!raw) return;
-      const snapshot = JSON.parse(raw) as Record<string, string | null>;
-      for (const k of DAY_STATE_KEYS) {
-        if (snapshot[k] !== null) window.localStorage.setItem(k, snapshot[k]!);
-        else window.localStorage.removeItem(k);
-      }
-    } catch { /* ignore */ }
-  };
-
-  const clearDayState = () => {
-    try { DAY_STATE_KEYS.forEach((k) => window.localStorage.removeItem(k)); } catch { /* ignore */ }
-  };
-
   const openResource = (resourceVideoId: string, sourceUrl: string) => {
-    if (videoId) saveDayState(videoId);
     setUrl(sourceUrl);
     setVideoId(resourceVideoId);
     const found = resources.find((r) => r.video_id === resourceVideoId);
@@ -4485,7 +4458,6 @@ export function CinqJoursApp(props: {
     } else {
       setTranscript([]);
     }
-    restoreDayState(resourceVideoId);
     setView("source");
     if (!existingTitle && resourceVideoId && !String(resourceVideoId).startsWith("text-") && sourceUrl) {
       fetchTitleClient(sourceUrl).then((t) => {
@@ -4500,16 +4472,12 @@ export function CinqJoursApp(props: {
   const removeResource = (key: string) => {
     const target = resources.find((r) => String(r.key) === key);
     setResources(resources.filter((r) => String(r.key) !== key));
-    if (target) {
-      try { window.localStorage.removeItem(`cj-daystate-${target.video_id}`); } catch { /* ignore */ }
-    }
     if (target && target.video_id === videoId) {
       setTranscript([]);
       setVideoId(null);
       setSourceType(null);
       setVideoTitle(null);
       setUrl("");
-      clearDayState();
     }
   };
 
@@ -4581,14 +4549,12 @@ export function CinqJoursApp(props: {
               setVideoWidth={setVideoWidth}
               level={level}
               onStartReadingMode={() => {
-                if (videoId) saveDayState(videoId);
                 setVideoId(null);
                 setVideoTitle(null);
                 setTranscript([]);
                 setUrl("");
                 setSourceType("text");
                 setImportError(null);
-                clearDayState();
                 setTextModeVersion((n) => n + 1);
                 setVideoWidth(100);
               }}
@@ -4597,17 +4563,18 @@ export function CinqJoursApp(props: {
           {view === "resources" && <ResourcesView resources={resources} onSelect={openResource} onDelete={removeResource} />}
           {(() => {
             const langKey = `${getLangCodes().targetLang}-${getLangCodes().translationLang}-${getUiLocale()}`;
+            const resourceKey = `${langKey}-${resourceSegment(videoId)}`;
             return (
               <>
-                {view === 1 && <DayOne key={langKey} sourceText={sourceText} addVocab={addVocab} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
-                {view === 4 && <DayFour key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
-                {view === "journal" && <JournalView key={langKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+                {view === 1 && <DayOne key={resourceKey} sourceText={sourceText} addVocab={addVocab} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
+                {view === 4 && <DayFour key={resourceKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
+                {view === "journal" && <JournalView key={resourceKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
               </>
             );
           })()}
           {view === 2 && <DayTwo transcript={transcript} videoId={videoId} isTextSource={sourceType === "text"} />}
-          {view === 3 && <DayThree vocab={vocab} sourceText={sourceText} addVocab={addVocab} currentSourceId={videoId} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
-          {view === 5 && <DayFive sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+          {view === 3 && <DayThree key={`jour3-${resourceSegment(videoId)}`} vocab={vocab} sourceText={sourceText} addVocab={addVocab} currentSourceId={videoId} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
+          {view === 5 && <DayFive key={`jour5-${resourceSegment(videoId)}`} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
           {view === "carnet" && <CarnetView vocab={vocab} notes={notes} setNote={setNote} removeVocab={removeVocab} frdic={{ connected: frdicConnected, mode: frdicMode, busy: frdicBusy, enabled: !!activeDict, name: activeDict?.name ?? "", authUrl: activeDict?.authUrl ?? "", onConnect: frdicConnect, onSave: frdicSave, onDisconnect: frdicDisconnect, onSync: frdicSync }} />}
           </div>
 
