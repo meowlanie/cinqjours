@@ -1919,7 +1919,7 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
               <span className="cj-mono mt-1 shrink-0 text-[11px] text-[#B08D57]">{l.t}</span>
               <p className="leading-relaxed text-[#262220]">{l.text}</p>
             </div>
-            <Recorder label={t("v208", "Record ({n})").replace("{n}", String(i + 1))} persistKey={`cj-recording-day2-${resourceSegment(videoId)}-${i}`} />
+            <Recorder key={`day2-${resourceSegment(videoId)}-${i}`} label={t("v208", "Record ({n})").replace("{n}", String(i + 1))} />
           </div>
         ))}
       </div>
