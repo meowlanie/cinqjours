@@ -3681,7 +3681,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
       for (const s of secs) s.items = seededShuffle(s.items, rng);
     }
     return secs;
-  }, [vocab, order, shuffleSeed, uiLocale]);
+  }, [vocab, order, shuffleSeed, uiLocale, targetLang]);
 
   const saveNote = (word: string) => {
     const note = noteText.trim();
