@@ -65,3 +65,23 @@ export async function deleteAudio(id: string): Promise<void> {
     db.close();
   }
 }
+
+export async function deleteAudioByPrefix(prefix: string): Promise<void> {
+  const db = await openDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        for (const key of req.result) {
+          if (typeof key === "string" && key.startsWith(prefix)) store.delete(key);
+        }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}

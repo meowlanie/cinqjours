@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { extractYouTubeId, fetchTranscriptClient } from "@/lib/transcript";
 import { saveVocab } from "@/lib/supabase";
-import { putAudio, getAudio, deleteAudio } from "@/lib/journalStore";
+import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
 import { useSettings, t, getLangCodes, getUiLocale } from "@/lib/settings";
 import { type Level } from "@/lib/languages";
 import { localeOf, typeLabels } from "@/lib/languages";
@@ -656,6 +656,90 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
 --------------------------------------------------------------- */
  function resourceSegment(sourceId: string | null): string {
   return sourceId || "none";
+}
+
+/* ---------------------------------------------------------------
+   PER-RESOURCE DAY STATE — migration & cleanup
+   Older builds stored day state under global keys (no resource id).
+   Move those to the last-active resource once, and delete every
+   namespaced key when its resource is removed.
+--------------------------------------------------------------- */
+const LEGACY_LS_KEYS = [
+  "cj-correction-audio-v2",
+  "cj-correction-day5",
+  "cj-jour3-v2",
+  "cj-topic-writing",
+  "cj-topic-speaking",
+  "cj-journal-prompt",
+];
+const LEGACY_IDB_KEYS = ["cj-recording-day1", "cj-recording-day5", "cj-journal-recording"];
+// Language-suffixed correction/text keys, without the trailing resource id.
+const LEGACY_LANG_KEY_RE = /^cj-(correction|text)-(summary|writing|journal)-[a-z-]+$/i;
+
+function moveLocalStorageKey(from: string, to: string) {
+  try {
+    const value = window.localStorage.getItem(from);
+    if (value === null) return;
+    if (window.localStorage.getItem(to) === null) window.localStorage.setItem(to, value);
+    window.localStorage.removeItem(from);
+  } catch { /* ignore */ }
+}
+
+async function migrateLegacyDayState(targetSourceId: string) {
+  if (typeof window === "undefined") return;
+  const seg = resourceSegment(targetSourceId);
+  try {
+    for (const key of LEGACY_LS_KEYS) moveLocalStorageKey(key, `${key}-${seg}`);
+    const langKeys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && LEGACY_LANG_KEY_RE.test(k)) langKeys.push(k);
+    }
+    for (const key of langKeys) moveLocalStorageKey(key, `${key}-${seg}`);
+  } catch { /* ignore */ }
+  for (const key of LEGACY_IDB_KEYS) {
+    try {
+      const data = await getAudio(key);
+      if (data !== null) {
+        if ((await getAudio(`${key}-${seg}`)) === null) await putAudio(`${key}-${seg}`, data);
+        await deleteAudio(key);
+      }
+    } catch { /* ignore */ }
+  }
+}
+
+const DAY_STATE_KEY_PREFIXES = [
+  "cj-correction-summary-",
+  "cj-correction-writing-",
+  "cj-correction-journal-",
+  "cj-text-summary-",
+  "cj-text-writing-",
+  "cj-text-journal-",
+  "cj-correction-audio-v2-",
+  "cj-correction-day5-",
+  "cj-jour3-v2-",
+  "cj-topic-writing-",
+  "cj-topic-speaking-",
+  "cj-journal-prompt-",
+];
+
+function removeResourceDayState(sourceId: string) {
+  if (typeof window === "undefined") return;
+  const seg = resourceSegment(sourceId);
+  const suffix = `-${seg}`;
+  try {
+    const doomed: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.endsWith(suffix) && DAY_STATE_KEY_PREFIXES.some((p) => k.startsWith(p))) doomed.push(k);
+    }
+    doomed.forEach((k) => window.localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  // Recordings live in IndexedDB.
+  deleteAudio(`cj-recording-day1-${seg}`).catch(() => {});
+  deleteAudio(`cj-recording-day5-${seg}`).catch(() => {});
+  deleteAudio(`cj-journal-recording-${seg}`).catch(() => {});
+  deleteAudioByPrefix(`cj-recording-day2-${seg}-`).catch(() => {});
 }
 
 function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: number, rangeHigh: number, sourceText: string, sourceId: string | null = null) {
@@ -1835,7 +1919,7 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
               <span className="cj-mono mt-1 shrink-0 text-[11px] text-[#B08D57]">{l.t}</span>
               <p className="leading-relaxed text-[#262220]">{l.text}</p>
             </div>
-            <Recorder label={t("v208", "Record ({n})").replace("{n}", String(i + 1))} />
+            <Recorder label={t("v208", "Record ({n})").replace("{n}", String(i + 1))} persistKey={`cj-recording-day2-${resourceSegment(videoId)}-${i}`} />
           </div>
         ))}
       </div>
@@ -4001,6 +4085,29 @@ export function CinqJoursApp(props: {
     hasRestoredRef.current = true;
   }, [resources]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // One-time migration: older builds stored day state under global keys.
+  // Attach them to the last-active resource (legacy keys had no resource id,
+  // so this is the best available owner), then never run again.
+  const hasMigratedRef = useRef(false);
+  useEffect(() => {
+    if (hasMigratedRef.current) return;
+    if (resources.length === 0) return;
+    try {
+      if (window.localStorage.getItem("cj-daystate-migrated")) {
+        hasMigratedRef.current = true;
+        return;
+      }
+    } catch { return; }
+    hasMigratedRef.current = true;
+    const target = readLastSourceId() || String(resources[0]?.video_id ?? "");
+    if (!target) return;
+    migrateLegacyDayState(target)
+      .catch(() => {})
+      .finally(() => {
+        try { window.localStorage.setItem("cj-daystate-migrated", "1"); } catch { /* ignore */ }
+      });
+  }, [resources]);
+
   useEffect(() => {
     if (!hasRestoredRef.current && !videoId) return;
     if (videoId) rememberSourceId(videoId);
@@ -4472,6 +4579,7 @@ export function CinqJoursApp(props: {
   const removeResource = (key: string) => {
     const target = resources.find((r) => String(r.key) === key);
     setResources(resources.filter((r) => String(r.key) !== key));
+    if (target) removeResourceDayState(String(target.video_id));
     if (target && target.video_id === videoId) {
       setTranscript([]);
       setVideoId(null);
