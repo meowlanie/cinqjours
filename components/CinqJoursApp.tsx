@@ -3587,8 +3587,9 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
 /* ---------------------------------------------------------------
    CARNET (all saved vocab, grouped by category)
 --------------------------------------------------------------- */
-function CarnetView({ vocab, notes, setNote, removeVocab, frdic }: {
-  vocab: { word: string; def: string; context?: string; translation?: string; type?: string }[];
+function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
+  vocab: { word: string; def: string; context?: string; translation?: string; type?: string; targetLang?: string }[];
+  targetLang: string;
   notes: Record<string, string>;
   setNote: (word: string, note: string) => void;
   removeVocab: (i: number) => void;
@@ -3671,6 +3672,7 @@ function CarnetView({ vocab, notes, setNote, removeVocab, frdic }: {
       { key: "correction", title: t("v246", "Corrections"), items: [] },
     ];
     vocab.forEach((v, idx) => {
+      if (v.targetLang && v.targetLang !== targetLang) return;
       const section = secs.find((s) => s.key === categorize(v));
       if (section) section.items.push({ v, idx });
     });
@@ -3856,10 +3858,12 @@ function CarnetView({ vocab, notes, setNote, removeVocab, frdic }: {
         </div>
       )}
 
-      {vocab.length === 0 ? (
+      {sections.every((s) => s.items.length === 0) ? (
         <div className="rounded-lg border border-[#B08D5744] bg-[#B08D5714] px-4 py-3 text-left text-sm text-[#7a5f30]">
           
-          {t("v128", "Rien pour l'instant. Cliquez un mot ou surlignez une expression dans la source, ou enregistrez une correction, pour l'ajouter ici.")}
+          {vocab.length === 0
+            ? t("v128", "Rien pour l'instant. Cliquez un mot ou surlignez une expression dans la source, ou enregistrez une correction, pour l'ajouter ici.")
+            : t("v256", "Aucune fiche pour cette langue. Changez de langue cible pour voir les autres fiches.")}
         </div>
       ) : (
         sections.map((section) =>
@@ -4013,11 +4017,12 @@ export function CinqJoursApp(props: {
     const t = setTimeout(() => setImportError(null), 4000);
     return () => clearTimeout(t);
   }, [importError]);
-  const [vocab, setVocab] = useState<{ word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }[]>(() => {
+  const [vocab, setVocab] = useState<{ word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction"; targetLang?: string }[]>(() => {
     if (typeof window === "undefined") return [];
     try {
       const raw = window.localStorage.getItem(lsKey);
-      return raw ? (JSON.parse(raw) as { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }[]) : [];
+      if (!raw) return [];
+      return JSON.parse(raw) as { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction"; targetLang?: string }[];
     } catch {
       return [];
     }
@@ -4108,6 +4113,26 @@ export function CinqJoursApp(props: {
       });
   }, [resources]);
 
+  // One-time migration: cards saved before per-language tagging carry a stale
+  // `targetLang` (the earlier backfill persisted the page-load language, not
+  // the user's real one), so the Carnet hid them. Re-tag ALL existing cards to
+  // the user's current target language, overwriting the stale tags, then never
+  // run again. The persist effect saves the result.
+  const hasCarnetMigratedRef = useRef(false);
+  useEffect(() => {
+    if (hasCarnetMigratedRef.current) return;
+    try {
+      if (window.localStorage.getItem("cj-carnet-lang-v2")) {
+        hasCarnetMigratedRef.current = true;
+        return;
+      }
+    } catch { /* ignore */ }
+    hasCarnetMigratedRef.current = true;
+    const lang = getLangCodes().targetLang;
+    setVocab((prev) => prev.map((v) => (v.targetLang === lang ? v : { ...v, targetLang: lang })));
+    try { window.localStorage.setItem("cj-carnet-lang-v2", "1"); } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     if (!hasRestoredRef.current && !videoId) return;
     if (videoId) rememberSourceId(videoId);
@@ -4195,8 +4220,9 @@ export function CinqJoursApp(props: {
     }
   };
 
-  const addVocab = (entry: { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }) => {
-    setVocab((v) => [entry, ...v].filter((e, i, a) => a.findIndex((e2) => e2.word === e.word) === i));
+  const addVocab = (entry: { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction"; targetLang?: string }) => {
+    const stamped = { ...entry, targetLang: entry.targetLang || getLangCodes().targetLang };
+    setVocab((v) => [stamped, ...v].filter((e, i, a) => a.findIndex((e2) => e2.word === e.word) === i));
     if (entry.type !== "correction") {
       pushToFrdic(entry.word, entry.context);
     }
@@ -4275,12 +4301,12 @@ export function CinqJoursApp(props: {
       const notesArr = Array.isArray(nData.notes) ? nData.notes : [];
       setVocab((prev) => {
         const existingKeys = new Set(prev.map((v) => v.word.toLowerCase()));
-        const additions: { word: string; def: string; translation: string; context: string; type: "vocab" }[] = [];
+        const additions: { word: string; def: string; translation: string; context: string; type: "vocab"; targetLang: string }[] = [];
         const updates = new Map<string, string>();
         for (const w of words) {
           const key = String(w?.word || "").toLowerCase();
           if (!key) continue;
-          if (!existingKeys.has(key)) additions.push({ word: String(w.word), def: String(w.exp || ""), translation: "", context: "", type: "vocab" });
+          if (!existingKeys.has(key)) additions.push({ word: String(w.word), def: String(w.exp || ""), translation: "", context: "", type: "vocab", targetLang: getLangCodes().targetLang });
           else if (w?.exp) updates.set(key, String(w.exp));
         }
         let next = prev;
@@ -4683,7 +4709,7 @@ export function CinqJoursApp(props: {
           {view === 2 && <DayTwo transcript={transcript} videoId={videoId} isTextSource={sourceType === "text"} />}
           {view === 3 && <DayThree key={`jour3-${resourceSegment(videoId)}`} vocab={vocab} sourceText={sourceText} addVocab={addVocab} currentSourceId={videoId} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
           {view === 5 && <DayFive key={`jour5-${resourceSegment(videoId)}`} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
-          {view === "carnet" && <CarnetView vocab={vocab} notes={notes} setNote={setNote} removeVocab={removeVocab} frdic={{ connected: frdicConnected, mode: frdicMode, busy: frdicBusy, enabled: !!activeDict, name: activeDict?.name ?? "", authUrl: activeDict?.authUrl ?? "", onConnect: frdicConnect, onSave: frdicSave, onDisconnect: frdicDisconnect, onSync: frdicSync }} />}
+          {view === "carnet" && <CarnetView vocab={vocab} targetLang={getLangCodes().targetLang} notes={notes} setNote={setNote} removeVocab={removeVocab} frdic={{ connected: frdicConnected, mode: frdicMode, busy: frdicBusy, enabled: !!activeDict, name: activeDict?.name ?? "", authUrl: activeDict?.authUrl ?? "", onConnect: frdicConnect, onSave: frdicSave, onDisconnect: frdicDisconnect, onSync: frdicSync }} />}
           </div>
 
           {view !== "resources" && view !== "journal" && view !== "carnet" && (
