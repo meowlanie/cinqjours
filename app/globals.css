@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary-text: #F4EEE0;
 }
 
 @theme inline {
@@ -12,11 +13,44 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Per-language theme.
+   --background = window + primary buttons (strong hue).
+   --accent = secondary buttons + tags (soft hue). */
+html[lang="fr"] {
+  --background: #04637B;
+  --background-hover: color-mix(in srgb, var(--background) 85%, black);
+  --accent: #DFA397;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent) 35%, black);
+  --accent-hover: color-mix(in srgb, var(--accent) 80%, black);
+}
+html[lang="de"] {
+  --background: #145F23;
+  --background-hover: color-mix(in srgb, var(--background) 85%, black);
+  --accent: #C5DAC1;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent) 35%, black);
+  --accent-hover: color-mix(in srgb, var(--accent) 80%, black);
+}
+html[lang="en"] {
+  --background: #1C4680;
+  --background-hover: color-mix(in srgb, var(--background) 85%, black);
+  --accent: #bbbdf6;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent) 35%, black);
+  --accent-hover: color-mix(in srgb, var(--accent) 80%, black);
+}
+html[lang="zh"] {
+  --background: #A52C0A;
+  --background-hover: color-mix(in srgb, var(--background) 85%, black);
+  --accent: #EFD9A8;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent) 35%, black);
+  --accent-hover: color-mix(in srgb, var(--accent) 80%, black);
 }
 
 body {

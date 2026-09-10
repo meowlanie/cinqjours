@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, Fragment, type Dispatch, type SetStateAction } from "react";
 import {
-  BookMarked, Mic, Play, Square, Check, X, Plus, Volume2, Settings,
+  BookMarked, Mic, Play, Square, Check, X, Plus, Volume2, Settings, Download,
   PenLine, MessageCircle, ChevronRight, Trash2, Link2,
   RotateCcw, Sparkles, ChevronLeft, History, ArrowUpRight, Loader2, Save, CircleCheck, CircleSlash,
   PlayCircle, FileText, Pause, NotebookPen, Eye
@@ -333,7 +333,7 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {status === "idle" && (
-        <button onClick={start} className="flex items-center gap-2 rounded-full bg-[#B08D57] px-5 py-2.5 text-sm font-medium text-[#171B22] transition hover:bg-[#c4a06a]">
+        <button onClick={start} className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2.5 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)]">
           <Mic size={16} /> {label}
         </button>
       )}
@@ -345,10 +345,10 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
             onPointerLeave={cancelHold}
             onPointerCancel={cancelHold}
             className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition select-none touch-none ${
-              status === "recording" ? "bg-[#B5432E] text-white hover:bg-[#9c3a27]" : "bg-[#B08D57] text-[#171B22] hover:bg-[#c4a06a]"
+              status === "recording" ? "bg-[#B5432E] text-white hover:bg-[#9c3a27]" : "bg-[var(--background)] text-[var(--primary-text)] hover:bg-[var(--background-hover)]"
             } ${holding ? "scale-95 opacity-80" : ""}`}
           >
-            <span className={`h-2 w-2 rounded-full ${status === "recording" ? "cj-rec-dot bg-white" : "bg-[#171B22]"}`} />
+            <span className={`h-2 w-2 rounded-full ${status === "recording" ? "cj-rec-dot bg-white" : "bg-[var(--background)]"}`} />
             {status === "recording" ? <Pause size={14} /> : <Play size={14} />}
             {holding ? t("v205", "Finish…") : status === "recording" ? t("v243", "Pause") : t("v206", "Resume")} · {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
           </button>
@@ -358,17 +358,17 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
       {status === "recorded" && audioUrl && (
         <div className="flex flex-wrap items-center gap-2 cj-fade-in">
           <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} className="hidden" />
-          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[#171B22] px-4 py-2 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35]">
+          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)]">
             {playing ? <Square size={14} /> : <Play size={14} />}
             {playing ? t("v12", "En lecture…") : t("v13", "Écouter")}
           </button>
           {persistKey && !saved && (
-            <button onClick={save} disabled={saving} className="flex items-center gap-1.5 rounded-full bg-[#5C7A5A] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4a6548] disabled:opacity-50">
+            <button onClick={save} disabled={saving} className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-50">
               <Save size={14} /> {saving ? "…" : t("v204", "Save")}
             </button>
           )}
           {persistKey && saved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-[#5C7A5A]">
+            <span className="flex items-center gap-1 text-xs font-medium text-[var(--accent)]">
               <Check size={13} />  {t("v14", "Enregistré")}
             </span>
           )}
@@ -430,14 +430,14 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
       <div className="flex items-center gap-1">
         <button
           onClick={() => setView("annotated")}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "annotated" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "annotated" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
         >
           
           {t("v15", "Texte annoté")}
         </button>
         <button
           onClick={() => setView("corrected")}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "corrected" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "corrected" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
         >
           
           {t("v16", "Texte corrigé")}
@@ -467,7 +467,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                     {t.type === "removed" ? (
                       <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
                     ) : t.type === "added" ? (
-                      <span className="font-medium text-[#3f5a3d]">{t.text}</span>
+                      <span className="font-medium text-[var(--accent-text)]">{t.text}</span>
                     ) : (
                       <span>{t.text}</span>
                     )}
@@ -497,7 +497,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                 return isSaved ? (
                   <button
                     onClick={() => removeVocabByWord?.(textToCheck)}
-                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)] transition hover:bg-[var(--accent-soft)]"
                     title={t("v106", "Supprimer")}
                   >
                     <Check size={11} />  {t("v19", "Carnet")}
@@ -515,8 +515,8 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
             </div>
           ))}
           {suggested.map((s, i) => (
-            <div key={`s-${i}`} className={`flex items-start gap-2 text-[#3f5a3d] ${compact ? "text-[10px]" : "text-sm"}`}>
-              <span className="cj-mono mt-0.5 shrink-0 rounded border border-[#5C7A5A44] bg-[#5C7A5A0d] px-1.5 py-0.5 text-[10px] uppercase">
+            <div key={`s-${i}`} className={`flex items-start gap-2 text-[var(--accent-text)] ${compact ? "text-[10px]" : "text-sm"}`}>
+              <span className="cj-mono mt-0.5 shrink-0 rounded border border-[var(--accent-border)] bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] uppercase">
                 {t("v222", "Style")}
               </span>
               <span className="flex-1 italic">"{s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text}" → {s.suggestion}</span>
@@ -526,7 +526,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                 return isSaved ? (
                   <button
                     onClick={() => removeVocabByWord?.(textToCheck)}
-                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] transition hover:bg-[#5C7A5A28]"
+                    className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)] transition hover:bg-[var(--accent-soft)]"
                     title={t("v106", "Supprimer")}
                   >
                     <Check size={11} />  {t("v19", "Carnet")}
@@ -642,7 +642,7 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
       <div className="mt-2 flex justify-end">
         <button
           onClick={() => onDone((ref.current?.innerText || "").trim())}
-          className="flex items-center gap-1.5 rounded-full bg-[#5C7A5A] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#4a6548]"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
         >
           <Check size={14} /> {t("v217", "Terminer")}
         </button>
@@ -1161,14 +1161,14 @@ function SourceView(props: SourceViewProps) {
         <button
           onClick={submitUrl}
           disabled={importing}
-          className="flex items-center gap-2 rounded-lg bg-[#171B22] px-4 py-2.5 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35] disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-[var(--background)] px-4 py-2.5 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
         >
-          {importing && <Loader2 size={15} className="animate-spin" />}
+          {importing ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           {t("v200", "Import")}
         </button>
         <button
           onClick={onStartReadingMode}
-          className="flex items-center gap-1.5 rounded-lg border border-[#5C7A5A] bg-[#5C7A5A] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#4A6B48]"
+          className="flex items-center gap-1.5 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
         >
           <FileText size={14} />  {t("v26", "Lire un texte")}
         </button>
@@ -1208,7 +1208,7 @@ function SourceView(props: SourceViewProps) {
                 </a>
                 <button
                   onClick={cycleVideoSize}
-                  className="flex items-center gap-1.5 rounded-full bg-[#171B22]/90 px-3 py-1.5 text-xs font-medium text-[#F4EEE0] shadow transition hover:bg-[#171B22]"
+                  className="flex items-center gap-1.5 rounded-full bg-[var(--background)]/90 px-3 py-1.5 text-xs font-medium text-[var(--primary-text)] shadow transition hover:bg-[var(--background)]"
                   title={videoWidth >= 100 ? t("v30", "Réduire la vidéo pour voir la transcription à côté") : videoWidth >= 50 ? t("v31", "Réduire encore") : t("v32", "Revenir en plein écran")}
                 >
                   {videoWidth >= 100 ? <><Square size={11} />  {t("v33", "Réduire")}</> : videoWidth >= 50 ? <><Square size={11} /> {t("v202", "Small")}</> : <><ArrowUpRight size={12} /> {t("v203", "Large")}</>}
@@ -1378,7 +1378,7 @@ function SourceView(props: SourceViewProps) {
                 }
               }}
               disabled={pasting && !pasteText.trim()}
-              className="rounded bg-[#B08D57] px-4 py-1.5 text-xs font-medium text-[#171B22] transition hover:bg-[#C1974B] disabled:opacity-40"
+              className="rounded bg-[var(--background)] px-4 py-1.5 text-xs font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-40"
             >
               {t("v216", "Valider")}
             </button>
@@ -1558,7 +1558,7 @@ function SourceView(props: SourceViewProps) {
         )}
 
         {toast && (
-          <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+          <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
             {toast}
           </div>
         )}
@@ -1792,7 +1792,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-4 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
           >
             {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
             
@@ -1801,7 +1801,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           <button
             disabled={!text.trim() || loading || selfMode}
             onClick={correct}
-            className="flex items-center gap-2 rounded-full bg-[#171B22] px-5 py-2 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35] disabled:opacity-30"
+            className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-30"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
             
@@ -1831,7 +1831,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
               <button
                 onClick={correctAudio}
                 disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-5 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
               >
                 {audioLoading && <Loader2 size={15} className="animate-spin" />}
                 
@@ -1851,7 +1851,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -1884,10 +1884,10 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
       <DayHeader n={2} title={t("v242", "Prononciation")} subtitle={isTextSource ? t("v66", "Lisez chaque phrase à voix haute, puis enregistrez-vous.") : t("v67", "Lisez chaque phrase à voix haute, puis enregistrez-vous. Utilisez la mini-vidéo (en bas à droite) pour réécouter.")} />
 
       {videoId && !isTextSource && showVideo && (
-        <div className="fixed bottom-4 right-4 z-20 w-64 overflow-hidden rounded-lg border border-[#26222018] bg-[#171B22] shadow-2xl">
+        <div className="fixed bottom-4 right-4 z-20 w-64 overflow-hidden rounded-lg border border-[#26222018] bg-[var(--background)] shadow-2xl">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="cj-mono text-[10px] uppercase tracking-wider text-[#F4EEE0aa]">{t("v69", "Vidéo")}</span>
-            <button onClick={() => setShowVideo(false)} className="text-[#F4EEE0aa] transition hover:text-[#F4EEE0]" title={t("v70", "Masquer la vidéo")}>
+            <button onClick={() => setShowVideo(false)} className="text-[#F4EEE0aa] transition hover:text-[var(--primary-text)]" title={t("v70", "Masquer la vidéo")}>
               <X size={14} />
             </button>
           </div>
@@ -1906,7 +1906,7 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
       {videoId && !isTextSource && !showVideo && (
         <button
           onClick={() => setShowVideo(true)}
-          className="fixed bottom-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-[#171B22] px-3 py-2 text-xs font-medium text-[#F4EEE0] shadow-lg transition hover:bg-[#262b35]"
+          className="fixed bottom-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-[var(--background)] px-3 py-2 text-xs font-medium text-[var(--primary-text)] shadow-lg transition hover:bg-[var(--background-hover)]"
         >
           <Volume2 size={14} />  {t("v69", "Vidéo")}
         </button>
@@ -2258,9 +2258,9 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                         const isChosen = answers[i] === opt;
                         const isCorrectOpt = opt === q.answer;
                         let cls = "border-[#26222022] text-[#4a453f] hover:bg-[#26222008]";
-                        if (checked && isChosen && isCorrectOpt) cls = "border-[#5C7A5A] bg-[#5C7A5A14] text-[#3f5a3d]";
+                        if (checked && isChosen && isCorrectOpt) cls = "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]";
                         else if (checked && isChosen && !isCorrectOpt) cls = "border-[#B5432E] bg-[#B5432E0d] text-[#8a3626]";
-                        else if (checked && isCorrectOpt) cls = "border-[#5C7A5A55] text-[#3f5a3d]";
+                        else if (checked && isCorrectOpt) cls = "border-[var(--accent-border)] text-[var(--accent-text)]";
                         else if (isChosen) cls = "border-[#B08D57] bg-[#B08D5714] text-[#262220]";
                         return (
                           <button key={opt} onClick={() => pick(i, opt)} className={`rounded-full border px-3.5 py-1.5 text-sm transition ${cls}`}>
@@ -2281,19 +2281,19 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                   {checked && (
                     <div className="mt-2.5">
                       <p className="flex items-start gap-1.5 text-xs text-[#6b665e]">
-                        {isCorrect(i) ? <Check size={14} className="mt-0.5 shrink-0 text-[#5C7A5A]" /> : <X size={14} className="mt-0.5 shrink-0 text-[#B5432E]" />}
+                        {isCorrect(i) ? <Check size={14} className="mt-0.5 shrink-0 text-[var(--accent)]" /> : <X size={14} className="mt-0.5 shrink-0 text-[#B5432E]" />}
                         {q.options.length === 0 ? (evaluations[i]?.feedback || q.explain) : q.explain}
                       </p>
                       {!isCorrect(i) && (
                         <div className="mt-1.5 flex items-center justify-between gap-2">
-                          <span className="text-xs text-[#3f5a3d]">{t("v84", "Réponse :")} {q.answer}</span>
+                          <span className="text-xs text-[var(--accent-text)]">{t("v84", "Réponse :")} {q.answer}</span>
                           {(() => {
                             const answerText = q.answer.toLowerCase();
                             const isSaved = savedCorrections?.has(answerText);
                               return isSaved ? (
                                <button
                                  onClick={() => { removeVocabByWord?.(answerText); setToast(t("v106", "Supprimer")); }}
-                                 className="flex items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-2 py-0.5 text-[11px] font-medium text-[#3f5a3d] hover:bg-[#5C7A5A28]"
+                                 className="flex items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)] hover:bg-[var(--accent-soft)]"
                                  title={t("v106", "Supprimer")}
                                >
                                  <Check size={11} />  {t("v19", "Carnet")}
@@ -2322,7 +2322,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         <button
           onClick={verify}
           disabled={checking}
-          className="flex items-center gap-2 rounded-full bg-[#171B22] px-5 py-2 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35] disabled:opacity-60"
+          className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-60"
         >
           {checking && <Loader2 size={14} className="animate-spin" />}
           
@@ -2391,7 +2391,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                   <button
                     key={s}
                     onClick={() => setFlashcardSize(s)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardSize === s ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardSize === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
                   >
                     {s === "sm" ? t("v202", "Small") : s === "md" ? t("v213", "Medium") : t("v203", "Large")}
                   </button>
@@ -2401,13 +2401,13 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
             <div className="flex gap-1.5 mb-4">
               <button
                 onClick={() => { setFlashcardMode("recall"); setFlipped(new Set()); }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 {t("v209", "Memorize")}
               </button>
               <button
                 onClick={() => { setFlashcardMode("recognise"); setFlipped(new Set()); }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 
                 {t("v87", "Reconnaître")}
@@ -2435,7 +2435,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         </div>
       )}
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#171B22] px-4 py-1.5 text-xs font-medium text-[#F4EEE0] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--background)] px-4 py-1.5 text-xs font-medium text-[var(--primary-text)] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2591,7 +2591,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-4 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
           >
             {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
             
@@ -2600,7 +2600,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           <button
             disabled={!text.trim() || loading || selfMode}
             onClick={correct}
-            className="flex items-center gap-2 rounded-full bg-[#171B22] px-5 py-2 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35] disabled:opacity-30"
+            className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-30"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
             
@@ -2626,7 +2626,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2796,7 +2796,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
             <button
               onClick={correctAudio}
               disabled={audioLoading}
-              className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-5 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
             >
               {audioLoading && <Loader2 size={15} className="animate-spin" />}
               
@@ -2809,7 +2809,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -3179,7 +3179,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-4 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
           >
             {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
             
@@ -3188,7 +3188,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           <button
             disabled={!text.trim() || loading || selfMode}
             onClick={correct}
-            className="flex items-center gap-2 rounded-full bg-[#171B22] px-5 py-2 text-sm font-medium text-[#F4EEE0] transition hover:bg-[#262b35] disabled:opacity-30"
+            className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-30"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
             
@@ -3218,7 +3218,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
               <button
                 onClick={correctAudio}
                 disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-5 py-2 text-sm font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
               >
                 {audioLoading && <Loader2 size={15} className="animate-spin" />}
                 
@@ -3235,7 +3235,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         <button
           onClick={saveEntry}
           disabled={!text.trim() && !audioData}
-          className="flex items-center gap-1.5 rounded-full bg-[#5C7A5A] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#4a6548] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
         >
           <Save size={14} />  {t("v111", "Enregistrer l'entrée")}
         </button>
@@ -3291,7 +3291,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -3533,7 +3533,7 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                       <div className="flex items-baseline gap-2">
                         <p className="cj-display text-[16px] text-[#262220]">{v.word}</p>
                         {isMastered && (
-                          <span className="flex items-center gap-0.5 rounded-full bg-[#5C7A5A22] px-1.5 py-0.5 text-[10px] text-[#3f5a3d]">
+                          <span className="flex items-center gap-0.5 rounded-full bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[var(--accent-text)]">
                             <Check size={10} />  {t("v122", "maîtrisé")}
                           </span>
                         )}
@@ -3703,7 +3703,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 <button
                   key={s}
                   onClick={() => setSize(s)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${size === s ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${size === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
                 >
                   {s === "sm" ? t("v202", "Small") : s === "md" ? t("v213", "Medium") : t("v203", "Large")}
                 </button>
@@ -3712,13 +3712,13 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
             <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
               <button
                 onClick={() => { setFlashcardMode(flashcardMode === "recall" ? null : "recall"); setFlipped(new Set()); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 {t("v209", "Memorize")}
               </button>
               <button
                 onClick={() => { setFlashcardMode(flashcardMode === "recognise" ? null : "recognise"); setFlipped(new Set()); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 
                 {t("v87", "Reconnaître")}
@@ -3727,14 +3727,14 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
             <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
               <button
                 onClick={() => setOrder("chrono")}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "chrono" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "chrono" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 
                 {t("v125", "Récent")}
               </button>
               <button
                 onClick={() => { setOrder("random"); setShuffleSeed(Math.floor(Math.random() * 2147483647)); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "random" ? "bg-[#171B22] text-[#F4EEE0]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "random" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
               >
                 
                 {t("v126", "Aléatoire")}
@@ -3747,7 +3747,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
           {frdic.enabled && (<div className="w-fit flex items-center justify-between gap-3 rounded-xl border border-[#B08D5744] bg-[#B08D5714] px-4 py-3">
             <div className="flex items-center gap-3">
               {frdic.connected
-                ? <CircleCheck size={18} className="shrink-0 text-[#5C7A5A]" />
+                ? <CircleCheck size={18} className="shrink-0 text-[var(--accent)]" />
                 : <CircleSlash size={18} className="shrink-0 text-[#B08D57]" />}
               <div>
                 <p className="text-sm font-medium text-[#262220]">{frdic.name}</p>
@@ -3777,7 +3777,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
               ) : (
                 <button
                   onClick={() => { setFrdicEditing(false); setModeInput(frdic.mode); setConnectError(null); setShowFrdicModal(true); }}
-                  className="rounded-lg bg-[#B08D57] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#9c7a44]"
+                  className="rounded-lg bg-[var(--background)] px-3 py-1.5 text-xs font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)]"
                 >
                   连接账号
                 </button>
@@ -3849,7 +3849,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                   else if (r.error) setConnectError(r.error);
                 }}
                 disabled={frdic.busy}
-                className="rounded-lg bg-[#B08D57] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#9c7a44] disabled:opacity-50"
+                className="rounded-lg bg-[var(--background)] px-4 py-2 text-xs font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
               >
                 {frdic.busy ? (frdicEditing ? "保存中…" : "连接中…") : (frdicEditing ? "保存" : "连接")}
               </button>
@@ -4619,13 +4619,13 @@ export function CinqJoursApp(props: {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="cj-root min-h-screen w-full bg-[#171B22]">
+    <div className="cj-root min-h-screen w-full bg-[var(--background)]">
       <FontImport />
       <header className="flex items-center justify-between px-5 py-4 md:px-8">
         <div className="flex items-center gap-3">
           <Logo size={44} className="shrink-0" />
           <div className="flex flex-col leading-none">
-            <h1 className="cj-formal text-2xl text-[#F4EEE0]">Cinq jours</h1>
+            <h1 className="cj-formal text-2xl text-[var(--primary-text)]">Cinq jours</h1>
             <span className="cj-mono mt-1 hidden text-[11px] uppercase tracking-wider text-[#F4EEE066] sm:inline">
               {t("v140", "A five-day language learning routine")}
             </span>
@@ -4735,7 +4735,7 @@ export function CinqJoursApp(props: {
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
           {toast}
         </div>
       )}

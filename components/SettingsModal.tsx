@@ -22,7 +22,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#171B22]/90 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--background)]/90 p-4"
       onClick={onClose}
     >
       <div
@@ -61,7 +61,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
         <button
           onClick={onClose}
-          className="mt-6 w-full rounded-full bg-[#5C7A5A] py-3 text-sm font-medium text-white shadow-lg transition hover:bg-[#4f6b4e]"
+          className="mt-6 w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#262220] shadow-lg transition hover:bg-[var(--accent-hover)]"
         >
           {t("settings.done", "Terminé")}
         </button>

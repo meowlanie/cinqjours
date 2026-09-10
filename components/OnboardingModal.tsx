@@ -69,7 +69,7 @@ export function OnboardingModal() {
   const tp: TFn = (key, fallback) => t(key, fallback, ui);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#171B22]/90 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--background)]/90 p-4">
       <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl">
         <h2 className="cj-display text-2xl text-[#262220]">{tp("onboarding.title", "Welcome to Cinq jours")}</h2>
         <p className="mt-1 text-sm text-[#6b665e]">{tp("onboarding.subtitle", "A five-day language learning routine that turns your favourite content into a structured curriculum.")}</p>
@@ -112,7 +112,7 @@ export function OnboardingModal() {
               level,
             })
           }
-          className="mt-6 w-full rounded-full bg-[#5C7A5A] py-3 text-sm font-medium text-white shadow-lg transition hover:bg-[#4f6b4e]"
+          className="mt-6 w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#262220] shadow-lg transition hover:bg-[var(--accent-hover)]"
         >
           {tp("onboarding.continue", "Let's Begin")}
         </button>

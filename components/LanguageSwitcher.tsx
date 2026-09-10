@@ -18,7 +18,7 @@ export function LanguageSwitcher() {
           className={`rounded-full px-2 py-0.5 font-medium transition ${
             uiLocale === l
               ? "bg-[#F4EEE0] text-[#171B22]"
-              : "text-[#F4EEE0aa] hover:text-[#F4EEE0]"
+              : "text-[#F4EEE0aa] hover:text-[var(--primary-text)]"
           }`}
         >
           {l.toUpperCase()}
