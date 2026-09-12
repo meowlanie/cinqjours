@@ -4495,6 +4495,11 @@ export function CinqJoursApp(props: {
     }
     setSourceType("video");
     setImporting(true);
+    fetch("/api/extension-import/target", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetLang: getLangCodes().targetLang }),
+    }).catch(() => {});
     setImportError(null);
     setTranscript([]);
     setVideoTitle(null);
@@ -4576,6 +4581,86 @@ export function CinqJoursApp(props: {
       setImporting(false);
     }
   };
+
+  const applyExtensionImport = async (videoId: string) => {
+    setImporting(true);
+    let data: { found: boolean; transcript: { t: string; text: string }[]; title: string | null; lang: string | null } | null = null;
+    for (let i = 0; i < 8; i++) {
+      try {
+        const res = await fetch(`/api/extension-import?videoId=${encodeURIComponent(videoId)}`);
+        const d = (await res.json()) as {
+          found: boolean;
+          transcript?: { t: string; text: string }[];
+          title?: string | null;
+          lang?: string | null;
+        };
+        if (d.found) {
+          data = d as { found: boolean; transcript: { t: string; text: string }[]; title: string | null; lang: string | null };
+          break;
+        }
+      } catch {
+        /* retry */
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    try {
+      if (data && data.found && Array.isArray(data.transcript) && data.transcript.length > 0) {
+        setTranscript(data.transcript);
+        setImportError(null);
+        const vid = videoId;
+        const title = data.title ?? null;
+        const metaBase = {
+          video_id: vid,
+          url: `https://www.youtube.com/watch?v=${vid}`,
+          title,
+          date: new Date().toISOString(),
+          key: `${vid}-${Date.now()}`,
+        };
+        const existing = resources.find((r) => r.video_id === vid);
+        if (existing) {
+          setResources([
+            { ...existing, transcript: data!.transcript, title: (existing.title as string | null) || title },
+            ...resources.filter((r) => r.video_id !== vid),
+          ]);
+        } else {
+          setResources([{ ...metaBase, transcript: data!.transcript, type: "video" }, ...resources]);
+        }
+        setVideoId(vid);
+        if (title) setVideoTitle(title);
+        setSourceType("video");
+        setView("source");
+      } else {
+        setImportError(t("v139", "Aucune transcription fournie par l'extension."));
+      }
+    } catch {
+      setImportError(t("v139", "Impossible de joindre le serveur."));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const extHandled = useRef(false);
+  useEffect(() => {
+    if (extHandled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const ext = params.get("ext");
+    if (ext) {
+      extHandled.current = true;
+      applyExtensionImport(ext);
+      window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+    }
+  }, []);
+
+  useEffect(() => {
+    const tl = getLangCodes().targetLang;
+    if (tl) {
+      fetch("/api/extension-import/target", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetLang: tl }),
+      }).catch(() => {});
+    }
+  }, []);
 
   const openResource = (resourceVideoId: string, sourceUrl: string) => {
     setUrl(sourceUrl);

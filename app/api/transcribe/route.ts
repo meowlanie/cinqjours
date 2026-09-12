@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { extractYouTubeId, groupIntoSentences, type CaptionTrack, type RawLine } from "@/lib/transcript";
+import { extractYouTubeId, groupIntoSentences, parseTrackContent, type CaptionTrack, type RawLine } from "@/lib/transcript";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -125,42 +125,7 @@ async function fetchTrackLines(track: CaptionTrack, preferLang: string | null): 
   );
   if (!res.ok) throw new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
   const text = await res.text();
-  if (text.trim() === "") throw new Error("Sous-titres vides (restriction PoToken).");
-
-  try {
-    const json = JSON.parse(text);
-    const events: { tStartMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
-    return events
-      .filter((e) => Array.isArray(e.segs))
-      .map((e) => {
-        const captionText = (e.segs || [])
-          .map((s) => s.utf8 || "")
-          .join("")
-          .replace(/\n/g, " ")
-          .trim();
-        return { text: captionText, offset: e.tStartMs ?? 0, duration: 0 };
-      })
-      .filter((c) => c.text);
-  } catch {
-    const xml: RawLine[] = [];
-    const re = /<text start="([\d.]+)" dur="([\d.]+)">([\s\S]*?)<\/text>/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      const body = m[3]
-        .replace(/<[^>]+>/g, "")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .trim();
-      if (body) {
-        xml.push({ text: body, offset: Math.round(parseFloat(m[1]) * 1000), duration: Math.round(parseFloat(m[2]) * 1000) });
-      }
-    }
-    if (xml.length === 0) throw new Error("Format de sous-titres non reconnu.");
-    return xml;
-  }
+  return parseTrackContent(text);
 }
 
 /** Try clients in order; return the first that yields caption tracks. */
