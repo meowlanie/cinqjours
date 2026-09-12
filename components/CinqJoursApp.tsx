@@ -4713,7 +4713,7 @@ export function CinqJoursApp(props: {
           </div>
 
           {view !== "resources" && view !== "journal" && view !== "carnet" && (
-            <div className="mt-auto flex items-center justify-end border-t border-[#26222014] pt-5">
+            <div className="mt-auto flex items-center justify-start border-t border-[#26222014] pt-5">
               <button
                 onClick={() => setView(isNumber(view) && view === 5 ? "source" : isNumber(view) ? Math.min(5, view + 1) : 1)}
                 className="flex items-center gap-1 text-sm text-[#6b665e] hover:text-[#262220]"
