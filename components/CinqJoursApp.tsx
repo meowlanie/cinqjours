@@ -1269,7 +1269,7 @@ function SourceView(props: SourceViewProps) {
                 autoFocus
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
-                placeholder={t("v40", "Collez ici la transcription.\nElle sera nettoyée automatiquement en cliquant sur « Valider ».")}
+                placeholder={t("v40", "Collez ici la transcription. Elle sera reformatée automatiquement en cliquant sur « Valider ».")}
                 className="w-full grow resize-none rounded border border-[#B08D5733] bg-white/80 p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                 style={{ minHeight: "300px" }}
               />
