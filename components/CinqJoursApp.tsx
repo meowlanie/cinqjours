@@ -2552,7 +2552,9 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       {topicLoading ? (
         <p className="flex items-center gap-1 text-sm text-[#6b665e]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
       ) : (
-        <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+        sourceText.trim() && (
+          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+        )
       )}
       {!sourceText.trim() && (
         <ImportNotice suffix={t("v89", " — votre sujet de rédaction apparaîtra ici une fois la source importée.")} />
@@ -2763,7 +2765,9 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       {topicLoading ? (
         <p className="flex items-center gap-1 text-sm text-[#6b665e]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
       ) : (
-        <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+        sourceText.trim() && (
+          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+        )
       )}
       {!sourceText.trim() && (
         <ImportNotice suffix={t("v94", " — votre sujet d'expression orale apparaîtra ici une fois la source importée.")} />
