@@ -368,7 +368,7 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
             </button>
           )}
           {persistKey && saved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-[#5C7A5A]">
+            <span className="flex items-center gap-1 text-xs font-medium text-[#4a453f]">
               <Check size={13} />  {t("v14", "Enregistré")}
             </span>
           )}
@@ -467,7 +467,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                     {t.type === "removed" ? (
                       <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
                     ) : t.type === "added" ? (
-                      <span className="font-medium text-[var(--accent-text)]">{t.text}</span>
+                      <span className="font-medium text-[#3f5a3d]">{t.text}</span>
                     ) : (
                       <span>{t.text}</span>
                     )}
@@ -515,8 +515,8 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
             </div>
           ))}
           {suggested.map((s, i) => (
-            <div key={`s-${i}`} className={`flex items-start gap-2 text-[var(--accent-text)] ${compact ? "text-[10px]" : "text-sm"}`}>
-              <span className="cj-mono mt-0.5 shrink-0 rounded border border-[var(--accent-border)] bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] uppercase">
+            <div key={`s-${i}`} className={`flex items-start gap-2 text-[#3f5a3d] ${compact ? "text-[10px]" : "text-sm"}`}>
+              <span className="cj-mono mt-0.5 shrink-0 rounded border border-[#5C7A5A44] bg-[#5C7A5A0d] px-1.5 py-0.5 text-[10px] uppercase">
                 {t("v222", "Style")}
               </span>
               <span className="flex-1 italic">"{s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text}" → {s.suggestion}</span>
@@ -2253,9 +2253,9 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                         const isChosen = answers[i] === opt;
                         const isCorrectOpt = opt === q.answer;
                         let cls = "border-[#26222022] text-[#4a453f] hover:bg-[#26222008]";
-                        if (checked && isChosen && isCorrectOpt) cls = "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-text)]";
+                        if (checked && isChosen && isCorrectOpt) cls = "border-[#5C7A5A] bg-[#5C7A5A14] text-[#3f5a3d]";
                         else if (checked && isChosen && !isCorrectOpt) cls = "border-[#B5432E] bg-[#B5432E0d] text-[#8a3626]";
-                        else if (checked && isCorrectOpt) cls = "border-[var(--accent-border)] text-[var(--accent-text)]";
+                        else if (checked && isCorrectOpt) cls = "border-[#5C7A5A55] text-[#3f5a3d]";
                         else if (isChosen) cls = "border-[#B08D57] bg-[#B08D5714] text-[#262220]";
                         return (
                           <button key={opt} onClick={() => pick(i, opt)} className={`rounded-full border px-3.5 py-1.5 text-sm transition ${cls}`}>
