@@ -368,7 +368,7 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
             </button>
           )}
           {persistKey && saved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-[var(--accent)]">
+            <span className="flex items-center gap-1 text-xs font-medium text-[#5C7A5A]">
               <Check size={13} />  {t("v14", "Enregistré")}
             </span>
           )}
@@ -1553,7 +1553,7 @@ function SourceView(props: SourceViewProps) {
         )}
 
         {toast && (
-          <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+          <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
             {toast}
           </div>
         )}
@@ -1846,7 +1846,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2276,7 +2276,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                   {checked && (
                     <div className="mt-2.5">
                       <p className="flex items-start gap-1.5 text-xs text-[#6b665e]">
-                        {isCorrect(i) ? <Check size={14} className="mt-0.5 shrink-0 text-[var(--accent)]" /> : <X size={14} className="mt-0.5 shrink-0 text-[#B5432E]" />}
+                        {isCorrect(i) ? <Check size={14} className="mt-0.5 shrink-0 text-[#5C7A5A]" /> : <X size={14} className="mt-0.5 shrink-0 text-[#B5432E]" />}
                         {q.options.length === 0 ? (evaluations[i]?.feedback || q.explain) : q.explain}
                       </p>
                       {!isCorrect(i) && (
@@ -2430,7 +2430,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         </div>
       )}
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--background)] px-4 py-1.5 text-xs font-medium text-[var(--primary-text)] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2623,7 +2623,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2808,7 +2808,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -3290,7 +3290,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -3746,7 +3746,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
           {frdic.enabled && (<div className="w-fit flex items-center justify-between gap-3 rounded-xl border border-[#B08D5744] bg-[#B08D5714] px-4 py-3">
             <div className="flex items-center gap-3">
               {frdic.connected
-                ? <CircleCheck size={18} className="shrink-0 text-[var(--accent)]" />
+                ? <CircleCheck size={18} className="shrink-0 text-[#5C7A5A]" />
                 : <CircleSlash size={18} className="shrink-0 text-[#B08D57]" />}
               <div>
                 <p className="text-sm font-medium text-[#262220]">{frdic.name}</p>
@@ -4824,7 +4824,7 @@ export function CinqJoursApp(props: {
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-[#262220] shadow-lg cj-fade-in">
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
