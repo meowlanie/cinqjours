@@ -1173,10 +1173,6 @@ function SourceView(props: SourceViewProps) {
         </button>
       </div>
 
-      {!videoId && !importing && !isTextSource && (
-        <ImportNotice suffix={t("v27", " — collez un lien YouTube ci-dessus et cliquez Importer, ou cliquez Lire un texte pour importer un texte.")} />
-      )}
-
       <div className={videoWidth >= 100 ? "" : "flex items-start gap-4"}>
         <div
           className={videoWidth >= 100 ? "w-full" : "shrink-0"}
@@ -1261,10 +1257,6 @@ function SourceView(props: SourceViewProps) {
             />
           ) : pasting ? (
             <div className="flex h-full flex-col">
-              <p className="mb-2 text-xs text-[#7a5f30]">
-                
-                {t("v37", "Ouvrez la vidéo YouTube, cliquez")} <strong>{t("v38", "… → Afficher la transcription")}</strong>{t("v39", ", copiez tout le texte et collez-le ici.")}
-              </p>
               <textarea
                 autoFocus
                 value={pasteText}
@@ -1352,7 +1344,11 @@ function SourceView(props: SourceViewProps) {
             })
           ) : (
             <p className="select-none text-[15px] text-[#26222055]" style={{ fontFamily: "'Inter', sans-serif" }}>
-              {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : t("v42", "Cliquez « Coller une transcription » pour commencer.")}
+              {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : (
+                <>
+                  {t("v37", "Ouvrez la vidéo YouTube, cliquez")} <strong>{t("v38", "… → Afficher la transcription")}</strong>{t("v39", ", copiez tout le texte et collez-le ici.")}
+                </>
+              )}
             </p>
           )}
         </div>
