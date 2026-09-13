@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Cinq jours Youtube Assistant",
+  "version": "1.0.0",
+  "description": "One-click import of a signed-in YouTube video and its captions into Cinq jours app.",
+  "permissions": ["activeTab", "storage", "scripting", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.youtube.com/watch*",
+        "https://youtube.com/watch*",
+        "https://youtube.fr/watch*",
+        "https://*.youtube.fr/watch*",
+        "https://m.youtube.com/watch*",
+        "https://youtu.be/*"
+      ],
+      "js": ["content.js"]
+    },
+    {
+      "matches": ["https://cinqjours.app/*", "http://localhost/*"],
+      "js": ["bridge.js"]
+    }
+  ],
+  "action": { "default_title": "Import into Cinq jours" }
+}

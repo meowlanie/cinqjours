@@ -7,7 +7,7 @@ import {
   RotateCcw, Sparkles, ChevronLeft, History, ArrowUpRight, Loader2, Save, CircleCheck, CircleSlash,
   PlayCircle, FileText, Pause, NotebookPen, Eye
 } from "lucide-react";
-import { extractYouTubeId, fetchTranscriptClient } from "@/lib/transcript";
+import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences } from "@/lib/transcript";
 import { saveVocab } from "@/lib/supabase";
 import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
 import { useSettings, t, getLangCodes, getUiLocale } from "@/lib/settings";
@@ -3991,12 +3991,12 @@ function SideTabs({ view, setView }: { view: string | number; setView: (v: strin
 --------------------------------------------------------------- */
 export function CinqJoursApp(props: {
   resources: Record<string, unknown>[];
-  setResources: (r: Record<string, unknown>[]) => void;
+  setResources: Dispatch<SetStateAction<Record<string, unknown>[]>>;
   lsKey: string;
 }) {
   const { resources, setResources, lsKey } = props;
   const lastRes = resources[0];
-  const { level } = useSettings();
+  const { level, targetLang } = useSettings();
   const [view, setView] = useState<string | number>("source");
   const boundedViews = view === "resources" || view === 2 || view === "journal" || view === "carnet";
   const [url, setUrl] = useState(() => String(lastRes?.url ?? ""));
@@ -4044,7 +4044,6 @@ export function CinqJoursApp(props: {
   const frdicConnectedRef = useRef(false);
   useEffect(() => { frdicConnectedRef.current = frdicConnected; }, [frdicConnected]);
 
-  const targetLang = getLangCodes().targetLang;
   const activeDict = dictProviderForTarget(targetLang);
   const activeId = activeDict?.id ?? null;
 
@@ -4539,6 +4538,29 @@ export function CinqJoursApp(props: {
         }
       }
 
+      // 3) Extension bridge — uses the user's signed-in YouTube session to fetch
+      // captions that the server/browser alone cannot reach.
+      if (!transcriptToSave && id) {
+        if (await isExtensionInstalled()) {
+          try {
+            const ext = await requestCaptionsViaExtension(id, targetLang);
+            if (ext?.rawTrack) {
+              transcriptToSave = groupIntoSentences(parseTrackContent(ext.rawTrack));
+              apiTitle = apiTitle || ext.title || null;
+            }
+          } catch {
+            /* extension returned an error */
+          }
+        } else {
+          setImportError(
+            t(
+              "v240",
+              "Cette vidéo nécessite une connexion YouTube. Installez l'extension Cinq jours Youtube Assistant pour importer ses sous-titres."
+            )
+          );
+        }
+      }
+
       const clientTitle = await clientTitleP;
       const title = apiTitle || clientTitle || null;
       const vid = apiVideoId || id;
@@ -4576,6 +4598,117 @@ export function CinqJoursApp(props: {
       setImporting(false);
     }
   };
+
+  const pendingExt = useRef(
+    new Map<string, (data: { rawTrack: string; title?: string | null }) => void>()
+  );
+  const pongResolvers = useRef<(() => void) | null>(null);
+  const handleImportRef = useRef<(u: string) => void>(() => {});
+  handleImportRef.current = handleImport;
+
+  /** Fast check that the Cinq jours browser extension is installed on this site. */
+  const isExtensionInstalled = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 800);
+      pongResolvers.current = () => {
+        clearTimeout(timer);
+        resolve(true);
+      };
+      window.postMessage({ type: "cjq:ping" }, "*");
+    });
+  };
+
+  /** Ask the extension to fetch captions for a video using the user's YouTube session. */
+  const requestCaptionsViaExtension = (
+    videoId: string,
+    targetLang: string
+  ): Promise<{ rawTrack: string; title: string | null } | null> => {
+    return new Promise((resolve) => {
+      const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const timer = setTimeout(() => {
+        pendingExt.current.delete(requestId);
+        resolve(null);
+      }, 12000);
+      pendingExt.current.set(requestId, (data) => {
+        clearTimeout(timer);
+        resolve({ rawTrack: data.rawTrack, title: data.title ?? null });
+      });
+      window.postMessage({ type: "cjq:need-captions", videoId, targetLang, requestId }, "*");
+    });
+  };
+
+  /** Import both the video and its transcript pushed by the extension (one-click flow). */
+  const applyExtensionImportData = useCallback(
+    (d: { videoId: string; title?: string | null; rawTrack: string }) => {
+      try {
+        const lines = groupIntoSentences(parseTrackContent(d.rawTrack));
+        if (lines.length === 0) {
+          setImportError(t("v139", "Aucune transcription fournie par l'extension."));
+          return;
+        }
+        setTranscript(lines);
+        setImportError(null);
+        setVideoId(d.videoId);
+        if (d.title) setVideoTitle(d.title);
+        setSourceType("video");
+        setView("source");
+        setToast(t("v241", "Vidéo et transcription importées depuis l'extension."));
+        const metaBase = {
+          video_id: d.videoId,
+          url: `https://www.youtube.com/watch?v=${d.videoId}`,
+          title: d.title ?? null,
+          date: new Date().toISOString(),
+          key: `${d.videoId}-${Date.now()}`,
+        };
+        setResources((prev) => {
+          const existing = prev.find((r) => r.video_id === d.videoId);
+          if (existing) {
+            return [
+              { ...existing, transcript: lines, title: (existing.title as string | null) || d.title || null },
+              ...prev.filter((r) => r.video_id !== d.videoId),
+            ];
+          }
+          return [{ ...metaBase, transcript: lines, type: "video" }, ...prev];
+        });
+      } catch (e) {
+        setImportError(e instanceof Error ? e.message : t("v139", "Impossible de lire la transcription."));
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "cjq:pong") {
+        if (pongResolvers.current) {
+          pongResolvers.current();
+          pongResolvers.current = null;
+        }
+      } else if (d.type === "cjq:captions") {
+        const res = pendingExt.current.get(d.requestId);
+        if (res) {
+          pendingExt.current.delete(d.requestId);
+          res({ rawTrack: d.rawTrack, title: d.title });
+        }
+      } else if (d.type === "cjq:import") {
+        applyExtensionImportData({ videoId: d.videoId, title: d.title, rawTrack: d.rawTrack });
+      } else if (d.type === "cjq:retry") {
+        if (videoId) handleImportRef.current(`https://www.youtube.com/watch?v=${videoId}`);
+      } else if (d.type === "cjq:error") {
+        setImportError(d.message || t("v139", "L'extension n'a pas pu importer les sous-titres."));
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [applyExtensionImportData]);
+
+  useEffect(() => {
+    if (targetLang) {
+      window.postMessage({ type: "cjq:targetLang", targetLang }, "*");
+    }
+  }, [targetLang]);
 
   const openResource = (resourceVideoId: string, sourceUrl: string) => {
     setUrl(sourceUrl);

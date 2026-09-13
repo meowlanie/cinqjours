@@ -72,18 +72,9 @@ function decodeEntities(text: string): string {
     .replace(/&apos;/g, "'");
 }
 
-/** Fetch a caption track (JSON3 format preferred, XML fallback). */
-export async function fetchTrack(track: CaptionTrack, preferFr: boolean): Promise<RawLine[]> {
-  const base = track.baseUrl.replace(/&amp;/g, "&");
-  const url = `${base}&fmt=json3`;
-  const res = await fetch(url, {
-    headers: {
-      "Accept-Language": preferFr ? "fr,en;q=0.9" : "en;q=0.9",
-    },
-  });
-  if (!res.ok) throw new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
-
-  const text = await res.text();
+/** Parse a raw caption track body (JSON3 preferred, XML fallback) into lines. */
+export function parseTrackContent(text: string): RawLine[] {
+  if (!text || text.trim() === "") throw new Error("Sous-titres vides (restriction PoToken).");
   try {
     const json = JSON.parse(text);
     const events: { tStartMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
@@ -111,6 +102,21 @@ export async function fetchTrack(track: CaptionTrack, preferFr: boolean): Promis
     if (xml.length === 0) throw new Error("Format de sous-titres non reconnu.");
     return xml;
   }
+}
+
+/** Fetch a caption track (JSON3 format preferred, XML fallback). */
+export async function fetchTrack(track: CaptionTrack, preferFr: boolean): Promise<RawLine[]> {
+  const base = track.baseUrl.replace(/&amp;/g, "&");
+  const url = `${base}&fmt=json3`;
+  const res = await fetch(url, {
+    headers: {
+      "Accept-Language": preferFr ? "fr,en;q=0.9" : "en;q=0.9",
+    },
+  });
+  if (!res.ok) throw new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
+
+  const text = await res.text();
+  return parseTrackContent(text);
 }
 
 function selectTrack(tracks: CaptionTrack[], wantFr: boolean): CaptionTrack {
