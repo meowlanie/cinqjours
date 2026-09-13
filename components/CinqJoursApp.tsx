@@ -7,7 +7,7 @@ import {
   RotateCcw, Sparkles, ChevronLeft, History, ArrowUpRight, Loader2, Save, CircleCheck, CircleSlash,
   PlayCircle, FileText, Pause, NotebookPen, Eye
 } from "lucide-react";
-import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences } from "@/lib/transcript";
+import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences, parsePastedText } from "@/lib/transcript";
 import { saveVocab } from "@/lib/supabase";
 import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
 import { useSettings, t, getLangCodes, getUiLocale } from "@/lib/settings";
@@ -824,7 +824,6 @@ interface SourceViewProps {
   transcript: { t: string; text: string }[];
   onTranscriptChange: (t: { t: string; text: string }[]) => void;
   importing: boolean;
-  importError: string | null;
   vocabCount: number;
   addVocab: (e: { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }) => void;
   onImport: (url: string) => Promise<void>;
@@ -864,7 +863,7 @@ interface PopupEntry {
 function SourceView(props: SourceViewProps) {
   const {
     url, setUrl, videoId, setVideoId, title, transcript, onTranscriptChange,
-    importing, importError, vocabCount, addVocab, onImport,
+    importing, vocabCount, addVocab, onImport,
     onPasteTranscript, notes, setNote, savedWords, savedSentences, removeVocabByWord,
     isTextSource, textModeVersion, onStartReadingMode, videoWidth, setVideoWidth,
     level,
@@ -1270,7 +1269,7 @@ function SourceView(props: SourceViewProps) {
                 autoFocus
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
-                placeholder={t("v40", "0:00\nBonjour à tous...\n0:05\nAujourd'hui on va parler...")}
+                placeholder={t("v40", "Collez ici la transcription.\nElle sera nettoyée automatiquement en cliquant sur « Valider ».")}
                 className="w-full grow resize-none rounded border border-[#B08D5733] bg-white/80 p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                 style={{ minHeight: "300px" }}
               />
@@ -1353,7 +1352,7 @@ function SourceView(props: SourceViewProps) {
             })
           ) : (
             <p className="select-none text-[15px] text-[#26222055]" style={{ fontFamily: "'Inter', sans-serif" }}>
-              {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : t("v42", "La transcription apparaîtra ici. Sinon, cliquez « Coller une transcription » pour importer manuellement.")}
+              {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : t("v42", "Cliquez « Coller une transcription » pour commencer.")}
             </p>
           )}
         </div>
@@ -1562,9 +1561,9 @@ function SourceView(props: SourceViewProps) {
             {toast}
           </div>
         )}
-        {(error || importError) && (
+        {error && (
           <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
-            {error || importError}
+            {error}
           </div>
         )}
         </div>
@@ -4009,14 +4008,8 @@ export function CinqJoursApp(props: {
     return [];
   });
   const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
   const [textModeVersion, setTextModeVersion] = useState(0);
   const [videoWidth, setVideoWidth] = useState(100);
-  useEffect(() => {
-    if (!importError) return;
-    const t = setTimeout(() => setImportError(null), 4000);
-    return () => clearTimeout(t);
-  }, [importError]);
   const [vocab, setVocab] = useState<{ word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction"; targetLang?: string }[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -4415,31 +4408,7 @@ export function CinqJoursApp(props: {
   );
 
   const handlePasteTranscript = (raw: string) => {
-    const lines = raw.split("\n").filter((l) => l.trim());
-    const result: { t: string; text: string }[] = [];
-    let i = 0;
-    while (i < lines.length) {
-      const line = lines[i].trim();
-      const tsMatch = line.match(/^(\d{1,2}:\d{2})\s+(.+)/);
-      const bracketMatch = line.match(/^\[(\d{1,2}:\d{2})\]\s*(.*)/);
-      if (tsMatch) {
-        result.push({ t: tsMatch[1], text: tsMatch[2] });
-        i++;
-      } else if (bracketMatch) {
-        result.push({ t: bracketMatch[1], text: bracketMatch[2] });
-        i++;
-      } else {
-        const justTs = line.match(/^(\d{1,2}:\d{2})$/);
-        if (justTs && i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].trim().match(/^\d{1,2}:\d{2}$/)) {
-          result.push({ t: justTs[1], text: lines[i + 1].trim() });
-          i += 2;
-          continue;
-        }
-        result.push({ t: "", text: line });
-        i++;
-      }
-    }
-    const filtered = result.filter((l) => l.text.length > 0);
+    const filtered = parsePastedText(raw);
     if (filtered.length > 0) {
       setTranscript(filtered);
       if (videoId) saveTranscript(videoId, filtered);
@@ -4494,7 +4463,6 @@ export function CinqJoursApp(props: {
     }
     setSourceType("video");
     setImporting(true);
-    setImportError(null);
     setTranscript([]);
     setVideoTitle(null);
     try {
@@ -4530,11 +4498,9 @@ export function CinqJoursApp(props: {
           if (data.title) apiTitle = data.title;
           if (Array.isArray(data.transcript) && data.transcript.length) {
             transcriptToSave = data.transcript;
-          } else if (data.error && !transcriptToSave) {
-            setImportError(data.error);
           }
         } catch {
-          setImportError(t("v139", "Impossible de joindre le serveur."));
+          // server fallback failed, fall through to extension
         }
       }
 
@@ -4552,12 +4518,7 @@ export function CinqJoursApp(props: {
             /* extension returned an error */
           }
         } else {
-          setImportError(
-            t(
-              "v240",
-              "Cette vidéo nécessite une connexion YouTube. Installez l'extension Cinq jours Youtube Assistant pour importer ses sous-titres."
-            )
-          );
+          // extension not installed; nothing more to try
         }
       }
 
@@ -4569,7 +4530,6 @@ export function CinqJoursApp(props: {
 
       if (transcriptToSave) {
         setTranscript(transcriptToSave);
-        setImportError(null);
       }
 
       if (vid) {
@@ -4593,7 +4553,7 @@ export function CinqJoursApp(props: {
         }
       }
     } catch {
-      setImportError(t("v139", "Impossible de joindre le serveur."));
+      // import failed silently
     } finally {
       setImporting(false);
     }
@@ -4643,11 +4603,10 @@ export function CinqJoursApp(props: {
       try {
         const lines = groupIntoSentences(parseTrackContent(d.rawTrack));
         if (lines.length === 0) {
-          setImportError(t("v139", "Aucune transcription fournie par l'extension."));
+          // extension returned no captions; silently ignore
           return;
         }
         setTranscript(lines);
-        setImportError(null);
         setVideoId(d.videoId);
         if (d.title) setVideoTitle(d.title);
         setSourceType("video");
@@ -4670,8 +4629,8 @@ export function CinqJoursApp(props: {
           }
           return [{ ...metaBase, transcript: lines, type: "video" }, ...prev];
         });
-      } catch (e) {
-        setImportError(e instanceof Error ? e.message : t("v139", "Impossible de lire la transcription."));
+      } catch {
+        // extension data unreadable; silently ignore
       }
     },
     []
@@ -4697,7 +4656,7 @@ export function CinqJoursApp(props: {
       } else if (d.type === "cjq:retry") {
         if (videoId) handleImportRef.current(`https://www.youtube.com/watch?v=${videoId}`);
       } else if (d.type === "cjq:error") {
-        setImportError(d.message || t("v139", "L'extension n'a pas pu importer les sous-titres."));
+        // extension error silently ignored
       }
     };
     window.addEventListener("message", onMsg);
@@ -4720,7 +4679,6 @@ export function CinqJoursApp(props: {
     const saved = found?.transcript as { t: string; text: string }[] | undefined;
     if (Array.isArray(saved) && saved.length > 0) {
       setTranscript(saved);
-      setImportError(null);
     } else {
       setTranscript([]);
     }
@@ -4800,7 +4758,6 @@ export function CinqJoursApp(props: {
               transcript={transcript}
               onTranscriptChange={onTranscriptChange}
               importing={importing}
-              importError={importError}
               vocabCount={carnetSidebarCount}
               addVocab={addVocab}
               onImport={handleImport}
@@ -4821,7 +4778,6 @@ export function CinqJoursApp(props: {
                 setTranscript([]);
                 setUrl("");
                 setSourceType("text");
-                setImportError(null);
                 setTextModeVersion((n) => n + 1);
                 setVideoWidth(100);
               }}
