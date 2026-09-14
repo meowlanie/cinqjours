@@ -54,9 +54,9 @@ function LangSelect({
 
 export function OnboardingModal() {
   const { onboarded, completeOnboarding, t } = useSettings();
-  const [ui, setUi] = useState<LangCode>("fr");
-  const [target, setTarget] = useState<LangCode>("fr");
-  const [trans, setTrans] = useState<LangCode>("fr");
+  const [ui, setUi] = useState<LangCode>("en");
+  const [target, setTarget] = useState<LangCode>("en");
+  const [trans, setTrans] = useState<LangCode>("en");
   const [level, setLevel] = useState<Level>("advanced");
 
   // Never render during SSR — the persisted `onboarded` flag is only known on

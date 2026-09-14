@@ -26,9 +26,9 @@ const DICTS: Partial<Record<LangCode, Dict>> = { fr, en, de, zh };
 
 // Synced copy of the active UI locale so that the standalone `t()` below works
 // in any component without requiring each one to subscribe to the context.
-let currentUiLocale: LangCode = "fr";
-let currentTargetLang: LangCode = "fr";
-let currentTranslationLang: LangCode = "fr";
+let currentUiLocale: LangCode = "en";
+let currentTargetLang: LangCode = "en";
+let currentTranslationLang: LangCode = "en";
 
 /** Read the active target/translation languages from anywhere (e.g. fetch calls). */
 export function getLangCodes(): { targetLang: LangCode; translationLang: LangCode } {
@@ -96,19 +96,19 @@ const SettingsContext = createContext<SettingsValue | null>(null);
 // UI never paints in a default language and then switches (the flash). The
 // module-level `current*` mirrors are updated here so the standalone `t()` is
 // correct on the very first render too. `readLs` already guards the missing
-// `window` during SSR, so server rendering still falls back to "fr".
+// `window` during SSR, so server rendering still falls back to "en".
 function initUi(): LangCode {
-  const v = readLs(LS.ui, UI_LANGUAGES, "fr");
+  const v = readLs(LS.ui, UI_LANGUAGES, "en");
   currentUiLocale = v;
   return v;
 }
 function initTarget(): LangCode {
-  const v = readLs(LS.target, TARGET_LANGUAGES, "fr");
+  const v = readLs(LS.target, TARGET_LANGUAGES, "en");
   currentTargetLang = v;
   return v;
 }
 function initTrans(): LangCode {
-  const v = readLs(LS.trans, TRANSLATION_LANGUAGES, "fr");
+  const v = readLs(LS.trans, TRANSLATION_LANGUAGES, "en");
   currentTranslationLang = v;
   return v;
 }

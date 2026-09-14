@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`h-full antialiased ${inter.variable} ${plexMono.variable} ${petitFormal.variable}`}>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${plexMono.variable} ${petitFormal.variable}`}>
       <body className="min-h-full">{children}</body>
     </html>
   );
