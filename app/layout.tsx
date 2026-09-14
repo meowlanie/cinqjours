@@ -7,8 +7,8 @@ const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], var
 const petitFormal = Petit_Formal_Script({ subsets: ["latin"], weight: "400", variable: "--font-petit", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Cinq jours — Un support, cinq jours, pour le maîtriser",
-  description: "Routine d'apprentissage en cinq jours à partir d'un support YouTube : résumé, prononciation, grammaire, rédaction et expression orale.",
+  title: "Cinq jours — A five-day language learning routine",
+  description: "Turn any YouTube video or text into a structured 5-day curriculum, covering comprehension, pronunciation, vocabulary & grammar, writing, and speaking — plus a language journal for daily practice.",
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     apple: "/logo.png",
