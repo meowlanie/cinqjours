@@ -4730,7 +4730,7 @@ export function CinqJoursApp(props: {
             <BookMarked size={15} />
             <span className="hidden sm:inline">{t("v19", "Carnet")}</span>
             {carnetSidebarCount > 0 && (
-              <span className="cj-mono rounded-full bg-[#B08D57] px-1.5 py-0.5 text-[10px] text-[#171B22]">{carnetSidebarCount}</span>
+              <span className="cj-mono rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] text-[#262220]">{carnetSidebarCount}</span>
             )}
           </button>
           <LanguageSwitcher />
