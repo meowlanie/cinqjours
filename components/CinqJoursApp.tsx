@@ -742,12 +742,57 @@ function removeResourceDayState(sourceId: string) {
   deleteAudioByPrefix(`cj-recording-day2-${seg}-`).catch(() => {});
 }
 
-function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: number, rangeHigh: number, sourceText: string, sourceId: string | null = null) {
-  const lc = getLangCodes();
+/* ---------------------------------------------------------------
+   ONE-TIME MIGRATION: move correction/text keys from
+   cj-(correction|text)-<task>-<target>-<ui>-<src> to source-scoped
+   cj-(correction|text)-<task>-<src>.  Runs once behind the
+   cj-correction-src-v2 flag, no dependency on resources.
+--------------------------------------------------------------- */
+const CORRECTIONS_KEY_RE = /^cj-(correction|text)-(summary|writing|journal)-([a-z]{2})-([a-z]{2})-(.+)$/;
+
+function migrateCorrectionKeysToSource() {
+  if (typeof window === "undefined") return;
+  const { targetLang } = getLangCodes();
   const ui = getUiLocale();
+  const grouped = new Map<string, { key: string; value: string; target: string; ui: string }[]>();
+  const doomed: string[] = [];
+
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const k = window.localStorage.key(i);
+    if (!k) continue;
+    const m = CORRECTIONS_KEY_RE.exec(k);
+    if (!m) continue;
+    const [, , task, lang1, lang2, src] = m;
+    const value = window.localStorage.getItem(k);
+    if (value === null) continue;
+    const mapKey = `${task}-${src}`;
+    if (!grouped.has(mapKey)) grouped.set(mapKey, []);
+    grouped.get(mapKey)!.push({ key: k, value, target: lang1, ui: lang2 });
+    doomed.push(k);
+  }
+
+  for (const [mapKey, variants] of grouped) {
+    for (const prefix of ["cj-correction-", "cj-text-"]) {
+      const newKey = `${prefix}${mapKey}`;
+      if ((window.localStorage.getItem(newKey) || "").length > 0) continue;
+      const candidates = variants
+        .filter((v) => v.key.startsWith(prefix) && v.value.length > 0)
+        .sort((a, b) => {
+          const as = (a.target === targetLang ? 2 : 0) + (a.ui === ui ? 1 : 0);
+          const bs = (b.target === targetLang ? 2 : 0) + (b.ui === ui ? 1 : 0);
+          return bs - as || b.value.length - a.value.length;
+        });
+      if (candidates[0]) window.localStorage.setItem(newKey, candidates[0].value);
+    }
+  }
+
+  for (const k of doomed) window.localStorage.removeItem(k);
+}
+
+function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: number, rangeHigh: number, sourceText: string, sourceId: string | null = null) {
   const resourceSeg = resourceSegment(sourceId);
-  const resultKey = `cj-correction-${taskName}-${lc.targetLang}-${ui}-${resourceSeg}`;
-  const textKey = `cj-text-${taskName}-${lc.targetLang}-${ui}-${resourceSeg}`;
+  const resultKey = `cj-correction-${taskName}-${resourceSeg}`;
+  const textKey = `cj-text-${taskName}-${resourceSeg}`;
 
   const [text, setText] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -2074,7 +2119,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        if (saved.sourceText === sourceText && saved.questions?.length) {
+        if (Array.isArray(saved.questions) && saved.questions.length) {
           setQuestions(saved.questions);
           setAnswers(saved.answers || {});
           setChecked(saved.checked || false);
@@ -2535,7 +2580,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       const raw = window.localStorage.getItem(TOPIC_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        if (saved.sourceText === sourceText && saved.topic) {
+        if (saved.topic) {
           setTopic(saved.topic);
           setTopicLoading(false);
           return;
@@ -2708,7 +2753,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       const raw = window.localStorage.getItem(TOPIC_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        if (saved.sourceText === sourceText && saved.topic) {
+        if (saved.topic) {
           setTopic(saved.topic);
           setTopicLoading(false);
           return;
@@ -4123,6 +4168,24 @@ export function CinqJoursApp(props: {
     const lang = getLangCodes().targetLang;
     setVocab((prev) => prev.map((v) => (v.targetLang === lang ? v : { ...v, targetLang: lang })));
     try { window.localStorage.setItem("cj-carnet-lang-v2", "1"); } catch { /* ignore */ }
+  }, []);
+
+  // One-time migration: move correction/text keys from
+  // cj-(correction|text)-<task>-<target>-<ui>-<src> to the simpler
+  // source-scoped cj-(correction|text)-<task>-<src> format so corrections
+  // survive UI-language switches.
+  const hasCorrSrcMigratedRef = useRef(false);
+  useEffect(() => {
+    if (hasCorrSrcMigratedRef.current) return;
+    try {
+      if (window.localStorage.getItem("cj-correction-src-v2")) {
+        hasCorrSrcMigratedRef.current = true;
+        return;
+      }
+    } catch { return; }
+    hasCorrSrcMigratedRef.current = true;
+    migrateCorrectionKeysToSource();
+    try { window.localStorage.setItem("cj-correction-src-v2", "1"); } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
