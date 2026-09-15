@@ -1245,7 +1245,7 @@ function SourceView(props: SourceViewProps) {
 
         <div
           onMouseUp={editing ? undefined : handleMouseUp}
-          className={`cj-scrollbar cj-display select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 p-5`}
+          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 p-5`}
           style={{ minHeight: "370px", maxHeight: "760px" }}
         >
           {editing ? (
