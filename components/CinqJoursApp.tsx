@@ -2416,7 +2416,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
             )}
             {phrasesOnly.length > 0 && (
               <div>
-                 <p className="cj-mono mb-3 text-[10px] uppercase tracking-wider text-[#7a5f30]">{t("v245", "Phrases")} ({phrasesOnly.length})</p>
+                 <p className="cj-mono mb-3 text-[10px] uppercase tracking-wider text-[#7a5f30]">{t("v245", "Expressions")} ({phrasesOnly.length})</p>
                 {renderCards(phrasesOnly, vocabOnly.length)}
               </div>
             )}
@@ -3667,7 +3667,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
   const sections = useMemo(() => {
     const secs: { key: string; title: string; items: { v: typeof vocab[number]; idx: number }[] }[] = [
       { key: "vocab", title: t("v77", "Vocabulaire"), items: [] },
-      { key: "phrase", title: t("v245", "Phrases"), items: [] },
+      { key: "phrase", title: t("v245", "Expressions"), items: [] },
       { key: "correction", title: t("v246", "Corrections"), items: [] },
     ];
     vocab.forEach((v, idx) => {
