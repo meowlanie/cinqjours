@@ -10,6 +10,11 @@ import {
 import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences, parsePastedText } from "@/lib/transcript";
 import { saveVocab } from "@/lib/supabase";
 import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
+import {
+  writeLs, removeLs, capEntries, cleanupDeadKeys,
+  readStorageFullFlag, clearStorageFullFlag, STORAGE_ERROR_EVENT,
+  DICT_CACHE_KEY, TRANS_CACHE_KEY,
+} from "@/lib/storage";
 import { useSettings, t, getLangCodes, getUiLocale } from "@/lib/settings";
 import { type Level } from "@/lib/languages";
 import { localeOf, typeLabels } from "@/lib/languages";
@@ -79,7 +84,7 @@ function isFrdicEnabled(): boolean {
 
 function rememberSourceId(id: string | null) {
   try {
-    if (id) window.localStorage.setItem(LS_LAST_SOURCE, id);
+    if (id) writeLs(LS_LAST_SOURCE, id);
     else window.localStorage.removeItem(LS_LAST_SOURCE);
   } catch {
     // ignore
@@ -680,7 +685,7 @@ function moveLocalStorageKey(from: string, to: string) {
   try {
     const value = window.localStorage.getItem(from);
     if (value === null) return;
-    if (window.localStorage.getItem(to) === null) window.localStorage.setItem(to, value);
+    if (window.localStorage.getItem(to) === null) writeLs(to, value);
     window.localStorage.removeItem(from);
   } catch { /* ignore */ }
 }
@@ -782,7 +787,7 @@ function migrateCorrectionKeysToSource() {
           const bs = (b.target === targetLang ? 2 : 0) + (b.ui === ui ? 1 : 0);
           return bs - as || b.value.length - a.value.length;
         });
-      if (candidates[0]) window.localStorage.setItem(newKey, candidates[0].value);
+      if (candidates[0]) writeLs(newKey, candidates[0].value);
     }
   }
 
@@ -809,12 +814,12 @@ function useCorrection(taskName: "summary" | "writing" | "journal", rangeLow: nu
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    try { window.localStorage.setItem(textKey, text); } catch { /* ignore */ }
+    try { writeLs(textKey, text); } catch { /* ignore */ }
   }, [text, textKey]);
 
   useEffect(() => {
     try {
-      if (result) window.localStorage.setItem(resultKey, JSON.stringify(result));
+      if (result) writeLs(resultKey, JSON.stringify(result));
       else window.localStorage.removeItem(resultKey);
     } catch { /* ignore */ }
   }, [result, resultKey]);
@@ -980,11 +985,13 @@ function SourceView(props: SourceViewProps) {
     } catch { /* ignore */ }
   }, []);
 
+  const DICT_CACHE_MAX = 1500;
+  const TRANS_CACHE_MAX = 1000;
   const persistDictCache = () => {
-    try { window.localStorage.setItem("cj-dict-cache", JSON.stringify(dictCache.current)); } catch { /* ignore */ }
+    writeLs(DICT_CACHE_KEY, JSON.stringify(capEntries(dictCache.current, DICT_CACHE_MAX)));
   };
   const persistTransCache = () => {
-    try { window.localStorage.setItem("cj-trans-cache", JSON.stringify(transCache.current)); } catch { /* ignore */ }
+    writeLs(TRANS_CACHE_KEY, JSON.stringify(capEntries(transCache.current, TRANS_CACHE_MAX)));
   };
 
   useEffect(() => {
@@ -1747,7 +1754,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
 
   useEffect(() => {
     try {
-      if (audioResult) window.localStorage.setItem(audioResultKey, JSON.stringify(audioResult));
+      if (audioResult) writeLs(audioResultKey, JSON.stringify(audioResult));
       else window.localStorage.removeItem(audioResultKey);
     } catch { /* ignore */ }
   }, [audioResult, audioResultKey]);
@@ -2132,7 +2139,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
   useEffect(() => {
     if (!loadedSaved.current) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sourceText, questions, answers, checked }));
+      writeLs(STORAGE_KEY, JSON.stringify({ sourceText, questions, answers, checked }));
     } catch { /* ignore */ }
   }, [sourceText, questions, answers, checked, STORAGE_KEY]);
 
@@ -2564,7 +2571,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         setErrorToast(fail);
       } else if (res.ok && data.topic) {
         setTopic(data.topic);
-        try { window.localStorage.setItem(TOPIC_KEY, JSON.stringify({ sourceText, topic: data.topic })); } catch { /* ignore */ }
+        try { writeLs(TOPIC_KEY, JSON.stringify({ sourceText, topic: data.topic })); } catch { /* ignore */ }
       } else {
         setErrorToast(t("v76", "Génération impossible pour ce texte — réessayez."));
       }
@@ -2737,7 +2744,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         setErrorToast(fail);
       } else if (res.ok && data.topic) {
         setTopic(data.topic);
-        try { window.localStorage.setItem(TOPIC_KEY, JSON.stringify({ sourceText, topic: data.topic })); } catch { /* ignore */ }
+        try { writeLs(TOPIC_KEY, JSON.stringify({ sourceText, topic: data.topic })); } catch { /* ignore */ }
       } else {
         setErrorToast(t("v76", "Génération impossible pour ce texte — réessayez."));
       }
@@ -2766,7 +2773,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
 
   useEffect(() => {
     try {
-      if (audioResult) window.localStorage.setItem(audioResultKey, JSON.stringify(audioResult));
+      if (audioResult) writeLs(audioResultKey, JSON.stringify(audioResult));
       else window.localStorage.removeItem(audioResultKey);
     } catch { /* ignore */ }
   }, [audioResult, audioResultKey]);
@@ -3037,7 +3044,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         const data = await res.json();
         if (data.topic) {
           setPrompt(data.topic);
-          try { window.localStorage.setItem(journalPromptKey, data.topic); } catch { /* ignore */ }
+          try { writeLs(journalPromptKey, data.topic); } catch { /* ignore */ }
           setGenerating(false);
           return;
         }
@@ -3062,7 +3069,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
     setPrompt(trimmed);
     setDraftTopic("");
     setEditingTopic(false);
-    try { window.localStorage.setItem(journalPromptKey, trimmed); } catch { /* ignore */ }
+    try { writeLs(journalPromptKey, trimmed); } catch { /* ignore */ }
   };
 
   const startSelfCorrect = async () => {
@@ -3147,7 +3154,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
     }
     const next = [entry, ...entries];
     setEntries(next);
-    try { window.localStorage.setItem("cj-journal-entries", JSON.stringify(next)); } catch { /* ignore */ }
+    try { writeLs("cj-journal-entries", JSON.stringify(next)); } catch { /* ignore */ }
     setText("");
     clear();
     setAudioResult(null);
@@ -3162,7 +3169,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
   const deleteEntry = (id: string) => {
     const next = entries.filter((e) => e.id !== id);
     setEntries(next);
-    try { window.localStorage.setItem("cj-journal-entries", JSON.stringify(next)); } catch { /* ignore */ }
+    try { writeLs("cj-journal-entries", JSON.stringify(next)); } catch { /* ignore */ }
     deleteAudio(id).catch(() => {});
   };
 
@@ -4194,7 +4201,7 @@ export function CinqJoursApp(props: {
     migrateLegacyDayState(target)
       .catch(() => {})
       .finally(() => {
-        try { window.localStorage.setItem("cj-daystate-migrated", "1"); } catch { /* ignore */ }
+        try { writeLs("cj-daystate-migrated", "1"); } catch { /* ignore */ }
       });
   }, [resources]);
 
@@ -4215,7 +4222,7 @@ export function CinqJoursApp(props: {
     hasCarnetMigratedRef.current = true;
     const lang = getLangCodes().targetLang;
     setVocab((prev) => prev.map((v) => (v.targetLang === lang ? v : { ...v, targetLang: lang })));
-    try { window.localStorage.setItem("cj-carnet-lang-v2", "1"); } catch { /* ignore */ }
+    try { writeLs("cj-carnet-lang-v2", "1"); } catch { /* ignore */ }
   }, []);
 
   // One-time migration: move correction/text keys from
@@ -4233,7 +4240,7 @@ export function CinqJoursApp(props: {
     } catch { return; }
     hasCorrSrcMigratedRef.current = true;
     migrateCorrectionKeysToSource();
-    try { window.localStorage.setItem("cj-correction-src-v2", "1"); } catch { /* ignore */ }
+    try { writeLs("cj-correction-src-v2", "1"); } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -4246,7 +4253,7 @@ export function CinqJoursApp(props: {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(lsKey, JSON.stringify(vocab));
+      writeLs(lsKey, JSON.stringify(vocab));
     } catch {
       // ignore
     }
@@ -4254,7 +4261,7 @@ export function CinqJoursApp(props: {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem("cj-notes", JSON.stringify(notes));
+      writeLs("cj-notes", JSON.stringify(notes));
     } catch {
       // ignore
     }
@@ -4820,9 +4827,35 @@ export function CinqJoursApp(props: {
   const isNumber = (v: string | number): v is number => typeof v === "number";
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Browser storage went full: a write was dropped. Warn instead of losing data.
+  const [storageFull, setStorageFull] = useState(readStorageFullFlag);
+  useEffect(() => {
+    const onErr = () => setStorageFull(true);
+    window.addEventListener(STORAGE_ERROR_EVENT, onErr);
+    return () => window.removeEventListener(STORAGE_ERROR_EVENT, onErr);
+  }, []);
+  const dismissStorageFull = () => {
+    setStorageFull(false);
+    clearStorageFullFlag();
+  };
+
+  // One-time cleanup of confirmed-dead keys and orphaned day-state blobs.
+  useEffect(() => { cleanupDeadKeys(); }, []);
+
   return (
     <div className="cj-root min-h-screen w-full bg-[var(--background)]">
       <FontImport />
+      {storageFull && (
+        <div className="mx-5 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#F4EEE033] bg-[#262220] px-5 py-3 md:mx-8">
+          <p className="text-sm text-[#F4EEE0dd]">{t("v259", "Browser storage is full — export your data so nothing is lost.")}</p>
+          <button
+            onClick={dismissStorageFull}
+            className="cj-mono shrink-0 rounded-full border border-[#F4EEE044] px-3 py-1 text-xs text-[#F4EEE0dd] transition hover:bg-[#F4EEE011]"
+          >
+            {t("v260", "Got it")}
+          </button>
+        </div>
+      )}
       <header className="flex items-center justify-between px-5 py-4 md:px-8">
         <div className="flex items-center gap-3">
           <Logo size={44} className="shrink-0" />

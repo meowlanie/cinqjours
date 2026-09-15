@@ -218,5 +218,13 @@
   "v257": "My Own Topic",
   "v258": "Topic…",
   "pinyin.toggle": "Pinyin",
-  "pinyin.hide": "Hide Pinyin"
+  "pinyin.hide": "Hide Pinyin",
+  "v259": "Browser storage is full — export your data so nothing is lost.",
+  "v260": "Got it",
+  "v261": "Data",
+  "v262": "Export my data",
+  "v263": "Import data",
+  "v264": "Working…",
+  "v265": "Importing replaces your current data. Continue?",
+  "v266": "Invalid backup file."
 }
