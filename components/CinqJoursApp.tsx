@@ -3747,7 +3747,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
             <div className="flex items-center gap-3">
               {frdic.connected
                 ? <CircleCheck size={18} className="shrink-0 text-[#5C7A5A]" />
-                : <CircleSlash size={18} className="shrink-0 text-[#B08D57]" />}
+                : <CircleSlash size={18} className="shrink-0 text-[#B5432E]" />}
               <div>
                 <p className="text-sm font-medium text-[#262220]">{frdic.name}</p>
                 <p className="text-xs text-[#7a5f30]">
