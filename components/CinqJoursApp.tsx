@@ -642,7 +642,7 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
       <div className="mt-2 flex justify-end">
         <button
           onClick={() => onDone((ref.current?.innerText || "").trim())}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)]"
         >
           <Check size={14} /> {t("v217", "Terminer")}
         </button>
