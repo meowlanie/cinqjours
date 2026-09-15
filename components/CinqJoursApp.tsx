@@ -2971,6 +2971,8 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
     try { return window.localStorage.getItem(journalPromptKey) || ""; } catch { return ""; }
   });
   const [generating, setGenerating] = useState(false);
+  const [editingTopic, setEditingTopic] = useState(false);
+  const [draftTopic, setDraftTopic] = useState("");
   const [histView, setHistView] = useState<"cards" | "cal">("cards");
 
   const [selfMode, setSelfMode] = useState(false);
@@ -3052,6 +3054,15 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
   const deletePrompt = () => {
     setPrompt("");
     try { window.localStorage.removeItem(journalPromptKey); } catch { /* ignore */ }
+  };
+
+  const saveOwnTopic = () => {
+    const trimmed = draftTopic.trim();
+    if (!trimmed) return;
+    setPrompt(trimmed);
+    setDraftTopic("");
+    setEditingTopic(false);
+    try { window.localStorage.setItem(journalPromptKey, trimmed); } catch { /* ignore */ }
   };
 
   const startSelfCorrect = async () => {
@@ -3193,14 +3204,51 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
             <button onClick={deletePrompt} className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]">{t("v106", "Supprimer")}</button>
           </div>
         ) : (
-          <button
-            onClick={() => generatePrompt(false)}
-            className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
-          >
-            <Sparkles size={13} />
-            
-            {t("v105", "Générer un sujet")}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => generatePrompt(false)}
+              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+            >
+              <Sparkles size={13} />
+              
+              {t("v105", "Générer un sujet")}
+            </button>
+            <button
+              onClick={() => { setDraftTopic(""); setEditingTopic(true); }}
+              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+            >
+              <PenLine size={13} />
+              {t("v257", "Mon propre sujet")}
+            </button>
+          </div>
+        )}
+        {editingTopic && (
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              autoFocus
+              value={draftTopic}
+              onChange={(e) => setDraftTopic(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveOwnTopic();
+                if (e.key === "Escape") setEditingTopic(false);
+              }}
+              placeholder={t("v258", "Sujet…")}
+              className="min-w-0 flex-1 rounded-lg border border-[#B08D5744] bg-white/60 px-3 py-1.5 text-sm text-[#262220] placeholder:text-[#6b665e] focus:border-[#B08D57] focus:outline-none"
+            />
+            <button
+              onClick={saveOwnTopic}
+              disabled={!draftTopic.trim()}
+              className="flex items-center gap-1 rounded-full border border-[#5C7A5A44] bg-[#5C7A5A14] px-3 py-1.5 text-xs font-medium text-[#4a6b49] transition enabled:hover:bg-[#5C7A5A28] disabled:opacity-40"
+            >
+              <Check size={13} />
+            </button>
+            <button
+              onClick={() => setEditingTopic(false)}
+              className="flex items-center gap-1 rounded-full border border-[#B5432E44] bg-[#B5432E14] px-3 py-1.5 text-xs font-medium text-[#B5432E] transition hover:bg-[#B5432E28]"
+            >
+              <X size={13} />
+            </button>
+          </div>
         )}
       </div>
 
