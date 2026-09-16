@@ -69,7 +69,7 @@ export function OnboardingModal() {
   const tp: TFn = (key, fallback) => t(key, fallback, ui);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--background)]/90 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#262220]/70 p-4">
       <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl">
         <h2 className="cj-display text-2xl text-[#262220]">{tp("onboarding.title", "Welcome to Cinq jours")}</h2>
         <p className="mt-1 text-sm text-[#6b665e]">{tp("onboarding.subtitle", "A five-day language learning routine that turns your favourite content into a structured curriculum.")}</p>

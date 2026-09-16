@@ -62,7 +62,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--background)]/90 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#262220]/70 p-4"
       onClick={onClose}
     >
       <div
@@ -104,7 +104,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 disabled={!!busy}
                 className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--background)] py-2.5 text-sm font-medium text-[var(--primary-text)] shadow transition hover:bg-[var(--background-hover)] disabled:opacity-60"
               >
-                {busy === "export" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                {busy === "export" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {t("v262", "Exporter mes données")}
               </button>
               <button
@@ -112,7 +112,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 disabled={!!busy}
                 className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[#262220] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
               >
-                {busy === "import" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                {busy === "import" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
                 {t("v263", "Importer mes données")}
               </button>
             </div>
@@ -128,7 +128,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
         <button
           onClick={onClose}
-          className="mt-6 w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#262220] shadow-lg transition hover:bg-[var(--accent-hover)]"
+          className="mt-6 w-full rounded-full bg-[var(--background)] py-3 text-sm font-medium text-[var(--primary-text)] shadow-lg transition hover:bg-[var(--background-hover)]"
         >
           {t("settings.done", "Terminé")}
         </button>
