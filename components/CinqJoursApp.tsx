@@ -1201,14 +1201,14 @@ function SourceView(props: SourceViewProps) {
         <button
           onClick={submitUrl}
           disabled={importing}
-          className="flex items-center gap-2 rounded-lg bg-[var(--background)] px-4 py-2.5 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
+          className="flex items-center gap-2 rounded-full bg-[var(--background)] px-4 py-2.5 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
         >
           {importing ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           {t("v200", "Import")}
         </button>
         <button
           onClick={onStartReadingMode}
-          className="flex items-center gap-1.5 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
         >
           <FileText size={14} />  {t("v26", "Lire un texte")}
         </button>
@@ -1237,7 +1237,7 @@ function SourceView(props: SourceViewProps) {
                   href={`https://www.youtube.com/watch?v=${videoId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1.5 text-xs font-medium text-[#171B22] shadow transition hover:bg-white"
+                  className="flex items-center gap-1 rounded-full bg-[#F4EEE0]/90 px-2.5 py-1.5 text-xs font-medium text-[#262220] shadow transition hover:bg-[#F4EEE0]"
                   title={t("v29", "Ouvrir sur YouTube")}
                 >
                   <ArrowUpRight size={11} /> YouTube
@@ -1384,7 +1384,7 @@ function SourceView(props: SourceViewProps) {
               );
             })
           ) : (
-            <p className="select-none text-[15px] text-[#26222055]" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <p className="select-none text-[15px] text-[#26222055]">
               {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : (
                 <>
                   {t("v37", "Ouvrez la vidéo YouTube, cliquez")} <strong>{t("v38", "… → Afficher la transcription")}</strong>{t("v39", ", copiez tout le texte et collez-le ici.")}
@@ -1397,7 +1397,7 @@ function SourceView(props: SourceViewProps) {
           <div className="mt-2 flex justify-end gap-2">
             <button
               onClick={() => { setPasting(false); setPasteText(""); setEditing(false); }}
-              className="rounded px-3 py-1.5 text-xs text-[#6b665e] hover:text-[#262220]"
+              className="rounded-full px-3 py-1.5 text-xs text-[#6b665e] hover:text-[#262220]"
             >
               {t("v215", "Annuler")}
             </button>
@@ -1414,7 +1414,7 @@ function SourceView(props: SourceViewProps) {
                 }
               }}
               disabled={pasting && !pasteText.trim()}
-              className="rounded bg-[var(--background)] px-4 py-1.5 text-xs font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-40"
+              className="rounded-full bg-[var(--background)] px-4 py-1.5 text-xs font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-40"
             >
               {t("v216", "Valider")}
             </button>
@@ -1469,7 +1469,7 @@ function SourceView(props: SourceViewProps) {
                     onClick={() => { setSelNoteDraft(notes[sentencePopup.text.toLowerCase()] || ""); setSelNoteEditing(true); }}
                     className="shrink-0 text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
                   >
-                    Modifier
+                    {t("v201", "Modifier")}
                   </button>
                 </div>
               ) : (
@@ -1489,7 +1489,7 @@ function SourceView(props: SourceViewProps) {
                   onClick={() => removeVocabByWord(sentencePopup.text.toLowerCase())}
                   className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
                 >
-                  Retirer
+                  {t("v267", "Retirer")}
                 </button>
               </div>
             ) : (
@@ -1558,7 +1558,7 @@ function SourceView(props: SourceViewProps) {
                     onClick={() => { setNoteDraft(popup.note || ""); setNoteEditing(true); }}
                     className="shrink-0 text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
                   >
-                    Modifier
+                    {t("v201", "Modifier")}
                   </button>
                 </div>
               ) : (
@@ -1578,7 +1578,7 @@ function SourceView(props: SourceViewProps) {
                   onClick={() => removeVocabByWord(stripPunct(popup.base || popup.word))}
                   className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
                 >
-                  Retirer
+                  {t("v267", "Retirer")}
                 </button>
               </div>
             ) : (
