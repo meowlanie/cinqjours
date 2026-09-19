@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { aiChat, parseJson } from "@/lib/ai";
-import { llmName, inLang, apiMessage, type LangCode } from "@/lib/languages";
+import { inLang, apiMessage, type LangCode } from "@/lib/languages";
 
 export const runtime = "nodejs";
 

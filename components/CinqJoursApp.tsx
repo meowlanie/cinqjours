@@ -5,13 +5,12 @@ import {
   BookMarked, Mic, Play, Square, Check, X, Plus, Volume2, Settings, Download,
   PenLine, MessageCircle, ChevronRight, Trash2, Link2,
   RotateCcw, Sparkles, ChevronLeft, History, ArrowUpRight, Loader2, Save, CircleCheck, CircleSlash,
-  PlayCircle, FileText, Pause, NotebookPen, Eye
+  PlayCircle, FileText, Pause, NotebookPen
 } from "lucide-react";
 import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences, parsePastedText } from "@/lib/transcript";
-import { saveVocab } from "@/lib/supabase";
 import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
 import {
-  writeLs, removeLs, capEntries, cleanupDeadKeys,
+  writeLs, capEntries, cleanupDeadKeys,
   readStorageFullFlag, clearStorageFullFlag, STORAGE_ERROR_EVENT,
   DICT_CACHE_KEY, TRANS_CACHE_KEY,
 } from "@/lib/storage";
@@ -78,9 +77,6 @@ const DAYS = [
 const msgQuota = () => t("v223", "Quota IA dépassé — réessayez plus tard.");
 const msgAi = () => t("v224", "Service IA indisponible — réessayez plus tard.");
 const LS_LAST_SOURCE = "cj-last-source-id";
-function isFrdicEnabled(): boolean {
-  return true;
-}
 
 function rememberSourceId(id: string | null) {
   try {
@@ -912,23 +908,16 @@ interface PopupEntry {
 
 function SourceView(props: SourceViewProps) {
   const {
-    url, setUrl, videoId, setVideoId, title, transcript, onTranscriptChange,
+    url, setUrl, videoId, setVideoId, transcript, onTranscriptChange,
     importing, vocabCount, addVocab, onImport,
     onPasteTranscript, notes, setNote, savedWords, savedSentences, removeVocabByWord,
     isTextSource, textModeVersion, onStartReadingMode, videoWidth, setVideoWidth,
-    level,
   } = props;
 
   const notedSentences = useMemo(
     () => Object.keys(notes).filter((k) => k.split(/\s+/).length > 1),
     [notes]
   );
-
-  const sourceWordCount = useMemo(
-    () => transcript.reduce((n, l) => n + (l.text.trim() ? l.text.trim().split(/\s+/).length : 0), 0),
-    [transcript]
-  );
-  const sourceFits = sourceWordCount < 500;
 
   const [showPinyin, setShowPinyin] = useState(false);
 
@@ -2023,7 +2012,11 @@ function Flashcard({ idx, flipped, setFlipped, front, back, frontBg, backBg, pad
       style={{ height: cardHeight || "auto", transformStyle: "preserve-3d" }}
       onClick={() => setFlipped((prev) => {
         const next = new Set(prev);
-        next.has(idx) ? next.delete(idx) : next.add(idx);
+        if (next.has(idx)) {
+          next.delete(idx);
+        } else {
+          next.add(idx);
+        }
         return next;
       })}
     >
@@ -2900,11 +2893,10 @@ function firstSentence(text: string): string {
   return m ? m[0].trim() : cleaned;
 }
 
-function JournalFlipCard({ entry, audioSrc, showCorrection, setShowCorrection, addToCarnet, savedCorrections, removeVocabByWord }: {
+function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCorrections, removeVocabByWord }: {
   entry: JournalEntry;
   audioSrc?: string;
   showCorrection: boolean;
-  setShowCorrection: (v: boolean) => void;
   addToCarnet: (s: Segment) => void;
   savedCorrections?: Set<string>;
   removeVocabByWord?: (word: string) => void;
@@ -3032,7 +3024,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
     setTimeout(() => setToast(null), 2200);
   };
 
-  const generatePrompt = async (manual = false) => {
+  const generatePrompt = async () => {
     setGenerating(true);
     try {
       const res = await fetch("/api/topic", {
@@ -3201,7 +3193,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         ) : prompt ? (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => generatePrompt(true)}
+              onClick={() => generatePrompt()}
               className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
             >
               <Sparkles size={13} />
@@ -3213,7 +3205,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         ) : (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => generatePrompt(false)}
+              onClick={() => generatePrompt()}
               className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
             >
               <Sparkles size={13} />
@@ -3411,7 +3403,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
               <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{openEntry.date}</p>
             </div>
 
-            <JournalFlipCard entry={openEntry} audioSrc={audioMap[openEntry.id] || openEntry.audio} showCorrection={showCorrection} setShowCorrection={setShowCorrection} addToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+            <JournalFlipCard entry={openEntry} audioSrc={audioMap[openEntry.id] || openEntry.audio} showCorrection={showCorrection} addToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
 
             <div className="mt-4 flex items-center justify-between gap-2">
               {openEntry.correction ? (
@@ -3725,12 +3717,6 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
     lg: { pad: "p-4", word: "text-lg", def: "text-sm" },
   }[size];
 
-  const gridCols: Record<string, Record<string, string>> = {
-    vocab: { sm: "sm:grid-cols-5", md: "sm:grid-cols-3", lg: "sm:grid-cols-2" },
-    phrase: { sm: "sm:grid-cols-5", md: "sm:grid-cols-3", lg: "sm:grid-cols-2" },
-    correction: { sm: "sm:grid-cols-2", md: "sm:grid-cols-2", lg: "sm:grid-cols-1" },
-  };
-
   const categorize = (v: { word: string; type?: string }): "vocab" | "phrase" | "correction" => {
     if (v.type === "correction") return "correction";
     if (v.type === "phrase") return "phrase";
@@ -3763,7 +3749,6 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
     return a;
   };
 
-  const uiLocale = getUiLocale();
   const sections = useMemo(() => {
     const secs: { key: string; title: string; items: { v: typeof vocab[number]; idx: number }[] }[] = [
       { key: "vocab", title: t("v77", "Vocabulaire"), items: [] },
@@ -3780,7 +3765,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
       for (const s of secs) s.items = seededShuffle(s.items, rng);
     }
     return secs;
-  }, [vocab, order, shuffleSeed, uiLocale, targetLang]);
+  }, [vocab, order, shuffleSeed, targetLang]);
 
   const saveNote = (word: string) => {
     const note = noteText.trim();
@@ -4751,7 +4736,7 @@ export function CinqJoursApp(props: {
         // extension data unreadable; silently ignore
       }
     },
-    []
+    [setResources, setTranscript, setVideoId, setVideoTitle, setSourceType, setView, setToast]
   );
 
   useEffect(() => {
@@ -4779,7 +4764,7 @@ export function CinqJoursApp(props: {
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [applyExtensionImportData]);
+  }, [applyExtensionImportData, videoId]);
 
   useEffect(() => {
     if (targetLang) {

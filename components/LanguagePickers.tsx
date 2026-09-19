@@ -11,8 +11,6 @@ import {
 } from "@/lib/languages";
 import { t } from "@/lib/settings";
 
-type TFn = (key: string, fallback: string) => string;
-
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>

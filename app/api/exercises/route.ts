@@ -81,7 +81,6 @@ export async function POST(req: Request) {
 
   const source = (body.source || "").trim();
   const target = (body.target || "fr") as LangCode;
-  const translation = (body.translation || "en") as LangCode;
   const ui = (body.ui || "fr") as LangCode;
   const levelPhrase = levelToFr(body.level);
   const previous = Array.isArray(body.previous) ? body.previous.filter((p) => p && typeof p.q === "string") : [];
