@@ -921,6 +921,8 @@ function SourceView(props: SourceViewProps) {
     [notes]
   );
 
+  const hasTimestamps = transcript.some((l) => l.t);
+
   const [showPinyin, setShowPinyin] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
@@ -1288,7 +1290,7 @@ function SourceView(props: SourceViewProps) {
 
         <div
           onMouseUp={editing ? undefined : handleMouseUp}
-          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 p-5`}
+          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
           style={{ minHeight: "370px", maxHeight: "760px" }}
         >
           {editing ? (
@@ -1317,7 +1319,7 @@ function SourceView(props: SourceViewProps) {
               const targetLang = getLangCodes().targetLang;
               return (
                 <div key={i} className="flex items-start gap-1">
-                  <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>
+                  {line.t && <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>}
                   <p className="flex-1 leading-relaxed text-[#262220]">
                     {targetLang === "zh" ? (
                       Array.from(new Intl.Segmenter("zh", { granularity: "word" }).segment(line.text)).map(
@@ -1664,7 +1666,7 @@ function ResourcesView({ resources, onSelect, onDelete }: {
               }}
               role="button"
               tabIndex={0}
-              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] bg-[#F4EEE0] text-left shadow-sm transition hover:border-[#B08D57] hover:shadow-md cursor-pointer"
+              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] bg-[#F4EEE0] text-left shadow-md transition hover:border-[#B08D57] hover:shadow-lg cursor-pointer"
             >
               <div className="aspect-video w-full overflow-hidden bg-[#26222010]">
                 {isText ? (
@@ -2906,6 +2908,79 @@ function firstSentence(text: string): string {
   return m ? m[0].trim() : cleaned;
 }
 
+function AudioBar({ src }: { src?: string }) {
+  const ref = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [cur, setCur] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  if (!src) return null;
+
+  const toggle = () => {
+    const a = ref.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else void a.play();
+  };
+
+  const pct = dur > 0 ? (cur / dur) * 100 : 0;
+
+  return (
+    <div className="mt-2 flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-1">
+      <audio
+        ref={ref}
+        src={src}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onTimeUpdate={(e) => setCur(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDur(e.currentTarget.duration)}
+        className="hidden"
+      />
+      <button
+        onClick={toggle}
+        aria-label={playing ? t("v12", "En lecture…") : t("v13", "Écouter")}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[#262220] transition hover:bg-[var(--accent-hover)]"
+      >
+        {playing ? <Pause size={13} /> : <Play size={13} />}
+      </button>
+      <input
+        type="range"
+        min={0}
+        max={dur || 0}
+        step={0.1}
+        value={Math.min(cur, dur || 0)}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (ref.current) ref.current.currentTime = v;
+          setCur(v);
+        }}
+        aria-label={t("v250", "Progression audio")}
+        className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full border-0 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-track]:bg-transparent"
+        style={{ background: `linear-gradient(to right, var(--accent) ${pct}%, #262220 ${pct}%)` }}
+      />
+      <a
+        href={src}
+        download
+        aria-label={t("v263", "Télécharger")}
+        className="shrink-0 text-[var(--accent-text)] transition hover:opacity-70"
+      >
+        <Download size={14} />
+      </a>
+      <span className="cj-mono shrink-0 text-[10px] tabular-nums text-[var(--accent-text)]">
+        {fmtAudioTime(cur)} / {fmtAudioTime(dur)}
+      </span>
+    </div>
+  );
+}
+
+function fmtAudioTime(s: number) {
+  if (!isFinite(s) || s <= 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
 function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCorrections, removeVocabByWord }: {
   entry: JournalEntry;
   audioSrc?: string;
@@ -2946,7 +3021,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
           <p className="mb-2 text-xs italic text-[#6b665e]">{t("v98", "Sujet :")} {entry.prompt}</p>
         )}
         <p className="text-[15px] leading-relaxed text-[#262220]">{entry.text}</p>
-        {audioSrc && <audio controls src={audioSrc} className="mt-3 w-full" />}
+        {audioSrc && <AudioBar src={audioSrc} />}
       </div>
 
       {/* BACK: corrections */}
@@ -3379,7 +3454,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
                     <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{truncateWords(e.prompt, 18)}</p>
                   ) : null}
                   {e.text && <p className="mt-2 text-sm leading-relaxed text-[#262220]">{truncateWords(e.text, 80)}</p>}
-                  {(audioMap[e.id] || e.audio) && <audio controls src={audioMap[e.id] || e.audio} className="mt-2 w-full" />}
+                  {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
                 </div>
               ))}
             </div>
@@ -4890,8 +4965,8 @@ export function CinqJoursApp(props: {
 
       <div className="flex flex-col gap-0 px-3 pb-10 md:flex-row md:gap-2 md:px-6">
         <SideTabs view={view} setView={setView} />
-          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[#F4EEE0] p-5 shadow-2xl md:p-9 ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px]" : "min-h-[780px]"}`}>
-          <div className={`flex-1 min-h-0 pb-6 ${boundedViews ? "overflow-y-auto cj-scrollbar" : ""}`}>
+          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[#F4EEE0] shadow-2xl ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px]" : "min-h-[780px]"}`}>
+          <div className={`flex-1 min-h-0 p-5 pb-6 md:p-9 ${boundedViews ? "overflow-y-auto cj-scrollbar" : ""}`}>
           {view === "source" && (
             <SourceView
               url={url}
@@ -4946,7 +5021,7 @@ export function CinqJoursApp(props: {
           </div>
 
           {view !== "resources" && view !== "journal" && view !== "carnet" && (
-            <div className="mt-auto flex items-center justify-start border-t border-[#26222014] pt-5">
+            <div className="mt-auto flex items-center justify-start border-t border-[#26222014] p-5 md:p-9">
               <button
                 onClick={() => setView(isNumber(view) && view === 5 ? "source" : isNumber(view) ? Math.min(5, view + 1) : 1)}
                 className="flex items-center gap-1 text-sm text-[#6b665e] hover:text-[#262220]"

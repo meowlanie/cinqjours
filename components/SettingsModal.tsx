@@ -102,7 +102,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 onClick={handleExport}
                 disabled={!!busy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--background)] py-2.5 text-sm font-medium text-[var(--primary-text)] shadow transition hover:bg-[var(--background-hover)] disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[#262220] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
               >
                 {busy === "export" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {t("v262", "Exporter mes données")}
