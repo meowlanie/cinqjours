@@ -349,7 +349,7 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
               status === "recording" ? "bg-[#B5432E] text-white hover:bg-[#9c3a27]" : "bg-[var(--background)] text-[var(--primary-text)] hover:bg-[var(--background-hover)]"
             } ${holding ? "scale-95 opacity-80" : ""}`}
           >
-            <span className={`h-2 w-2 rounded-full ${status === "recording" ? "cj-rec-dot bg-white" : "bg-[var(--background)]"}`} />
+            <span className={`h-2 w-2 rounded-full ${status === "recording" ? "cj-rec-dot bg-[var(--primary-text)]" : "bg-[var(--background)]"}`} />
             {status === "recording" ? <Pause size={14} /> : <Play size={14} />}
             {holding ? t("v205", "Finish…") : status === "recording" ? t("v243", "Pause") : t("v206", "Resume")} · {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
           </button>
@@ -431,16 +431,18 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
       <div className="flex items-center gap-1">
         <button
           onClick={() => setView("annotated")}
+          aria-pressed={view === "annotated"}
           className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "annotated" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
         >
-          
+
           {t("v15", "Texte annoté")}
         </button>
         <button
           onClick={() => setView("corrected")}
+          aria-pressed={view === "corrected"}
           className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "corrected" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
         >
-          
+
           {t("v16", "Texte corrigé")}
         </button>
       </div>
@@ -453,7 +455,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                 wordDiff(seg.text, seg.suggestion).map((t, k) => (
                   <Fragment key={k}>
                     {t.type === "removed" ? (
-                      <s className="text-[#999] line-through decoration-[#999] decoration-1">{t.text}</s>
+                      <s className="text-[#6b665e] line-through decoration-[#6b665e] decoration-1">{t.text}</s>
                     ) : t.type === "added" ? (
                       <span className="font-medium text-[#B08D57]">{t.text}</span>
                     ) : (
@@ -1303,7 +1305,7 @@ function SourceView(props: SourceViewProps) {
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder={t("v40", "Collez ici la transcription. Elle sera reformatée automatiquement en cliquant sur « Valider ».")}
-                className="w-full grow resize-none rounded border border-[#B08D5733] bg-white/80 p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                className="w-full grow resize-none rounded border border-[#B08D5733] bg-white/70 p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                 style={{ minHeight: "300px" }}
               />
             </div>
@@ -1442,7 +1444,7 @@ function SourceView(props: SourceViewProps) {
               ) : sentenceAiUnavailable ? (
                 <span className="not-italic text-sm text-[#4a453f]">{sentenceTranslation || t("v20", "Traduction indisponible — réessayez.")}</span>
               ) : (
-                <>{t("v44", "Traduction :")} <span className="text-[#B08D57]">{sentenceTranslation || "indisponible"}</span></>
+                <>{t("v44", "Traduction :")} <span className="text-[#B08D57]">{sentenceTranslation || t("v268", "indisponible")}</span></>
               )}
             </p>
 
@@ -1455,7 +1457,7 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setSelNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-white p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
                     <button onClick={() => setSelNoteEditing(false)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
@@ -1544,7 +1546,7 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-white p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
                     <button onClick={() => setNoteEditing(false)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
@@ -1662,10 +1664,9 @@ function ResourcesView({ resources, onSelect, onDelete }: {
               }}
               role="button"
               tabIndex={0}
-              style={{ backgroundColor: "#FFFFFF" }}
-              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] text-left shadow-sm transition hover:border-[#B08D57] hover:shadow-md cursor-pointer"
+              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] bg-[#F4EEE0] text-left shadow-sm transition hover:border-[#B08D57] hover:shadow-md cursor-pointer"
             >
-              <div className="aspect-video w-full overflow-hidden bg-[#17182210]">
+              <div className="aspect-video w-full overflow-hidden bg-[#26222010]">
                 {isText ? (
                   <div className="cj-scrollbar h-full w-full overflow-hidden bg-[#F4EEE0] p-3 text-left">
                     <p className="cj-mono mb-1 text-[9px] uppercase tracking-wider text-[#B08D57]">{t("v34", "Texte")}</p>
@@ -1864,7 +1865,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
         </div>
       )}
 
-      <div className="rounded-lg border border-[#26222014] bg-[#17182206] p-4">
+      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v62", "Résumé oral (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v63", "Enregistrez votre résumé à voix haute.")}</p>
         <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey={`cj-recording-day1-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
@@ -1889,18 +1890,18 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       </div>
 
       {notice && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {notice}
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {errorToast}
         </div>
       )}
@@ -2016,6 +2017,10 @@ function Flashcard({ idx, flipped, setFlipped, front, back, frontBg, backBg, pad
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={t("v294", "Retourner la carte")}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFlipped((prev) => { const next = new Set(prev); if (next.has(idx)) { next.delete(idx); } else { next.add(idx); } return next; }); } }}
       className="group relative cursor-pointer break-inside-avoid mb-3"
       style={{ height: cardHeight || "auto", transformStyle: "preserve-3d" }}
       onClick={() => setFlipped((prev) => {
@@ -2323,7 +2328,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                       onChange={(e) => typeAnswer(i, e.target.value)}
                       disabled={checked}
                       placeholder={t("v83", "Votre réponse…")}
-                      className="w-full rounded border border-[#26222022] bg-white px-3 py-2 text-sm text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57] disabled:opacity-60"
+                      className="w-full rounded border border-[#26222022] bg-white/70 px-3 py-2 text-sm text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57] disabled:opacity-60"
                     />
                   )}
                   {checked && (
@@ -2420,8 +2425,8 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                 setFlipped={setFlipped}
                 front={<p className={`cj-display ${sizeConf.front} text-[#262220] text-center`}>{v.word}</p>}
                 back={<p className={`${sizeConf.back} text-[#262220] text-center leading-relaxed`}>{v.translation || v.def || (v.type === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
-                frontBg="#FFFFFF"
-                backBg="#F7F3E8"
+                frontBg="#F4EEE0"
+                backBg="#F4EEE0"
                 pad={sizeConf.pad}
                 flashcardMode={flashcardMode}
               />
@@ -2478,12 +2483,12 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
       })()}
 
       {errorToast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {errorToast}
         </div>
       )}
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
@@ -2670,18 +2675,18 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {notice && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {notice}
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {errorToast}
         </div>
       )}
@@ -2836,14 +2841,14 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           {t("v90", "Régénérer le sujet")}
         </button>
       </div>
-      <div className="rounded-lg bg-[#17182208] p-5">
+      <div className="rounded-lg bg-[#26222008] p-5">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v95", "Votre présentation")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
         <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={`cj-recording-day5-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
       </div>
 
       {hasRecording && (
-        <div className="rounded-lg border border-[#26222014] bg-[#17182206] p-4">
+        <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
           {!audioResult ? (
             <button
               onClick={correctAudio}
@@ -2861,12 +2866,12 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {errorToast}
         </div>
       )}
@@ -2927,6 +2932,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
 
   return (
     <div
+      aria-label={t("v295", "Retourner pour voir la correction")}
       className={`relative mt-3 w-full ${entry.correction ? "min-h-[300px]" : ""}`}
       style={{ height: cardHeight || "auto", transformStyle: "preserve-3d", transition: "transform 0.5s ease", transform: showCorrection ? "rotateY(180deg)" : "rotateY(0deg)" }}
     >
@@ -2947,7 +2953,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
       <div
         ref={backRef}
         className="absolute inset-0 w-full rounded-lg border border-[#26222014] pb-6"
-        style={{ backfaceVisibility: "hidden", backgroundColor: "#FFFFFF", transform: "rotateY(180deg)" }}
+        style={{ backfaceVisibility: "hidden", backgroundColor: "#F4EEE0", transform: "rotateY(180deg)" }}
       >
         <div className="p-4" onClick={(e) => e.stopPropagation()}>
           {entry.correction && (
@@ -3307,7 +3313,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         </div>
       )}
 
-      <div className="rounded-lg border border-[#26222014] bg-[#17182206] p-4">
+      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v108", "Entrée orale (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
         <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey={journalRecordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
@@ -3347,13 +3353,13 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
             <div className="flex items-center gap-1 rounded-full bg-[#2622200a] p-0.5 text-[11px]">
               <button
                 onClick={() => setHistView("cards")}
-                className={`rounded-full px-3 py-1 transition ${histView === "cards" ? "bg-[#F4EEE0] text-[#171B22] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-3 py-1 transition ${histView === "cards" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
                 >
                   {t("v211", "Cards")}
                 </button>
               <button
                 onClick={() => setHistView("cal")}
-                className={`rounded-full px-3 py-1 transition ${histView === "cal" ? "bg-[#F4EEE0] text-[#171B22] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-3 py-1 transition ${histView === "cal" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
                 >
                   {t("v212", "Calendar")}
                 </button>
@@ -3362,7 +3368,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           {histView === "cards" ? (
             <div className="columns-1 gap-3 sm:columns-2 lg:columns-3">
               {entries.map((e) => (
-                <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} style={{ backgroundColor: "#FFFFFF" }} className="cursor-pointer break-inside-avoid mb-3 min-h-[180px] rounded-lg border border-[#26222014] p-4 shadow-sm transition hover:shadow-md">
+                <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="cursor-pointer break-inside-avoid mb-3 min-h-[180px] rounded-lg border border-[#26222014] bg-[#F4EEE0] p-4 shadow-sm transition hover:shadow-md">
                   <div className="flex items-start justify-between gap-2">
                     <p className="cj-mono text-[10px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
                     <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[#26222044] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
@@ -3384,24 +3390,24 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       )}
 
       {notice && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {notice}
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {toast}
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
           {errorToast}
         </div>
       )}
 
       {openEntry && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={() => setOpenEntry(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#262220]/40 p-4" onClick={() => setOpenEntry(null)}>
           <div
             className="w-full max-w-2xl rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl"
             style={{ perspective: "1200px" }}
@@ -3606,14 +3612,14 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
 
   return (
     <div className={`fixed inset-0 z-30 transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
-      <div onClick={onClose} className={`absolute inset-0 bg-black/30 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
+      <div onClick={onClose} className={`absolute inset-0 bg-[#262220]/30 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
       <div
         style={{ backgroundColor: "#F4EEE0" }}
         className={`absolute right-0 top-0 h-full w-[320px] shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-[#26222014] px-5 py-4">
           <h3 className="cj-display text-xl text-[#262220]">{t("v120", "Carnet d'apprentissage")}</h3>
-          <button onClick={onClose} className="text-[#4a453f] hover:text-[#262220]"><X size={18} /></button>
+          <button onClick={onClose} aria-label={t("v296", "Fermer")} className="text-[#4a453f] hover:text-[#262220] focus-visible:ring-2 focus-visible:ring-[#B08D57] rounded-full"><X size={18} /></button>
         </div>
         <div className="cj-scrollbar h-[calc(100%-64px)] overflow-y-auto p-5">
           {visible.length === 0 ? (
@@ -3657,7 +3663,7 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                           onChange={(e) => setNoteText(e.target.value)}
                           rows={2}
                           placeholder={t("v123", "Votre note…")}
-                          className="w-full rounded border border-[#B08D5733] bg-white p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                          className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                         />
                         <div className="mt-1 flex justify-end gap-2">
                           <button onClick={() => setEditingWord(null)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
@@ -3836,7 +3842,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-3 flex-wrap">
           <p className="text-sm leading-relaxed text-[#6b665e] flex-1 min-w-0">{t("v127", "Tous vos mots, phrases et corrections enregistrés, regroupés par catégorie.")}</p>
-          {frdic.enabled && (<div className="w-fit flex items-center justify-between gap-3 rounded-xl border border-[#B08D5744] bg-[#B08D5714] px-4 py-3">
+          {frdic.enabled && (<div className="w-fit flex items-center justify-between gap-3 rounded-lg border border-[#B08D5744] bg-[#B08D5714] px-4 py-3">
             <div className="flex items-center gap-3">
               {frdic.connected
                 ? <CircleCheck size={18} className="shrink-0 text-[#5C7A5A]" />
@@ -3855,7 +3861,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 <>
                   <button
                     onClick={() => { setFrdicEditing(true); setModeInput(frdic.mode); setTokenInput(""); setConnectError(null); setShowFrdicModal(true); }}
-                    className="rounded-lg border border-[#B08D5744] bg-white/70 px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-white disabled:opacity-50"
+                    className="rounded-lg border border-[#B08D5744] bg-white/70 px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-white/80 disabled:opacity-50"
                   >
                     设置
                   </button>
@@ -3880,7 +3886,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
       </div>
 
       {showFrdicModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowFrdicModal(false)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#262220]/40 p-4" onClick={() => setShowFrdicModal(false)}>
           <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="cj-display text-xl text-[#262220]">{frdicEditing ? `${frdic.name} 设置` : `连接 ${frdic.name} 账号`}</h3>
@@ -3900,7 +3906,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
               )}
             </p>
               <label className="mb-1 block text-xs font-medium text-[#6b665e]">{frdic.name} API 令牌{frdicEditing && "（可选）"}</label>
-            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[#26222022] bg-white px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
+            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[#26222022] bg-white/70 px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
               <input
                 type={showToken ? "text" : "password"}
                 value={tokenInput}
@@ -3933,10 +3939,10 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
               <button onClick={() => setShowFrdicModal(false)} className="rounded-lg px-3 py-2 text-xs font-medium text-[#6b665e] transition hover:text-[#262220]">取消</button>
               <button
                 onClick={async () => {
-                  const t = tokenInput.trim();
-                  if (!t && !frdicEditing) { setConnectError("请先粘贴令牌。"); return; }
+                  const token = tokenInput.trim();
+                  if (!token && !frdicEditing) { setConnectError("请先粘贴令牌。"); return; }
                   setConnectError(null);
-                  const r = frdicEditing ? await frdic.onSave(t, modeInput) : await frdic.onConnect(t, modeInput);
+                  const r = frdicEditing ? await frdic.onSave(token, modeInput) : await frdic.onConnect(token, modeInput);
                   if (r.ok) { setShowFrdicModal(false); setTokenInput(""); setFrdicEditing(false); }
                   else if (r.error) setConnectError(r.error);
                 }}
@@ -3974,8 +3980,8 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                       setFlipped={setFlipped}
                       front={<p className={`cj-display ${sizeConf.word} text-[#262220] text-center`}>{v.word}</p>}
                       back={<p className={`${sizeConf.def} text-[#262220] text-center leading-relaxed`}>{v.translation || v.def || (section.key === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
-                      frontBg="#FFFFFF"
-                      backBg="#F7F3E8"
+                      frontBg="#F4EEE0"
+                      backBg="#F4EEE0"
                       pad={sizeConf.pad}
                       flashcardMode={flashcardMode}
                     />
@@ -3986,7 +3992,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                   {section.items.map(({ v, idx }) => {
                     const note = notes[v.word.toLowerCase()];
                     return (
-                      <div key={idx} style={{ backgroundColor: "#FFFFFF" }} className={`group break-inside-avoid mb-3 rounded-lg border border-[#26222014] shadow-sm ${sizeConf.pad}`}>
+                      <div key={idx} className={`group break-inside-avoid mb-3 rounded-lg border border-[#26222014] bg-[#F4EEE0] shadow-sm ${sizeConf.pad}`}>
                         <div className="flex items-start justify-between gap-2">
                           <p className={`cj-display ${sizeConf.word} text-[#262220]`}>{v.word}</p>
                           <button onClick={() => removeVocab(idx)} className="text-[#26222055] opacity-0 transition group-hover:opacity-100 hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
@@ -4015,7 +4021,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                               onChange={(e) => setNoteText(e.target.value)}
                               rows={2}
                               placeholder={t("v123", "Votre note…")}
-                              className="w-full rounded border border-[#B08D5733] bg-white p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                              className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                             />
                             <div className="mt-1 flex justify-end gap-2">
                               <button onClick={() => setEditingWord(null)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
@@ -4055,7 +4061,7 @@ function SideTabs({ view, setView }: { view: string | number; setView: (v: strin
     { id: "carnet", label: t("v19", "Carnet"), icon: BookMarked },
   ];
   return (
-    <div className="ml-5 flex shrink-0 flex-row flex-wrap gap-2 pt-2 md:ml-0 md:w-[124px] md:flex-col">
+    <nav aria-label={t("v261", "Navigation")} className="ml-5 flex shrink-0 flex-row flex-wrap gap-2 pt-2 md:ml-0 md:w-[124px] md:flex-col">
       {items.map((item) => {
         const active = view === item.id;
         const Icon = item.icon;
@@ -4063,18 +4069,19 @@ function SideTabs({ view, setView }: { view: string | number; setView: (v: strin
           <button
             key={String(item.id)}
             onClick={() => setView(item.id)}
-            className={`cj-tab-ribbon flex h-11 w-11 flex-col items-center justify-center gap-1 transition-all md:h-[68px] md:w-full ${
+            aria-current={active ? "page" : undefined}
+            className={`cj-tab-ribbon flex h-11 w-11 flex-col items-center justify-center gap-1 transition-[background-color,color,box-shadow,width] duration-200 md:h-[68px] md:w-full ${
               active
-                ? "bg-[#F4EEE0] text-[#171B22] shadow-lg md:-mr-1 md:w-[140px]"
+                ? "bg-[#F4EEE0] text-[#262220] shadow-lg md:-mr-1 md:w-[140px]"
                 : "bg-[#F4EEE01c] text-[#F4EEE0aa] hover:bg-[#F4EEE033]"
-            }`}
+            } ${!active ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4EEE0]"}`}
           >
-            <Icon size={16} className={active ? "text-[#B08D57]" : "opacity-80"} />
+            <Icon size={16} className={active ? "text-[#B08D57]" : "text-[#F4EEE0cc]"} />
             <span className="hidden cj-mono text-[10px] font-medium uppercase leading-tight tracking-wide md:block">{item.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 

@@ -227,5 +227,9 @@
   "v264": "Working…",
   "v265": "Importing replaces your current data. Continue?",
   "v266": "Invalid backup file.",
-  "v267": "Remove"
+  "v267": "Remove",
+  "v268": "unavailable",
+  "v294": "Flip card",
+  "v295": "Flip to see correction",
+  "v296": "Close"
 }
