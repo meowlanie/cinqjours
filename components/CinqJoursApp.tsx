@@ -1651,11 +1651,19 @@ function ResourcesView({ resources, onSelect, onDelete }: {
                   : String(r.title || "")).slice(0, 240)
               : "";
             return (
-            <button
+            <div
               key={String(r.key || r.video_id)}
               onClick={() => onSelect(String(r.video_id), String(r.url))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect(String(r.video_id), String(r.url));
+                }
+              }}
+              role="button"
+              tabIndex={0}
               style={{ backgroundColor: "#FFFFFF" }}
-              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] text-left shadow-sm transition hover:border-[#B08D57] hover:shadow-md"
+              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] text-left shadow-sm transition hover:border-[#B08D57] hover:shadow-md cursor-pointer"
             >
               <div className="aspect-video w-full overflow-hidden bg-[#17182210]">
                 {isText ? (
@@ -1689,7 +1697,7 @@ function ResourcesView({ resources, onSelect, onDelete }: {
                   </button>
                 </div>
               </div>
-            </button>
+            </div>
           );
           })}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useSettings } from "@/lib/settings";
 import {
   UI_LANGUAGES,
@@ -58,12 +58,13 @@ export function OnboardingModal() {
   const [target, setTarget] = useState<LangCode>("en");
   const [trans, setTrans] = useState<LangCode>("en");
   const [level, setLevel] = useState<Level>("advanced");
+  const [mounted, setMounted] = useState(false);
 
-  // Never render during SSR — the persisted `onboarded` flag is only known on
-  // the client, so painting the modal server-side would make it flash on every
-  // load for returning users (the "language setting" flash). Client renders it
-  // normally for first-time visitors.
-  if (typeof window === "undefined") return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   if (onboarded) return null;
 
   const tp: TFn = (key, fallback) => t(key, fallback, ui);
