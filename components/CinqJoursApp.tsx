@@ -921,6 +921,8 @@ function SourceView(props: SourceViewProps) {
     [notes]
   );
 
+  const hasTimestamps = transcript.some((l) => l.t);
+
   const [showPinyin, setShowPinyin] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
@@ -1288,7 +1290,7 @@ function SourceView(props: SourceViewProps) {
 
         <div
           onMouseUp={editing ? undefined : handleMouseUp}
-          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 p-5`}
+          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
           style={{ minHeight: "370px", maxHeight: "760px" }}
         >
           {editing ? (
@@ -1317,7 +1319,7 @@ function SourceView(props: SourceViewProps) {
               const targetLang = getLangCodes().targetLang;
               return (
                 <div key={i} className="flex items-start gap-1">
-                  <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>
+                  {line.t && <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>}
                   <p className="flex-1 leading-relaxed text-[#262220]">
                     {targetLang === "zh" ? (
                       Array.from(new Intl.Segmenter("zh", { granularity: "word" }).segment(line.text)).map(
@@ -4890,8 +4892,8 @@ export function CinqJoursApp(props: {
 
       <div className="flex flex-col gap-0 px-3 pb-10 md:flex-row md:gap-2 md:px-6">
         <SideTabs view={view} setView={setView} />
-          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[#F4EEE0] p-5 shadow-2xl md:p-9 ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px]" : "min-h-[780px]"}`}>
-          <div className={`flex-1 min-h-0 pb-6 ${boundedViews ? "overflow-y-auto cj-scrollbar" : ""}`}>
+          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[#F4EEE0] shadow-2xl ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px] overflow-y-auto cj-scrollbar" : "min-h-[780px]"}`}>
+          <div className="flex-1 min-h-0 p-5 pb-6 md:p-9">
           {view === "source" && (
             <SourceView
               url={url}
