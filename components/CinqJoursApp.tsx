@@ -447,39 +447,63 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
         </button>
       </div>
 
-      <div className="rounded-lg border border-[#26222014] bg-white/60 p-5 leading-relaxed cj-display text-[17px] text-[#262220]">
+      <div
+        className="rounded-lg border border-[#26222014] bg-white/60 p-5 leading-relaxed cj-display text-[17px] text-[#262220]"
+        onCopy={(e) => {
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const container = document.createElement('div');
+            container.appendChild(range.cloneContents());
+            
+            // Convert Tailwind classes to inline styles for rich text paste
+            container.querySelectorAll('.font-medium').forEach(el => {
+              (el as HTMLElement).style.fontWeight = 'bold';
+            });
+            
+            const plainText = selection.toString().replace(/\s+/g, ' ').trim();
+            const htmlText = container.innerHTML.replace(/\s+/g, ' ').trim();
+            
+            e.clipboardData?.setData('text/plain', plainText);
+            e.clipboardData?.setData('text/html', htmlText);
+            e.preventDefault();
+          }
+        }}
+      >
         {view === "annotated" ? (
-          segments.map((seg, i) => (
-            <span key={i}>
-              {seg.suggestion && seg.suggestion !== seg.text ? (
-                wordDiff(seg.text, seg.suggestion).map((t, k) => (
-                  <Fragment key={k}>
-                    {t.type === "removed" ? (
-                      <s className="text-[#6b665e] line-through decoration-[#6b665e] decoration-1">{t.text}</s>
-                    ) : t.type === "added" ? (
-                      <span className="font-medium text-[#B08D57]">{t.text}</span>
-                    ) : (
-                      <span>{t.text}</span>
-                    )}
-                    {" "}
-                  </Fragment>
-                ))
-              ) : (
-                wordDiff(seg.text, seg.correction || seg.text).map((t, k) => (
-                  <Fragment key={k}>
-                    {t.type === "removed" ? (
-                      <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
-                    ) : t.type === "added" ? (
-                      <span className="font-medium text-[#3f5a3d]">{t.text}</span>
-                    ) : (
-                      <span>{t.text}</span>
-                    )}
-                    {" "}
-                  </Fragment>
-                ))
-              )}
-            </span>
-          ))
+          <span>
+            {segments.map((seg, i) => (
+              <Fragment key={i}>
+                {seg.suggestion && seg.suggestion !== seg.text ? (
+                  wordDiff(seg.text, seg.suggestion).map((t, k) => (
+                    <Fragment key={k}>
+                      {t.type === "removed" ? (
+                        <s className="text-[#6b665e] line-through decoration-[#6b665e] decoration-1">{t.text}</s>
+                      ) : t.type === "added" ? (
+                        <span className="font-medium text-[#B08D57]">{t.text}</span>
+                      ) : (
+                        <span>{t.text}</span>
+                      )}
+                      {" "}
+                    </Fragment>
+                  ))
+                ) : (
+                  wordDiff(seg.text, seg.correction || seg.text).map((t, k) => (
+                    <Fragment key={k}>
+                      {t.type === "removed" ? (
+                        <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
+                      ) : t.type === "added" ? (
+                        <span className="font-medium text-[#3f5a3d]">{t.text}</span>
+                      ) : (
+                        <span>{t.text}</span>
+                      )}
+                      {" "}
+                    </Fragment>
+                  ))
+                )}
+              </Fragment>
+            ))}
+          </span>
         ) : (
           <span>{segments.map((s) => s.suggestion || s.correction || s.text).join(" ")}</span>
         )}
