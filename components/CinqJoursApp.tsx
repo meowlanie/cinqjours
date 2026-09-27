@@ -2860,29 +2860,28 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           {t("v90", "Régénérer le sujet")}
         </button>
       </div>
-      <div className="rounded-lg bg-[#26222008] p-5">
+      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v95", "Votre présentation")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
         <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={`cj-recording-day5-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        {hasRecording && (
+          <div className="mt-4 border-t border-[#26222014] pt-4">
+            {!audioResult ? (
+              <button
+                onClick={correctAudio}
+                disabled={audioLoading}
+                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
+              >
+                {audioLoading && <Loader2 size={15} className="animate-spin" />}
+                
+                {t("v65", "Corriger mon enregistrement")}
+              </button>
+            ) : (
+              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+            )}
+          </div>
+        )}
       </div>
-
-      {hasRecording && (
-        <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
-          {!audioResult ? (
-            <button
-              onClick={correctAudio}
-              disabled={audioLoading}
-              className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
-            >
-              {audioLoading && <Loader2 size={15} className="animate-spin" />}
-              
-              {t("v65", "Corriger mon enregistrement")}
-            </button>
-          ) : (
-            <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
-          )}
-        </div>
-      )}
 
       {toast && (
         <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
