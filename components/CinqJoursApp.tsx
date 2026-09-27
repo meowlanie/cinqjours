@@ -229,7 +229,10 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
         setSaved(false);
         stream.getTracks().forEach((t) => t.stop());
         if (onRecorded) onRecorded(url);
-        blobToDataUrl(blob).then((dataUrl) => { if (onAudioData) onAudioData(dataUrl); }).catch(() => {});
+        blobToDataUrl(blob).then((dataUrl) => {
+          if (onAudioData) onAudioData(dataUrl);
+          if (persistKey) putAudio(persistKey, dataUrl).catch(() => {});
+        }).catch(() => {});
       };
       mr.start();
       mediaRecorderRef.current = mr;
@@ -359,20 +362,10 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
       {status === "recorded" && audioUrl && (
         <div className="flex flex-wrap items-center gap-2 cj-fade-in">
           <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} className="hidden" />
-          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)]">
+          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]">
             {playing ? <Square size={14} /> : <Play size={14} />}
             {playing ? t("v12", "En lecture…") : t("v13", "Écouter")}
           </button>
-          {persistKey && !saved && (
-            <button onClick={save} disabled={saving} className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-50">
-              <Save size={14} /> {saving ? "…" : t("v204", "Save")}
-            </button>
-          )}
-          {persistKey && saved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-[#4a453f]">
-              <Check size={13} />  {t("v14", "Enregistré")}
-            </span>
-          )}
           <button onClick={reset} className="flex items-center gap-1.5 rounded-full border border-[#26222033] px-3 py-2 text-xs text-[#4a453f] hover:bg-[#26222008]">
             <RotateCcw size={13} /> {t("v207", "Redo")}
           </button>
