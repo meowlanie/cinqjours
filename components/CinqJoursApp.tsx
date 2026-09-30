@@ -34,8 +34,18 @@ const FontImport = () => (
     .cj-mono { font-family: var(--font-mono), monospace; }
     .cj-scrollbar::-webkit-scrollbar { width: 6px; }
     .cj-scrollbar::-webkit-scrollbar-thumb { background: #C1974B55; border-radius: 4px; }
+    .cj-scrollbar-hidden { scrollbar-width: none; }
+    .cj-scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; }
     @keyframes cj-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .cj-fade-in { animation: cj-fade-in 0.35s ease-out; }
+    .cj-paper {
+      background-color: #FBF7EE;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      box-shadow: inset 0 0 0 1px #2622200d;
+    }
+    .cj-ink { text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 3px; cursor: help; }
+    .cj-ink-flag { text-decoration-color: var(--accent); }
+    .cj-ink-sug { text-decoration-color: #3f5a3d; }
     @keyframes cj-pulse-rec { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
     .cj-rec-dot { animation: cj-pulse-rec 1.1s ease-in-out infinite; }
     .cj-tab-ribbon {
@@ -1936,10 +1946,10 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
 
   if (transcript.length === 0) {
     return (
-      <div className="cj-fade-in space-y-5">
-        <DayHeader n={2} title={t("v242", "Prononciation")} subtitle={isTextSource ? t("v66", "Lisez chaque phrase à voix haute, puis enregistrez-vous.") : t("v67", "Lisez chaque phrase à voix haute, puis enregistrez-vous. Utilisez la mini-vidéo (en bas à droite) pour réécouter.")} />
-        <ImportNotice suffix={t("v68", " — les phrases à prononcer apparaîtront ici.")} />
-      </div>
+    <div className="cj-fade-in space-y-5">
+      <DayHeader n={2} title={t("v242", "Prononciation")} subtitle={isTextSource ? t("v66", "Lisez chaque phrase à voix haute, puis enregistrez-vous.") : t("v67", "Lisez chaque phrase à voix haute, puis enregistrez-vous. Utilisez la mini-vidéo (en bas à droite) pour réécouter.")} />
+      <ImportNotice suffix={t("v68", " — les phrases à prononcer apparaîtront ici.")} />
+    </div>
     );
   }
 
@@ -2304,7 +2314,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         <button
           onClick={() => generate(true)}
           disabled={generating || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -2640,7 +2650,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         <button
           onClick={() => generateTopic(true)}
           disabled={topicLoading || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -2853,7 +2863,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         <button
           onClick={() => generateTopic(true)}
           disabled={topicLoading || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -3030,7 +3040,7 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
       {/* FRONT: original text + audio */}
       <div
         ref={frontRef}
-        className="w-full rounded-lg border border-[#26222014] p-4"
+        className="cj-paper w-full rounded-xl border border-[#26222014] p-5"
         style={{ backfaceVisibility: "hidden" }}
       >
         {entry.prompt && !entry.prompt.startsWith("Écrivez librement") && (
@@ -3043,8 +3053,8 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
       {/* BACK: corrections */}
       <div
         ref={backRef}
-        className="absolute inset-0 w-full rounded-lg border border-[#26222014] pb-6"
-        style={{ backfaceVisibility: "hidden", backgroundColor: "#F4EEE0", transform: "rotateY(180deg)" }}
+        className="cj-paper absolute inset-0 w-full rounded-xl border border-[#26222014] pb-6"
+        style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
       >
         <div className="p-4" onClick={(e) => e.stopPropagation()}>
           {entry.correction && (
@@ -3058,10 +3068,62 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
   );
 }
 
-function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
-  const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, sourceText, sourceId);
-  const journalPromptKey = `cj-journal-prompt-${resourceSegment(sourceId)}`;
-  const journalRecordingKey = `cj-journal-recording-${resourceSegment(sourceId)}`;
+function JournalMarginalia({ result, onAddToCarnet, savedCorrections, removeVocabByWord }: {
+  result: CorrectResult;
+  onAddToCarnet?: (s: Segment) => void;
+  savedCorrections?: Set<string>;
+  removeVocabByWord?: (word: string) => void;
+}) {
+  const { segments } = result;
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div className="cj-display text-[17px] leading-relaxed text-[#262220]">
+      {segments.map((seg, i) => {
+        const isFlag = seg.flagged && seg.correction && seg.correction !== seg.text;
+        const isSug = !isFlag && seg.suggestion && seg.suggestion !== seg.text;
+        if (!isFlag && !isSug) return <span key={i}>{seg.text}{" "}</span>;
+        const note = isFlag ? seg.correction : seg.suggestion;
+        const tone = isFlag ? "var(--accent-text)" : "#3f5a3d";
+        return (
+          <span
+            key={i}
+            className={`cj-ink relative ${isFlag ? "cj-ink-flag" : "cj-ink-sug"}`}
+            onMouseEnter={() => setOpen(i)}
+            onMouseLeave={() => setOpen((o) => (o === i ? null : o))}
+            onClick={() => setOpen((o) => (o === i ? null : i))}
+            onFocus={() => setOpen(i)}
+            onBlur={() => setOpen((o) => (o === i ? null : o))}
+            tabIndex={0}
+          >
+            {seg.text}
+            {open === i && (
+              <span className="cj-fade-in absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-[#26222014] bg-[#FBF7EE] p-3 text-left text-[12px] normal-case shadow-md">
+                <span className="cj-mono mb-1 block text-[10px] uppercase tracking-wider" style={{ color: tone }}>{isFlag ? (seg.note?.label || t("v220", "Correction")) : t("v222", "Style")}</span>
+                <span className="italic text-[#262220]">"{seg.text.length > 60 ? seg.text.slice(0, 60) + "…" : seg.text}" → {note}</span>
+                {seg.note?.comment && <span className="mt-1 block text-[#6b665e]">{seg.note.comment}</span>}
+                {onAddToCarnet && (() => {
+                  const key = (seg.correction || seg.text).toLowerCase();
+                  const saved = savedCorrections?.has(key);
+                  return saved ? (
+                    <button onClick={(e) => { e.stopPropagation(); removeVocabByWord?.(key); }} className="mt-2 flex items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)]"><Check size={11} /> {t("v19", "Carnet")}</button>
+                  ) : (
+                    <button onClick={(e) => { e.stopPropagation(); onAddToCarnet(seg); }} className="mt-2 flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30]"><Plus size={11} /> {t("v19", "Carnet")}</button>
+                  );
+                })()}
+              </span>
+            )}
+            {" "}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: { addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
+  const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, "", null);
+  const journalPromptKey = `cj-journal-prompt`;
+  const journalRecordingKey = `cj-journal-recording`;
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
   useEffect(() => {
@@ -3135,7 +3197,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       const res = await fetch("/api/topic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceText, title: sourceTitle, mode: "journal", target: getUiLocale(), level }),
+        body: JSON.stringify({ mode: "journal", target: getUiLocale(), level }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -3206,7 +3268,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       const res = await fetch("/api/correct-audio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: audioPayload, source: sourceText, target: getLangCodes().targetLang, translation: getUiLocale() }),
+        body: JSON.stringify({ audio: audioPayload, target: getLangCodes().targetLang, translation: getUiLocale() }),
       });
       const data = await res.json().catch(() => ({}));
       const fail = aiFailureMessage(res, data);
@@ -3271,18 +3333,22 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
   };
 
   return (
-    <div className="cj-fade-in space-y-5">
+    <div className="cj-fade-in relative flex flex-col gap-4 xl:flex-row xl:items-stretch xl:gap-0">
+      <section className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-r-none p-6 shadow-[0_2px_0_#efe9da] space-y-5 xl:h-[calc(100dvh-1rem)] xl:overflow-y-auto cj-scrollbar-hidden">
       <div>
-        <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">Journal</p>
-        <h2 className="cj-display text-3xl text-[#262220]">{dateStr}</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-[#6b665e]">{t("v252", "Write a journal entry freely or click 'Generate a topic' for inspiration.")}</p>
+        <p className="cj-mono text-[10px] uppercase tracking-[0.2em] text-[var(--accent-text)]">Journal</p>
+        <h2 className="cj-formal mt-1 text-2xl leading-tight text-[#262220]">{dateStr}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-[#6b665e]">{t("v252", "Write a journal entry freely or click 'Generate a topic' for inspiration.")}</p>
         {generating ? (
           <p className="mt-2 flex items-center gap-1 text-sm text-[#6b665e]">
             
             {t("v88", "Génération du sujet")}<LoadingDots />
           </p>
         ) : prompt ? (
-          <p className="mt-2 rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{prompt}</p>
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border-l-2 border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3">
+            <p className="text-[15px] italic leading-relaxed text-[#262220]">{prompt}</p>
+            <button onClick={deletePrompt} className="shrink-0 text-[11px] text-[var(--accent-text)] transition hover:opacity-70">{t("v106", "Supprimer")}</button>
+          </div>
         ) : null}
       </div>
 
@@ -3290,19 +3356,18 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
         {generating ? (
           <button
             disabled
-            className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] opacity-40"
+            className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] opacity-60"
           >
-            <Loader2 size={13} className="animate-spin" />
+            <LoadingDots />
             {prompt ? t("v104", "Régénérer un sujet") : t("v105", "Générer un sujet")}
           </button>
         ) : prompt ? (
           <div className="flex items-center gap-3">
             <button
               onClick={() => generatePrompt()}
-              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
             >
               <Sparkles size={13} />
-              
               {t("v104", "Régénérer un sujet")}
             </button>
             <button onClick={deletePrompt} className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]">{t("v106", "Supprimer")}</button>
@@ -3311,15 +3376,14 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           <div className="flex items-center gap-3">
             <button
               onClick={() => generatePrompt()}
-              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
             >
               <Sparkles size={13} />
-              
               {t("v105", "Générer un sujet")}
             </button>
             <button
               onClick={() => { setDraftTopic(""); setEditingTopic(true); }}
-              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
             >
               <PenLine size={13} />
               {t("v257", "Mon propre sujet")}
@@ -3365,7 +3429,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           rows={12}
           spellCheck={false}
           placeholder={t("v107", "Écrivez votre entrée de journal ici…")}
-          className="w-full rounded-lg border border-[#26222022] bg-white/70 p-4 text-[15px] leading-relaxed text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57]"
+          className="w-full resize-none rounded-xl border border-[#2622201a] bg-white/50 p-5 text-[17px] leading-relaxed text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57]"
         />
       )}
 
@@ -3375,10 +3439,9 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
           >
-            {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
-            
+            {selfLoading ? <LoadingDots /> : <PenLine size={15} />}
             {t("v60", "Corriger moi-même")}
           </button>
           <button
@@ -3386,26 +3449,26 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
             onClick={correct}
             className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-30"
           >
-            {loading && <Loader2 size={15} className="animate-spin" />}
-            
+            {loading && <LoadingDots />}
             {t("v253", "Correct my entry")}
           </button>
         </div>
       </div>
 
       {result && (
-        <div>
-          <div className="mb-1 flex justify-end">
+        <div className="rounded-xl border border-[#26222014] bg-white/50 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="cj-mono text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v220", "Correction")}</p>
             <button onClick={clear} className="flex items-center gap-1 text-xs text-[#6b665e] transition hover:text-[#B5432E]">
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
-          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+          <JournalMarginalia result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
         </div>
       )}
 
-      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
-        <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v108", "Entrée orale (optionnel)")}</p>
+      <div className="rounded-xl border border-[#26222014] bg-white/40 p-4">
+        <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v108", "Entrée orale (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
         <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey={journalRecordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
         {hasRecording && (
@@ -3414,14 +3477,15 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
               <button
                 onClick={correctAudio}
                 disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-5 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-50"
               >
-                {audioLoading && <Loader2 size={15} className="animate-spin" />}
-                
+                {audioLoading && <LoadingDots />}
                 {t("v65", "Corriger mon enregistrement")}
               </button>
             ) : (
-              <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+              <div className="rounded-xl border border-[#26222014] bg-white/50 p-4">
+                <JournalMarginalia result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+              </div>
             )}
           </div>
         )}
@@ -3436,49 +3500,56 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
           <Save size={14} />  {t("v111", "Enregistrer l'entrée")}
         </button>
       </div>
+      </section>
 
-      {entries.length > 0 && (
-        <div className="border-t border-[#26222014] pt-5">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v112", "Entrées précédentes")}</p>
-            <div className="flex items-center gap-1 rounded-full bg-[#2622200a] p-0.5 text-[11px]">
-              <button
-                onClick={() => setHistView("cards")}
-                className={`rounded-full px-3 py-1 transition ${histView === "cards" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
-                >
-                  {t("v211", "Cards")}
-                </button>
-              <button
-                onClick={() => setHistView("cal")}
-                className={`rounded-full px-3 py-1 transition ${histView === "cal" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
-                >
-                  {t("v212", "Calendar")}
-                </button>
-            </div>
+       <aside className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-l-none px-6 pt-3 pb-6 shadow-[0_2px_0_#efe9da] xl:h-[calc(100dvh-1rem)] xl:flex xl:flex-col">
+         <div className="xl:flex-1 xl:overflow-y-auto cj-scrollbar">
+         <div className="pr-4">
+            <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-[#FBF7EE] pt-3 pb-1">
+             <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v112", "Entrées précédentes")}</p>
+             <div className="flex items-center gap-1 rounded-full bg-[#2622200a] p-0.5 text-[11px]">
+               <button
+                 onClick={() => setHistView("cards")}
+                 className={`rounded-full px-3 py-1 transition ${histView === "cards" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                 >
+                   {t("v211", "Cards")}
+                 </button>
+               <button
+                 onClick={() => setHistView("cal")}
+                 className={`rounded-full px-3 py-1 transition ${histView === "cal" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                 >
+                   {t("v212", "Calendar")}
+                 </button>
+             </div>
+           </div>
+           {entries.length > 0 ? (
+             histView === "cards" ? (
+               <div className="columns-2 gap-3">
+                 {entries.map((e) => (
+                   <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="cj-paper relative mb-3 cursor-pointer break-inside-avoid rounded-lg border border-[#26222014] px-2 py-3 transition hover:border-[#26222026]">
+                     <div className="flex items-start justify-between gap-2">
+                       <p className="cj-mono text-[9px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
+                       <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[#26222044] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
+                         <Trash2 size={14} />
+                       </button>
+                     </div>
+                     {e.prompt && !e.prompt.startsWith("Écrivez librement") ? (
+                       <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{truncateWords(e.prompt, 18)}</p>
+                     ) : null}
+                     {e.text && <p className="mt-2 line-clamp-[10] text-sm leading-relaxed text-[#262220]">{e.text}</p>}
+                     {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
+                   </div>
+                 ))}
+               </div>
+             ) : (
+               <JournalCalendar entries={entries} onOpen={(e) => { setOpenEntry(e); setShowCorrection(false); }} />
+             )
+           ) : (
+             <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{t("v297", "No entries yet.")}</p>
+           )}
           </div>
-          {histView === "cards" ? (
-            <div className="columns-1 gap-3 sm:columns-2 lg:columns-3">
-              {entries.map((e) => (
-                <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="cursor-pointer break-inside-avoid mb-3 min-h-[180px] rounded-lg border border-[#26222014] bg-[#F4EEE0] p-4 shadow-sm transition hover:shadow-md">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="cj-mono text-[10px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
-                    <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[#26222044] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  {e.prompt && !e.prompt.startsWith("Écrivez librement") ? (
-                    <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{truncateWords(e.prompt, 18)}</p>
-                  ) : null}
-                  {e.text && <p className="mt-2 text-sm leading-relaxed text-[#262220]">{truncateWords(e.text, 80)}</p>}
-                  {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <JournalCalendar entries={entries} onOpen={(e) => { setOpenEntry(e); setShowCorrection(false); }} />
-          )}
-        </div>
-      )}
+         </div>
+       </aside>
 
       {notice && (
         <div role="status" aria-live="polite" className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#B5432E] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">
@@ -3500,7 +3571,7 @@ function JournalView({ sourceText, sourceTitle, addVocab, level, savedCorrection
       {openEntry && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#262220]/40 p-4" onClick={() => setOpenEntry(null)}>
           <div
-            className="w-full max-w-2xl rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl"
+            className="cj-paper w-full max-w-2xl rounded-2xl p-6 shadow-2xl"
             style={{ perspective: "1200px" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -5026,7 +5097,7 @@ export function CinqJoursApp(props: {
               <>
                 {view === 1 && <DayOne key={resourceKey} sourceText={sourceText} addVocab={addVocab} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
                 {view === 4 && <DayFour key={resourceKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
-                {view === "journal" && <JournalView key={resourceKey} sourceText={sourceText} sourceTitle={videoTitle} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} sourceId={videoId} />}
+                {view === "journal" && <JournalView key={`journal-${langKey}`} addVocab={addVocab} level={level} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />}
               </>
             );
           })()}
