@@ -2952,7 +2952,7 @@ function AudioBar({ src }: { src?: string }) {
   const pct = dur > 0 ? (cur / dur) * 100 : 0;
 
   return (
-    <div className="mt-2 flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-1">
+      <div className="mt-2 flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-1">
       <audio
         ref={ref}
         src={src}
@@ -2966,9 +2966,9 @@ function AudioBar({ src }: { src?: string }) {
       <button
         onClick={toggle}
         aria-label={playing ? t("v12", "En lecture…") : t("v13", "Écouter")}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[#262220] transition hover:bg-[var(--accent-hover)]"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] transition hover:opacity-80"
       >
-        {playing ? <Pause size={13} /> : <Play size={13} />}
+        {playing ? <Pause size={13} fill="currentColor" /> : <Play size={13} fill="currentColor" />}
       </button>
       <input
         type="range"
@@ -2982,7 +2982,7 @@ function AudioBar({ src }: { src?: string }) {
           setCur(v);
         }}
         aria-label={t("v250", "Progression audio")}
-        className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full border-0 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-track]:bg-transparent"
+        className="h-1.5 flex-1 min-w-0 cursor-pointer appearance-none rounded-full border-0 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-track]:bg-transparent"
         style={{ background: `linear-gradient(to right, var(--accent) ${pct}%, #262220 ${pct}%)` }}
       />
       <a
