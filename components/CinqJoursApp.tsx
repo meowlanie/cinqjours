@@ -1866,7 +1866,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
           >
             {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
             
@@ -2314,7 +2314,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         <button
           onClick={() => generate(true)}
           disabled={generating || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -2650,7 +2650,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         <button
           onClick={() => generateTopic(true)}
           disabled={topicLoading || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -2675,7 +2675,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
           >
             {selfLoading ? <Loader2 size={15} className="animate-spin" /> : <PenLine size={15} />}
             
@@ -2863,7 +2863,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         <button
           onClick={() => generateTopic(true)}
           disabled={topicLoading || !sourceText.trim()}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728] disabled:opacity-40"
         >
           {regenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
           
@@ -2994,7 +2994,7 @@ function AudioBar({ src }: { src?: string }) {
         <Download size={14} />
       </a>
       <span className="cj-mono shrink-0 text-[10px] tabular-nums text-[var(--accent-text)]">
-        {fmtAudioTime(cur)} / {fmtAudioTime(dur)}
+        {fmtAudioTime(cur)}/{fmtAudioTime(dur)}
       </span>
     </div>
   );
@@ -3356,7 +3356,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
         {generating ? (
           <button
             disabled
-            className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] opacity-60"
+            className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] opacity-60"
           >
             <LoadingDots />
             {prompt ? t("v104", "Régénérer un sujet") : t("v105", "Générer un sujet")}
@@ -3365,7 +3365,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           <div className="flex items-center gap-3">
             <button
               onClick={() => generatePrompt()}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
+              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
             >
               <Sparkles size={13} />
               {t("v104", "Régénérer un sujet")}
@@ -3376,14 +3376,14 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           <div className="flex items-center gap-3">
             <button
               onClick={() => generatePrompt()}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
+              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
             >
               <Sparkles size={13} />
               {t("v105", "Générer un sujet")}
             </button>
             <button
               onClick={() => { setDraftTopic(""); setEditingTopic(true); }}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80"
+              className="flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[#B08D5728]"
             >
               <PenLine size={13} />
               {t("v257", "Mon propre sujet")}
@@ -3439,7 +3439,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
             onClick={startSelfCorrect}
-            className="flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
           >
             {selfLoading ? <LoadingDots /> : <PenLine size={15} />}
             {t("v60", "Corriger moi-même")}
@@ -3477,7 +3477,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
               <button
                 onClick={correctAudio}
                 disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-5 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
               >
                 {audioLoading && <LoadingDots />}
                 {t("v65", "Corriger mon enregistrement")}
