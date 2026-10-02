@@ -294,7 +294,7 @@ The system's most distinctive component. Clip-path polygon shapes that form a vi
 
 A compact pill segmented control in the header.
 
-- **Style:** `rounded-full border border-[#F4EEE022]` with internal pill buttons. Active segment: `bg-[#F4EEE0] text-[#171B22]`. Inactive: `text-[#F4EEE0aa]` with hover brightening.
+- **Style:** `rounded-full border border-[#F4EEE022]` with internal pill buttons. Active segment: `bg-[#F4EEE0] text-[var(--text-strong)]`. Inactive: `text-[#F4EEE0aa]` with hover brightening.
 - **Size:** `px-2 py-0.5 text-xs` per segment.
 
 ### Toast Notifications

@@ -62,19 +62,19 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#262220]/70 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim-strong)] p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl bg-[var(--primary-text)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="cj-display text-2xl text-[#262220]">{t("settings.title", "Paramètres")}</h2>
+          <h2 className="cj-display text-2xl text-[var(--text)]">{t("settings.title", "Paramètres")}</h2>
           <button
             onClick={onClose}
             aria-label={t("settings.close", "Fermer")}
-            className="rounded-full p-1 text-[#6b665e] transition hover:bg-[#26222011] hover:text-[#262220]"
+            className="rounded-full p-1 text-[var(--text-muted)] transition hover:bg-[var(--fill-muted)] hover:text-[var(--text)]"
           >
             <X size={18} />
           </button>
@@ -102,7 +102,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 onClick={handleExport}
                 disabled={!!busy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[#262220] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[var(--text)] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
               >
                 {busy === "export" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 {t("v262", "Exporter mes données")}
@@ -110,7 +110,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={!!busy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[#262220] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent)] py-2.5 text-sm font-medium text-[var(--text)] shadow transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
               >
                 {busy === "import" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
                 {t("v263", "Importer mes données")}

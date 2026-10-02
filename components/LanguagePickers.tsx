@@ -14,7 +14,7 @@ import { t } from "@/lib/settings";
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-[#6b665e]">{label}</p>
+      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
       {children}
     </div>
   );
@@ -37,8 +37,8 @@ export function LangSelect({
           onClick={() => onChange(o)}
           className={`rounded-lg border px-3 py-1.5 text-sm transition ${
             value === o
-              ? "border-[#B08D57] bg-[#B08D5733] text-[#262220]"
-              : "border-[#26222022] text-[#6b665e] hover:border-[#26222044]"
+              ? "border-[#B08D57] bg-[#B08D5733] text-[var(--text)]"
+              : "border-[var(--border-strong)] text-[var(--text-muted)] hover:border-[var(--border-strong)]"
           }`}
         >
           {t(`lang.${o}`, o)}
@@ -63,8 +63,8 @@ export function LevelPicker({
           onClick={() => onChange(lv)}
           className={`flex-1 rounded-lg border px-2 py-2 text-sm transition ${
             value === lv
-              ? "border-[#B08D57] bg-[#B08D5733] text-[#262220]"
-              : "border-[#26222022] text-[#6b665e] hover:border-[#26222044]"
+              ? "border-[#B08D57] bg-[#B08D5733] text-[var(--text)]"
+              : "border-[var(--border-strong)] text-[var(--text-muted)] hover:border-[var(--border-strong)]"
           }`}
         >
           {t(`level.${lv}`, lv)}

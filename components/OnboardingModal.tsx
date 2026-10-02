@@ -16,7 +16,7 @@ type TFn = (key: string, fallback: string) => string;
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-[#6b665e]">{label}</p>
+      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
       {children}
     </div>
   );
@@ -41,8 +41,8 @@ function LangSelect({
           onClick={() => onChange(o)}
           className={`rounded-lg border px-3 py-1.5 text-sm transition ${
             value === o
-              ? "border-[#B08D57] bg-[#B08D5733] text-[#262220]"
-              : "border-[#26222022] text-[#6b665e] hover:border-[#26222044]"
+              ? "border-[#B08D57] bg-[#B08D5733] text-[var(--text)]"
+              : "border-[var(--border-strong)] text-[var(--text-muted)] hover:border-[var(--border-strong)]"
           }`}
         >
           {t(`lang.${o}`, o)}
@@ -70,10 +70,10 @@ export function OnboardingModal() {
   const tp: TFn = (key, fallback) => t(key, fallback, ui);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#262220]/70 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl">
-        <h2 className="cj-display text-2xl text-[#262220]">{tp("onboarding.title", "Welcome to Cinq jours")}</h2>
-        <p className="mt-1 text-sm text-[#6b665e]">{tp("onboarding.subtitle", "A five-day language learning routine that turns your favourite content into a structured curriculum.")}</p>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--scrim-strong)] p-4">
+      <div className="w-full max-w-md rounded-2xl bg-[var(--primary-text)] p-6 shadow-2xl">
+        <h2 className="cj-display text-2xl text-[var(--text)]">{tp("onboarding.title", "Welcome to Cinq jours")}</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">{tp("onboarding.subtitle", "A five-day language learning routine that turns your favourite content into a structured curriculum.")}</p>
 
         <div className="mt-5 space-y-4">
           <Field label={tp("onboarding.ui", "Langue de l'interface")}>
@@ -93,8 +93,8 @@ export function OnboardingModal() {
                   onClick={() => setLevel(lv)}
                   className={`flex-1 rounded-lg border px-2 py-2 text-sm transition ${
                     level === lv
-                      ? "border-[#B08D57] bg-[#B08D5733] text-[#262220]"
-                      : "border-[#26222022] text-[#6b665e] hover:border-[#26222044]"
+                      ? "border-[#B08D57] bg-[#B08D5733] text-[var(--text)]"
+                      : "border-[var(--border-strong)] text-[var(--text-muted)] hover:border-[var(--border-strong)]"
                   }`}
                 >
                   {tp(`level.${lv}`, lv)}
@@ -113,7 +113,7 @@ export function OnboardingModal() {
               level,
             })
           }
-          className="mt-6 w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#262220] shadow-lg transition hover:bg-[var(--accent-hover)]"
+          className="mt-6 w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[var(--text)] shadow-lg transition hover:bg-[var(--accent-hover)]"
         >
           {tp("onboarding.continue", "Let's Begin")}
         </button>

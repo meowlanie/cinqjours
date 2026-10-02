@@ -39,9 +39,9 @@ const FontImport = () => (
     @keyframes cj-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .cj-fade-in { animation: cj-fade-in 0.35s ease-out; }
     .cj-paper {
-      background-color: #FBF7EE;
+      background-color: var(--paper);
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      box-shadow: inset 0 0 0 1px #2622200d;
+      box-shadow: inset 0 0 0 1px var(--border);
     }
     .cj-ink { text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 3px; cursor: help; }
     .cj-ink-flag { text-decoration-color: var(--accent); }
@@ -366,17 +366,17 @@ function Recorder({ label, onRecorded, onAudioData, persistKey }: {
             {status === "recording" ? <Pause size={14} /> : <Play size={14} />}
             {holding ? t("v205", "Finish…") : status === "recording" ? t("v243", "Pause") : t("v206", "Resume")} · {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
           </button>
-          <p className="text-[10px] text-[#6b665e]">{t("v11", "Appuyez brièvement pour mettre en pause · maintenez 2 s pour terminer")}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">{t("v11", "Appuyez brièvement pour mettre en pause · maintenez 2 s pour terminer")}</p>
         </div>
       )}
       {status === "recorded" && audioUrl && (
         <div className="flex flex-wrap items-center gap-2 cj-fade-in">
           <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} className="hidden" />
-          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]">
+          <button onClick={togglePlay} className="flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:bg-[var(--accent-hover)]">
             {playing ? <Square size={14} /> : <Play size={14} />}
             {playing ? t("v12", "En lecture…") : t("v13", "Écouter")}
           </button>
-          <button onClick={reset} className="flex items-center gap-1.5 rounded-full border border-[#26222033] px-3 py-2 text-xs text-[#4a453f] hover:bg-[#26222008]">
+          <button onClick={reset} className="flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-2 text-xs text-[#4a453f] hover:bg-[var(--fill-muted)]">
             <RotateCcw size={13} /> {t("v207", "Redo")}
           </button>
           {error && <span className="text-[11px] text-[#B5432E]">{error}</span>}
@@ -431,11 +431,11 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
 
   return (
     <div className="cj-fade-in space-y-4">
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => setView("annotated")}
+        <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+          <button
+            onClick={() => setView("annotated")}
           aria-pressed={view === "annotated"}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "annotated" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+          className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${view === "annotated" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
         >
 
           {t("v15", "Texte annoté")}
@@ -443,7 +443,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
         <button
           onClick={() => setView("corrected")}
           aria-pressed={view === "corrected"}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${view === "corrected" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+          className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${view === "corrected" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
         >
 
           {t("v16", "Texte corrigé")}
@@ -451,7 +451,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
       </div>
 
       <div
-        className="rounded-lg border border-[#26222014] bg-white/60 p-5 leading-relaxed cj-display text-[17px] text-[#262220]"
+        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-5 leading-relaxed cj-display text-[17px] text-[var(--text)]"
         onCopy={(e) => {
           const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
@@ -481,7 +481,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                   wordDiff(seg.text, seg.suggestion).map((t, k) => (
                     <Fragment key={k}>
                       {t.type === "removed" ? (
-                        <s className="text-[#6b665e] line-through decoration-[#6b665e] decoration-1">{t.text}</s>
+                        <s className="text-[var(--text-muted)] line-through decoration-[var(--text-muted)] decoration-1">{t.text}</s>
                       ) : t.type === "added" ? (
                         <span className="font-medium text-[#B08D57]">{t.text}</span>
                       ) : (
@@ -667,7 +667,7 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
         suppressContentEditableWarning
         spellCheck={false}
         onInput={handleInput}
-        className="min-h-[140px] w-full rounded-lg border border-[#26222022] bg-white/70 p-4 text-[15px] leading-relaxed text-[#262220] outline-none focus:border-[#B08D57]"
+        className="min-h-[140px] w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none focus:border-[#B08D57]"
       />
       <div className="mt-2 flex justify-end">
         <button
@@ -1211,22 +1211,22 @@ function SourceView(props: SourceViewProps) {
   return (
     <div className="cj-fade-in space-y-6" ref={containerRef}>
       <div>
-        <h2 className="cj-display text-3xl text-[#262220]">{t("v24", "La source")}</h2>
-        <p className="mt-1 text-sm text-[#6b665e]">
+        <h2 className="cj-display text-3xl text-[var(--text)]">{t("v24", "La source")}</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           
           {t("v25", "Collez un lien YouTube. La transcription sert de matière première aux cinq jours.\n          La préférence de sous-titres est le français, sinon la langue disponible.")}
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <div className="flex w-full items-center gap-2 rounded-lg border border-[#26222022] bg-white/70 px-3 py-2.5 md:flex-1">
+        <div className="flex w-full items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2.5 md:flex-1">
           <Link2 size={15} className="shrink-0 text-[#B08D57]" />
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submitUrl()}
             placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full bg-transparent text-sm text-[#262220] outline-none placeholder:text-[#26222055]"
+            className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--placeholder)]"
           />
         </div>
         <button
@@ -1239,7 +1239,7 @@ function SourceView(props: SourceViewProps) {
         </button>
         <button
           onClick={onStartReadingMode}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)]"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-[var(--text)] transition hover:bg-[var(--accent-hover)]"
         >
           <FileText size={14} />  {t("v26", "Lire un texte")}
         </button>
@@ -1252,7 +1252,7 @@ function SourceView(props: SourceViewProps) {
         >
           {!isTextSource && videoId && (
             <div className="relative">
-              <div className="aspect-video w-full overflow-hidden rounded-lg border border-[#26222014] shadow-sm">
+              <div className="aspect-video w-full overflow-hidden rounded-lg border border-[var(--border)] shadow-sm">
                 <iframe
                   key={videoId}
                   className="h-full w-full"
@@ -1268,7 +1268,7 @@ function SourceView(props: SourceViewProps) {
                   href={`https://www.youtube.com/watch?v=${videoId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full bg-[#F4EEE0]/90 px-2.5 py-1.5 text-xs font-medium text-[#262220] shadow transition hover:bg-[#F4EEE0]"
+                  className="flex items-center gap-1 rounded-full bg-[var(--primary-text)]/90 px-2.5 py-1.5 text-xs font-medium text-[var(--text)] shadow transition hover:bg-[var(--primary-text)]"
                   title={t("v29", "Ouvrir sur YouTube")}
                 >
                   <ArrowUpRight size={11} /> YouTube
@@ -1317,7 +1317,7 @@ function SourceView(props: SourceViewProps) {
 
         <div
           onMouseUp={editing ? undefined : handleMouseUp}
-          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[#26222022] bg-white/60 px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
+          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
           style={{ minHeight: "370px", maxHeight: "760px" }}
         >
           {editing ? (
@@ -1325,7 +1325,7 @@ function SourceView(props: SourceViewProps) {
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               placeholder={t("v36", "Collez votre texte ici.")}
-              className="w-full h-full min-h-[300px] resize-none rounded p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+              className="w-full h-full min-h-[300px] resize-none rounded p-3 text-sm text-[var(--text)] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
             />
           ) : pasting ? (
             <div className="flex h-full flex-col">
@@ -1334,7 +1334,7 @@ function SourceView(props: SourceViewProps) {
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder={t("v40", "Collez ici la transcription. Elle sera reformatée automatiquement en cliquant sur « Valider ».")}
-                className="w-full grow resize-none rounded border border-[#B08D5733] bg-white/70 p-3 text-sm text-[#262220] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                className="w-full grow resize-none rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-3 text-sm text-[var(--text)] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                 style={{ minHeight: "300px" }}
               />
             </div>
@@ -1347,7 +1347,7 @@ function SourceView(props: SourceViewProps) {
               return (
                 <div key={i} className="flex items-start gap-1">
                   {line.t && <span className="cj-mono mt-1 w-10 shrink-0 text-[11px] text-[#B08D57]">{line.t}</span>}
-                  <p className="flex-1 leading-relaxed text-[#262220]">
+                  <p className="flex-1 leading-relaxed text-[var(--text)]">
                     {targetLang === "zh" ? (
                       Array.from(new Intl.Segmenter("zh", { granularity: "word" }).segment(line.text)).map(
                         ({ segment }, j) => {
@@ -1364,7 +1364,7 @@ function SourceView(props: SourceViewProps) {
                           return (
                             <span key={j} className="inline-flex flex-col items-center">
                               {showPinyin && (
-                                <span className="text-[10px] text-[#6b665e] leading-none">
+                                <span className="text-[10px] text-[var(--text-muted)] leading-none">
                                   {pinyin(segment, { toneType: "symbol", type: "string" })}
                                 </span>
                               )}
@@ -1415,7 +1415,7 @@ function SourceView(props: SourceViewProps) {
               );
             })
           ) : (
-            <p className="select-none text-[15px] text-[#26222055]">
+            <p className="select-none text-[15px] text-[var(--placeholder)]">
               {isTextSource ? t("v41", "Cliquer sur « Lire un texte » pour coller votre texte.") : (
                 <>
                   {t("v37", "Ouvrez la vidéo YouTube, cliquez")} <strong>{t("v38", "… → Afficher la transcription")}</strong>{t("v39", ", copiez tout le texte et collez-le ici.")}
@@ -1428,7 +1428,7 @@ function SourceView(props: SourceViewProps) {
           <div className="mt-2 flex justify-end gap-2">
             <button
               onClick={() => { setPasting(false); setPasteText(""); setEditing(false); }}
-              className="rounded-full px-3 py-1.5 text-xs text-[#6b665e] hover:text-[#262220]"
+              className="rounded-full px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
             >
               {t("v215", "Annuler")}
             </button>
@@ -1457,17 +1457,17 @@ function SourceView(props: SourceViewProps) {
             style={{
               left: Math.max(8, Math.min(sentencePopup.x - 160, document.documentElement.clientWidth - 336)),
               top: Math.max(8, Math.min(sentencePopup.y - 8, window.innerHeight - 300)),
-              backgroundColor: "#F4EEE0",
+              backgroundColor: "var(--primary-text)",
             }}
-            className="fixed z-30 w-80 overflow-y-auto overflow-x-hidden rounded-lg border border-[#26222018] p-4 text-[#262220] shadow-2xl cj-fade-in"
+            className="fixed z-30 w-80 overflow-y-auto overflow-x-hidden rounded-lg border border-[var(--border)] p-4 text-[var(--text)] shadow-2xl cj-fade-in"
           >
             <div className="mb-1 flex items-start justify-between gap-2">
               <p className="cj-display text-[15px] leading-snug">{sentencePopup.text}</p>
-              <button onClick={() => setSentencePopup(null)} className="shrink-0 text-[#26222055] hover:text-[#262220]">
+              <button onClick={() => setSentencePopup(null)} className="shrink-0 text-[var(--placeholder)] hover:text-[var(--text)]">
                 <X size={15} />
               </button>
             </div>
-            <p className="mt-2 text-xs italic text-[#6b665e]">
+            <p className="mt-2 text-xs italic text-[var(--text-muted)]">
               {sentenceTranslationLoading ? (
                 <span className="flex items-center gap-1"><Loader2 size={12} className="animate-spin" />  {t("v43", "Traduction en cours…")}</span>
               ) : sentenceAiUnavailable ? (
@@ -1477,7 +1477,7 @@ function SourceView(props: SourceViewProps) {
               )}
             </p>
 
-            <div className="mt-3 border-t border-[#26222014] pt-2">
+            <div className="mt-3 border-t border-[var(--border)] pt-2">
               {selNoteEditing ? (
                 <div>
                   <textarea
@@ -1486,11 +1486,11 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setSelNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
-                    <button onClick={() => setSelNoteEditing(false)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
-                    <button onClick={saveSentenceNote} className="text-xs font-medium text-[#7a5f30] hover:text-[#262220]">{t("v46", "Enregistrer")}</button>
+                    <button onClick={() => setSelNoteEditing(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
+                    <button onClick={saveSentenceNote} className="text-xs font-medium text-[#7a5f30] hover:text-[var(--text)]">{t("v46", "Enregistrer")}</button>
                   </div>
                 </div>
               ) : notes[sentencePopup.text.toLowerCase()] ? (
@@ -1515,7 +1515,7 @@ function SourceView(props: SourceViewProps) {
 
             {savedSentences.includes(sentencePopup.text.toLowerCase()) ? (
               <div className="mt-3 flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-[#6b665e]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
+                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
                 <button
                   onClick={() => removeVocabByWord(sentencePopup.text.toLowerCase())}
                   className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
@@ -1539,9 +1539,9 @@ function SourceView(props: SourceViewProps) {
             style={{
               left: Math.max(8, Math.min(popup.x ?? 200, document.documentElement.clientWidth - 296)),
               top: Math.max(8, Math.min(popup.y ?? 0, window.innerHeight - 440)),
-              backgroundColor: "#F4EEE0",
+              backgroundColor: "var(--primary-text)",
             }}
-            className="fixed z-20 max-h-[80vh] w-72 overflow-y-auto overflow-x-hidden rounded-lg border border-[#26222018] p-4 text-[#262220] shadow-2xl cj-fade-in"
+            className="fixed z-20 max-h-[80vh] w-72 overflow-y-auto overflow-x-hidden rounded-lg border border-[var(--border)] p-4 text-[var(--text)] shadow-2xl cj-fade-in"
           >
             <div className="mb-1 flex items-start justify-between gap-2">
               <div>
@@ -1550,7 +1550,7 @@ function SourceView(props: SourceViewProps) {
                   <p className="cj-mono text-[10px] uppercase tracking-wide text-[#B08D57]">{popup.pos}</p>
                 )}
               </div>
-              <button onClick={() => setPopup(null)} className="text-[#26222055] hover:text-[#262220]">
+              <button onClick={() => setPopup(null)} className="text-[var(--placeholder)] hover:text-[var(--text)]">
                 <X size={15} />
               </button>
             </div>
@@ -1562,11 +1562,11 @@ function SourceView(props: SourceViewProps) {
               <>
                 {popup.translation && <p className="mt-2 text-sm font-medium text-[#B08D57]">{popup.translation}</p>}
                 <p className="mt-1 text-sm text-[#4a453f]">{popup.def}</p>
-                {popup.example && <p className="mt-1.5 text-xs italic text-[#6b665e]">{popup.example}</p>}
+                {popup.example && <p className="mt-1.5 text-xs italic text-[var(--text-muted)]">{popup.example}</p>}
               </>
             )}
 
-            <div className="mt-3 border-t border-[#26222014] pt-2">
+            <div className="mt-3 border-t border-[var(--border)] pt-2">
               {noteEditing ? (
                 <div>
                   <textarea
@@ -1575,11 +1575,11 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
-                    <button onClick={() => setNoteEditing(false)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
-                    <button onClick={saveNote} className="text-xs font-medium text-[#7a5f30] hover:text-[#262220]">{t("v46", "Enregistrer")}</button>
+                    <button onClick={() => setNoteEditing(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
+                    <button onClick={saveNote} className="text-xs font-medium text-[#7a5f30] hover:text-[var(--text)]">{t("v46", "Enregistrer")}</button>
                   </div>
                 </div>
               ) : popup.note ? (
@@ -1604,7 +1604,7 @@ function SourceView(props: SourceViewProps) {
 
             {savedWords.has(stripPunct(popup.base || popup.word)) ? (
               <div className="mt-3 flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-[#6b665e]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
+                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
                 <button
                   onClick={() => removeVocabByWord(stripPunct(popup.base || popup.word))}
                   className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
@@ -1637,7 +1637,7 @@ function SourceView(props: SourceViewProps) {
         </div>
       </div>
 
-      <p className="text-xs text-[#6b665e]">
+      <p className="text-xs text-[var(--text-muted)]">
         {vocabCount === 0
           ? t("v50", "Votre carnet de vocabulaire est vide — cliquez un mot ou surlignez une expression pour commencer.")
           : t("v247", "Votre carnet contient {n} mots.").replace("{n}", String(vocabCount))}
@@ -1659,9 +1659,9 @@ function ResourcesView({ resources, onSelect, onDelete }: {
       <div>
         <div className="flex items-center gap-2">
           <History size={18} className="text-[#B08D57]" />
-          <h2 className="cj-display text-3xl text-[#262220]">{t("v51", "Ressources précédentes")}</h2>
+          <h2 className="cj-display text-3xl text-[var(--text)]">{t("v51", "Ressources précédentes")}</h2>
         </div>
-        <p className="mt-1 text-sm text-[#6b665e]">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           
           {t("v52", "Toutes les sources déjà importées. Reprenez-en une pour relancer son cycle de cinq jours.")}
         </p>
@@ -1693,13 +1693,13 @@ function ResourcesView({ resources, onSelect, onDelete }: {
               }}
               role="button"
               tabIndex={0}
-              className="group flex flex-col overflow-hidden rounded-lg border border-[#26222014] bg-[#F4EEE0] text-left shadow-md transition hover:border-[#B08D57] hover:shadow-lg cursor-pointer"
+              className="group flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--primary-text)] text-left shadow-md transition hover:border-[#B08D57] hover:shadow-lg cursor-pointer"
             >
-              <div className="aspect-video w-full overflow-hidden bg-[#26222010]">
+              <div className="aspect-video w-full overflow-hidden bg-[var(--fill-muted)]">
                 {isText ? (
-                  <div className="cj-scrollbar h-full w-full overflow-hidden bg-[#F4EEE0] p-3 text-left">
+                  <div className="cj-scrollbar h-full w-full overflow-hidden bg-[var(--primary-text)] p-3 text-left">
                     <p className="cj-mono mb-1 text-[9px] uppercase tracking-wider text-[#B08D57]">{t("v34", "Texte")}</p>
-                    <p className="text-[11px] leading-snug text-[#262220]">{thumbText}</p>
+                    <p className="text-[11px] leading-snug text-[var(--text)]">{thumbText}</p>
                   </div>
                 ) : (
                   <img
@@ -1711,16 +1711,16 @@ function ResourcesView({ resources, onSelect, onDelete }: {
               </div>
               <div className="flex flex-1 items-start justify-between gap-2 p-3.5">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[#262220]">{String(r.title || (Array.isArray(r.transcript) && r.transcript.length > 0 ? r.transcript.slice(0, 3).map((l: { text: string }) => l.text).join(" ").slice(0, 60) : t("v54", "Vidéo YouTube")))}</p>
-                  <p className="cj-mono mt-1 text-[10px] uppercase tracking-wide text-[#6b665e]">
+                  <p className="truncate text-sm font-medium text-[var(--text)]">{String(r.title || (Array.isArray(r.transcript) && r.transcript.length > 0 ? r.transcript.slice(0, 3).map((l: { text: string }) => l.text).join(" ").slice(0, 60) : t("v54", "Vidéo YouTube")))}</p>
+                  <p className="cj-mono mt-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
                     {new Date(String(r.date)).toLocaleDateString(localeOf(getUiLocale()), { day: "2-digit", month: "short", year: "numeric" })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <ArrowUpRight size={15} className="mt-0.5 shrink-0 text-[#26222044] transition group-hover:text-[#B08D57]" />
+                  <ArrowUpRight size={15} className="mt-0.5 shrink-0 text-[var(--text-muted)] transition group-hover:text-[#B08D57]" />
                   <button
                     onClick={(e) => { e.stopPropagation(); onDelete(String(r.key)); }}
-                    className="rounded p-0.5 text-[#26222033] transition hover:bg-[#B5432E11] hover:text-[#B5432E]"
+                    className="rounded p-0.5 text-[var(--text-muted)] transition hover:bg-[#B5432E11] hover:text-[#B5432E]"
                     title={t("v55", "Supprimer de l'historique")}
                   >
                     <Trash2 size={14} />
@@ -1857,11 +1857,11 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           rows={10}
           spellCheck={false}
           placeholder={t("v59", "Écrivez votre résumé ici…")}
-          className="w-full rounded-lg border border-[#26222022] bg-white/70 p-4 text-[15px] leading-relaxed text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57]"
+          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-sunken)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
-        <span className="cj-mono text-xs text-[#6b665e]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
+        <span className="cj-mono text-xs text-[var(--text-muted)]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
         <div className="flex items-center gap-2">
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
@@ -1886,7 +1886,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       {result && (
         <div>
           <div className="mb-1 flex justify-end">
-            <button onClick={clear} className="flex items-center gap-1 text-xs text-[#6b665e] transition hover:text-[#B5432E]">
+            <button onClick={clear} className="flex items-center gap-1 text-xs text-[var(--text-muted)] transition hover:text-[#B5432E]">
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
@@ -1894,13 +1894,13 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
         </div>
       )}
 
-      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--fill-muted)] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v62", "Résumé oral (optionnel)")}</p>
-        <p className="mb-3 text-xs text-[#6b665e]">{t("v63", "Enregistrez votre résumé à voix haute.")}</p>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">{t("v63", "Enregistrez votre résumé à voix haute.")}</p>
         <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey={`cj-recording-day1-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
 
         {hasRecording && (
-          <div className="mt-4 border-t border-[#26222014] pt-4">
+          <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               <button
                 onClick={correctAudio}
@@ -1958,10 +1958,10 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
       <DayHeader n={2} title={t("v242", "Prononciation")} subtitle={isTextSource ? t("v66", "Lisez chaque phrase à voix haute, puis enregistrez-vous.") : t("v67", "Lisez chaque phrase à voix haute, puis enregistrez-vous. Utilisez la mini-vidéo (en bas à droite) pour réécouter.")} />
 
       {videoId && !isTextSource && showVideo && (
-        <div className="fixed bottom-4 right-4 z-20 w-64 overflow-hidden rounded-lg border border-[#26222018] bg-[var(--background)] shadow-2xl">
+        <div className="fixed bottom-4 right-4 z-20 w-64 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] shadow-2xl">
           <div className="flex items-center justify-between px-2 py-1">
-            <span className="cj-mono text-[10px] uppercase tracking-wider text-[#F4EEE0aa]">{t("v69", "Vidéo")}</span>
-            <button onClick={() => setShowVideo(false)} className="text-[#F4EEE0aa] transition hover:text-[var(--primary-text)]" title={t("v70", "Masquer la vidéo")}>
+            <span className="cj-mono text-[10px] uppercase tracking-wider text-[var(--primary-text)]">{t("v69", "Vidéo")}</span>
+            <button onClick={() => setShowVideo(false)} className="text-[var(--primary-text)] transition hover:text-[var(--primary-text)]" title={t("v70", "Masquer la vidéo")}>
               <X size={14} />
             </button>
           </div>
@@ -1988,10 +1988,10 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
 
       <div className="space-y-3">
         {transcript.map((l, i) => (
-          <div key={i} className="rounded-lg border border-[#26222014] bg-white/60 p-4">
+          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
             <div className="mb-3 flex items-start gap-2">
               <span className="cj-mono mt-1 shrink-0 text-[11px] text-[#B08D57]">{l.t}</span>
-              <p className="leading-relaxed text-[#262220]">{l.text}</p>
+              <p className="leading-relaxed text-[var(--text)]">{l.text}</p>
             </div>
             <Recorder key={`day2-${resourceSegment(videoId)}-${i}`} label={t("v208", "Record ({n})").replace("{n}", String(i + 1))} />
           </div>
@@ -2070,13 +2070,13 @@ function Flashcard({ idx, flipped, setFlipped, front, back, frontBg, backBg, pad
         <>
           <div
             style={{ backgroundColor: backBg, backfaceVisibility: "hidden", transform: isFlipped ? "rotateX(180deg)" : "rotateX(0deg)" }}
-            className={`absolute inset-0 w-full rounded-lg border border-[#26222014] shadow-sm transition-transform duration-300 ${pad}`}
+            className={`absolute inset-0 w-full rounded-lg border border-[var(--border)] shadow-sm transition-transform duration-300 ${pad}`}
           >
             {back}
           </div>
           <div
             style={{ backgroundColor: frontBg, backfaceVisibility: "hidden", transform: isFlipped ? "rotateX(0deg)" : "rotateX(180deg)" }}
-            className={`absolute inset-0 w-full rounded-lg border border-[#26222014] shadow-sm transition-transform duration-300 ${pad}`}
+            className={`absolute inset-0 w-full rounded-lg border border-[var(--border)] shadow-sm transition-transform duration-300 ${pad}`}
           >
             {front}
           </div>
@@ -2085,13 +2085,13 @@ function Flashcard({ idx, flipped, setFlipped, front, back, frontBg, backBg, pad
         <>
           <div
             style={{ backgroundColor: frontBg, backfaceVisibility: "hidden", transform: isFlipped ? "rotateX(180deg)" : "rotateX(0deg)" }}
-            className={`absolute inset-0 w-full rounded-lg border border-[#26222014] shadow-sm transition-transform duration-300 ${pad}`}
+            className={`absolute inset-0 w-full rounded-lg border border-[var(--border)] shadow-sm transition-transform duration-300 ${pad}`}
           >
             {front}
           </div>
           <div
             style={{ backgroundColor: backBg, backfaceVisibility: "hidden", transform: isFlipped ? "rotateX(0deg)" : "rotateX(180deg)" }}
-            className={`absolute inset-0 w-full rounded-lg border border-[#26222014] shadow-sm transition-transform duration-300 ${pad}`}
+            className={`absolute inset-0 w-full rounded-lg border border-[var(--border)] shadow-sm transition-transform duration-300 ${pad}`}
           >
             {back}
           </div>
@@ -2327,23 +2327,23 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
             <p className="cj-mono mb-3 text-[10px] uppercase tracking-wider text-[#B08D57]">{section.title}</p>
             <div className="space-y-4">
               {section.items.map(({ q, i }) => (
-                <div key={i} className="rounded-lg border border-[#26222014] bg-white/60 p-4">
+                <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="cj-mono rounded border border-[#B08D5744] bg-[#B08D5714] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[#7a5f30]">
                       {typeLabels(getUiLocale())[q.type] || q.label || t("v219", "Question")}
                     </span>
                   </div>
-                  <p className="mb-3 text-[15px] text-[#262220]">{q.q}</p>
+                  <p className="mb-3 text-[15px] text-[var(--text)]">{q.q}</p>
                   {(shuffledOptions[i] || q.options).length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {(shuffledOptions[i] || q.options).map((opt) => {
                         const isChosen = answers[i] === opt;
                         const isCorrectOpt = opt === q.answer;
-                        let cls = "border-[#26222022] text-[#4a453f] hover:bg-[#26222008]";
+                        let cls = "border-[var(--border-strong)] text-[#4a453f] hover:bg-[var(--fill-muted)]";
                         if (checked && isChosen && isCorrectOpt) cls = "border-[#5C7A5A] bg-[#5C7A5A14] text-[#3f5a3d]";
                         else if (checked && isChosen && !isCorrectOpt) cls = "border-[#B5432E] bg-[#B5432E0d] text-[#8a3626]";
                         else if (checked && isCorrectOpt) cls = "border-[#5C7A5A55] text-[#3f5a3d]";
-                        else if (isChosen) cls = "border-[#B08D57] bg-[#B08D5714] text-[#262220]";
+                        else if (isChosen) cls = "border-[#B08D57] bg-[#B08D5714] text-[var(--text)]";
                         return (
                           <button key={opt} onClick={() => pick(i, opt)} className={`rounded-full border px-3.5 py-1.5 text-sm transition ${cls}`}>
                             {opt}
@@ -2357,12 +2357,12 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                       onChange={(e) => typeAnswer(i, e.target.value)}
                       disabled={checked}
                       placeholder={t("v83", "Votre réponse…")}
-                      className="w-full rounded border border-[#26222022] bg-white/70 px-3 py-2 text-sm text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57] disabled:opacity-60"
+                      className="w-full rounded border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57] disabled:opacity-60"
                     />
                   )}
                   {checked && (
                     <div className="mt-2.5">
-                      <p className="flex items-start gap-1.5 text-xs text-[#6b665e]">
+                      <p className="flex items-start gap-1.5 text-xs text-[var(--text-muted)]">
                         {isCorrect(i) ? <Check size={14} className="mt-0.5 shrink-0 text-[#5C7A5A]" /> : <X size={14} className="mt-0.5 shrink-0 text-[#B5432E]" />}
                         {q.options.length === 0 ? (evaluations[i]?.feedback || q.explain) : q.explain}
                       </p>
@@ -2423,7 +2423,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
               setChecked(false);
               setFlipped(new Set());
             }}
-            className="flex items-center gap-1.5 rounded-full border border-[#26222033] px-3 py-2 text-xs text-[#4a453f] hover:bg-[#26222008]"
+            className="flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-2 text-xs text-[#4a453f] hover:bg-[var(--fill-muted)]"
           >
             <RotateCcw size={13} /> {t("v207", "Redo")}
           </button>
@@ -2452,10 +2452,10 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                 idx={idx}
                 flipped={flipped}
                 setFlipped={setFlipped}
-                front={<p className={`cj-display ${sizeConf.front} text-[#262220] text-center`}>{v.word}</p>}
-                back={<p className={`${sizeConf.back} text-[#262220] text-center leading-relaxed`}>{v.translation || v.def || (v.type === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
-                frontBg="#F4EEE0"
-                backBg="#F4EEE0"
+                front={<p className={`cj-display ${sizeConf.front} text-[var(--text)] text-center`}>{v.word}</p>}
+                back={<p className={`${sizeConf.back} text-[var(--text)] text-center leading-relaxed`}>{v.translation || v.def || (v.type === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
+                frontBg="var(--paper)"
+                backBg="var(--paper)"
                 pad={sizeConf.pad}
                 flashcardMode={flashcardMode}
               />
@@ -2465,31 +2465,31 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
         );
 
         return (
-          <div className="mt-6 border-t border-[#26222014] pt-5">
+          <div className="mt-6 border-t border-[var(--border)] pt-5">
             <div className="flex items-start justify-between gap-2 mb-3">
               <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v86", "Révision de votre carnet")}</p>
-              <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
+              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
                 {(["sm", "md", "lg"] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setFlashcardSize(s)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardSize === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardSize === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                   >
                     {s === "sm" ? t("v202", "Small") : s === "md" ? t("v213", "Medium") : t("v203", "Large")}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="flex gap-1.5 mb-4">
+            <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5 mb-4">
               <button
                 onClick={() => { setFlashcardMode("recall"); setFlipped(new Set()); }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 {t("v209", "Memorize")}
               </button>
               <button
                 onClick={() => { setFlashcardMode("recognise"); setFlipped(new Set()); }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 
                 {t("v87", "Reconnaître")}
@@ -2637,10 +2637,10 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
     <div className="cj-fade-in space-y-5">
       <DayHeader n={4} title={t("v6", "Rédaction")} subtitle={t("v250", "Practise your writing with the generated topic.")} />
       {topicLoading ? (
-        <p className="flex items-center gap-1 text-sm text-[#6b665e]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
+        <p className="flex items-center gap-1 text-sm text-[var(--text-muted)]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
       ) : (
         sourceText.trim() && (
-          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[var(--text)]">{topic || fallbackTopic}</p>
         )
       )}
       {!sourceText.trim() && (
@@ -2666,11 +2666,11 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           rows={12}
           spellCheck={false}
           placeholder={t("v91", "Développez votre avis ici…")}
-          className="w-full rounded-lg border border-[#26222022] bg-white/70 p-4 text-[15px] leading-relaxed text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57]"
+          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-sunken)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
-        <span className="cj-mono text-xs text-[#6b665e]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
+        <span className="cj-mono text-xs text-[var(--text-muted)]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
         <div className="flex items-center gap-2">
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
@@ -2695,7 +2695,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       {result && (
         <div>
           <div className="mb-1 flex justify-end">
-            <button onClick={clear} className="flex items-center gap-1 text-xs text-[#6b665e] transition hover:text-[#B5432E]">
+            <button onClick={clear} className="flex items-center gap-1 text-xs text-[var(--text-muted)] transition hover:text-[#B5432E]">
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
@@ -2850,10 +2850,10 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
     <div className="cj-fade-in space-y-5">
       <DayHeader n={5} title={t("v93", "Expression orale")} subtitle={t("v251", "Practise your speaking with the generated topic.")} />
       {topicLoading ? (
-        <p className="flex items-center gap-1 text-sm text-[#6b665e]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
+        <p className="flex items-center gap-1 text-sm text-[var(--text-muted)]">{t("v88", "Génération du sujet")}<LoadingDots /></p>
       ) : (
         sourceText.trim() && (
-          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[#262220]">{topic || fallbackTopic}</p>
+          <p className="rounded-lg border-l-2 border-[#B08D57] bg-[#B08D5714] px-4 py-3 text-[15px] italic text-[var(--text)]">{topic || fallbackTopic}</p>
         )
       )}
       {!sourceText.trim() && (
@@ -2870,12 +2870,12 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           {t("v90", "Régénérer le sujet")}
         </button>
       </div>
-      <div className="rounded-lg border border-[#26222014] bg-[#26222006] p-4">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--fill-muted)] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v95", "Votre présentation")}</p>
-        <p className="mb-3 text-xs text-[#6b665e]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
         <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={`cj-recording-day5-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
         {hasRecording && (
-          <div className="mt-4 border-t border-[#26222014] pt-4">
+          <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               <button
                 onClick={correctAudio}
@@ -2983,7 +2983,7 @@ function AudioBar({ src }: { src?: string }) {
         }}
         aria-label={t("v250", "Progression audio")}
         className="h-1.5 flex-1 min-w-0 cursor-pointer appearance-none rounded-full border-0 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:bg-[var(--accent)] [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--accent)] [&::-moz-range-track]:bg-transparent"
-        style={{ background: `linear-gradient(to right, var(--accent) ${pct}%, #262220 ${pct}%)` }}
+        style={{ background: `linear-gradient(to right, var(--accent) ${pct}%, var(--text) ${pct}%)` }}
       />
       <a
         href={src}
@@ -3040,20 +3040,20 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
       {/* FRONT: original text + audio */}
       <div
         ref={frontRef}
-        className="cj-paper w-full rounded-xl border border-[#26222014] p-5"
+        className="cj-paper w-full rounded-xl border border-[var(--border)] p-5"
         style={{ backfaceVisibility: "hidden" }}
       >
         {entry.prompt && !entry.prompt.startsWith("Écrivez librement") && (
-          <p className="mb-2 text-xs italic text-[#6b665e]">{t("v98", "Sujet :")} {entry.prompt}</p>
+          <p className="mb-2 text-xs italic text-[var(--text-muted)]">{t("v98", "Sujet :")} {entry.prompt}</p>
         )}
-        <p className="text-[15px] leading-relaxed text-[#262220]">{entry.text}</p>
+        <p className="text-[15px] leading-relaxed text-[var(--text)]">{entry.text}</p>
         {audioSrc && <AudioBar src={audioSrc} />}
       </div>
 
       {/* BACK: corrections */}
       <div
         ref={backRef}
-        className="cj-paper absolute inset-0 w-full rounded-xl border border-[#26222014] pb-6"
+        className="cj-paper absolute inset-0 w-full rounded-xl border border-[var(--border)] pb-6"
         style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
       >
         <div className="p-4" onClick={(e) => e.stopPropagation()}>
@@ -3077,7 +3077,7 @@ function JournalMarginalia({ result, onAddToCarnet, savedCorrections, removeVoca
   const { segments } = result;
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div className="cj-display text-[17px] leading-relaxed text-[#262220]">
+    <div className="cj-display text-[17px] leading-relaxed text-[var(--text)]">
       {segments.map((seg, i) => {
         const isFlag = seg.flagged && seg.correction && seg.correction !== seg.text;
         const isSug = !isFlag && seg.suggestion && seg.suggestion !== seg.text;
@@ -3097,10 +3097,10 @@ function JournalMarginalia({ result, onAddToCarnet, savedCorrections, removeVoca
           >
             {seg.text}
             {open === i && (
-              <span className="cj-fade-in absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-[#26222014] bg-[#FBF7EE] p-3 text-left text-[12px] normal-case shadow-md">
+              <span className="cj-fade-in absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-[var(--border)] bg-[var(--paper)] p-3 text-left text-[12px] normal-case shadow-md">
                 <span className="cj-mono mb-1 block text-[10px] uppercase tracking-wider" style={{ color: tone }}>{isFlag ? (seg.note?.label || t("v220", "Correction")) : t("v222", "Style")}</span>
-                <span className="italic text-[#262220]">"{seg.text.length > 60 ? seg.text.slice(0, 60) + "…" : seg.text}" → {note}</span>
-                {seg.note?.comment && <span className="mt-1 block text-[#6b665e]">{seg.note.comment}</span>}
+                <span className="italic text-[var(--text)]">"{seg.text.length > 60 ? seg.text.slice(0, 60) + "…" : seg.text}" → {note}</span>
+                {seg.note?.comment && <span className="mt-1 block text-[var(--text-muted)]">{seg.note.comment}</span>}
                 {onAddToCarnet && (() => {
                   const key = (seg.correction || seg.text).toLowerCase();
                   const saved = savedCorrections?.has(key);
@@ -3334,19 +3334,19 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
 
   return (
     <div className="cj-fade-in relative flex flex-col gap-4 xl:flex-row xl:items-stretch xl:gap-0">
-      <section className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-r-none p-6 shadow-[0_2px_0_#efe9da] space-y-5 xl:h-[calc(100dvh-1rem)] xl:overflow-y-auto cj-scrollbar-hidden">
+      <section className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-r-none p-6 shadow-[0_2px_0_var(--hairline)] space-y-5 xl:h-[calc(100dvh-1rem)] xl:overflow-y-auto cj-scrollbar-hidden">
       <div>
         <p className="cj-mono text-[10px] uppercase tracking-[0.2em] text-[var(--accent-text)]">Journal</p>
-        <h2 className="cj-formal mt-1 text-2xl leading-tight text-[#262220]">{dateStr}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#6b665e]">{t("v252", "Write a journal entry freely or click 'Generate a topic' for inspiration.")}</p>
+        <h2 className="cj-formal mt-1 text-2xl leading-tight text-[var(--text)]">{dateStr}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{t("v252", "Write a journal entry freely or click 'Generate a topic' for inspiration.")}</p>
         {generating ? (
-          <p className="mt-2 flex items-center gap-1 text-sm text-[#6b665e]">
+          <p className="mt-2 flex items-center gap-1 text-sm text-[var(--text-muted)]">
             
             {t("v88", "Génération du sujet")}<LoadingDots />
           </p>
         ) : prompt ? (
           <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border-l-2 border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3">
-            <p className="text-[15px] italic leading-relaxed text-[#262220]">{prompt}</p>
+            <p className="text-[15px] italic leading-relaxed text-[var(--text)]">{prompt}</p>
             <button onClick={deletePrompt} className="shrink-0 text-[11px] text-[var(--accent-text)] transition hover:opacity-70">{t("v106", "Supprimer")}</button>
           </div>
         ) : null}
@@ -3401,7 +3401,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                 if (e.key === "Escape") setEditingTopic(false);
               }}
               placeholder={t("v258", "Sujet…")}
-              className="min-w-0 flex-1 rounded-lg border border-[#B08D5744] bg-white/60 px-3 py-1.5 text-sm text-[#262220] placeholder:text-[#6b665e] focus:border-[#B08D57] focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#B08D5744] bg-[var(--surface)] shadow-sm px-3 py-1.5 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[#B08D57] focus:outline-none"
             />
             <button
               onClick={saveOwnTopic}
@@ -3429,12 +3429,12 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           rows={12}
           spellCheck={false}
           placeholder={t("v107", "Écrivez votre entrée de journal ici…")}
-          className="w-full resize-none rounded-xl border border-[#2622201a] bg-white/50 p-5 text-[17px] leading-relaxed text-[#262220] outline-none placeholder:text-[#26222055] focus:border-[#B08D57]"
+          className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface-sunken)] p-5 text-[17px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-y-2">
-        <span className="cj-mono text-xs text-[#6b665e]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
+        <span className="cj-mono text-xs text-[var(--text-muted)]">{text.trim() ? (getLangCodes().targetLang === "zh" ? Array.from(text.trim()).length : text.trim().split(/\s+/).length) : 0} {getLangCodes().targetLang === "zh" ? t("v254", "characters") : t("v210", "words")}</span>
         <div className="flex items-center gap-2">
           <button
             disabled={!text.trim() || selfLoading || loading || selfMode}
@@ -3456,10 +3456,10 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
       </div>
 
       {result && (
-        <div className="rounded-xl border border-[#26222014] bg-white/50 p-5">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm p-5">
           <div className="mb-2 flex items-center justify-between">
             <p className="cj-mono text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v220", "Correction")}</p>
-            <button onClick={clear} className="flex items-center gap-1 text-xs text-[#6b665e] transition hover:text-[#B5432E]">
+            <button onClick={clear} className="flex items-center gap-1 text-xs text-[var(--text-muted)] transition hover:text-[#B5432E]">
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
@@ -3467,12 +3467,12 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
         </div>
       )}
 
-      <div className="rounded-xl border border-[#26222014] bg-[#26222006] p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--fill-muted)] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v108", "Entrée orale (optionnel)")}</p>
-        <p className="mb-3 text-xs text-[#6b665e]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
         <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey={journalRecordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
         {hasRecording && (
-          <div className="mt-4 border-t border-[#26222014] pt-4">
+          <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               <button
                 onClick={correctAudio}
@@ -3483,7 +3483,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                 {t("v65", "Corriger mon enregistrement")}
               </button>
             ) : (
-              <div className="rounded-xl border border-[#26222014] bg-white/50 p-4">
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
                 <JournalMarginalia result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
               </div>
             )}
@@ -3495,28 +3495,28 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
         <button
           onClick={saveEntry}
           disabled={!text.trim() && !audioData}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-[#262220] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-[var(--text)] transition hover:bg-[var(--accent-hover)] disabled:opacity-40"
         >
           <Save size={14} />  {t("v111", "Enregistrer l'entrée")}
         </button>
       </div>
       </section>
 
-       <aside className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-l-none px-6 pt-3 pb-6 shadow-[0_2px_0_#efe9da] xl:h-[calc(100dvh-1rem)] xl:flex xl:flex-col">
+       <aside className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-l-none px-6 pt-3 pb-6 shadow-[0_2px_0_var(--hairline)] xl:h-[calc(100dvh-1rem)] xl:flex xl:flex-col">
          <div className="xl:flex-1 xl:overflow-y-auto cj-scrollbar">
          <div className="pr-4">
-            <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-[#FBF7EE] pt-3 pb-1">
+            <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-[var(--paper)] pt-3 pb-1">
              <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v112", "Entrées précédentes")}</p>
-             <div className="flex items-center gap-1 rounded-full bg-[#2622200a] p-0.5 text-[11px]">
+              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
                <button
                  onClick={() => setHistView("cards")}
-                 className={`rounded-full px-3 py-1 transition ${histView === "cards" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${histView === "cards" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                  >
                    {t("v211", "Cards")}
                  </button>
                <button
                  onClick={() => setHistView("cal")}
-                 className={`rounded-full px-3 py-1 transition ${histView === "cal" ? "bg-[#F4EEE0] text-[#262220] shadow-sm" : "text-[#6b665e] hover:text-[#262220]"}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${histView === "cal" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                  >
                    {t("v212", "Calendar")}
                  </button>
@@ -3526,17 +3526,17 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
              histView === "cards" ? (
                <div className="columns-2 gap-3">
                  {entries.map((e) => (
-                   <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="cj-paper relative mb-3 cursor-pointer break-inside-avoid rounded-lg border border-[#26222014] px-2 py-3 transition hover:border-[#26222026]">
+                   <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="relative mb-3 cursor-pointer break-inside-avoid rounded-lg border border-[var(--border)] bg-[var(--paper)] px-2 py-3 shadow-sm transition hover:border-[var(--border-muted)]">
                      <div className="flex items-start justify-between gap-2">
                        <p className="cj-mono text-[9px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
-                       <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[#26222044] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
+                       <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[var(--text-muted)] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
                          <Trash2 size={14} />
                        </button>
                      </div>
                      {e.prompt && !e.prompt.startsWith("Écrivez librement") ? (
-                       <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{truncateWords(e.prompt, 18)}</p>
+                       <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{truncateWords(e.prompt, 18)}</p>
                      ) : null}
-                     {e.text && <p className="mt-2 line-clamp-[10] text-sm leading-relaxed text-[#262220]">{e.text}</p>}
+                     {e.text && <p className="mt-2 line-clamp-[10] text-sm leading-relaxed text-[var(--text)]">{e.text}</p>}
                      {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
                    </div>
                  ))}
@@ -3545,7 +3545,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                <JournalCalendar entries={entries} onOpen={(e) => { setOpenEntry(e); setShowCorrection(false); }} />
              )
            ) : (
-             <p className="mt-1 text-xs italic leading-relaxed text-[#6b665e]">{t("v297", "No entries yet.")}</p>
+             <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{t("v297", "No entries yet.")}</p>
            )}
           </div>
          </div>
@@ -3569,7 +3569,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
       )}
 
       {openEntry && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#262220]/40 p-4" onClick={() => setOpenEntry(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--scrim)] p-4" onClick={() => setOpenEntry(null)}>
           <div
             className="cj-paper w-full max-w-2xl rounded-2xl p-6 shadow-2xl"
             style={{ perspective: "1200px" }}
@@ -3585,7 +3585,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
               {openEntry.correction ? (
                 <button
                   onClick={() => setShowCorrection(!showCorrection)}
-                  className="text-[11px] text-[#6b665e] italic hover:text-[#262220]"
+                  className="text-[11px] text-[var(--text-muted)] italic hover:text-[var(--text)]"
                 >
                   {showCorrection ? t("v113", "← Cliquer pour voir le texte") : t("v114", "Cliquer pour voir les corrections →")}
                 </button>
@@ -3594,7 +3594,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
               )}
               <button
                 onClick={() => { deleteEntry(openEntry.id); setOpenEntry(null); }}
-                className="text-[#26222044] transition hover:text-[#B5432E]"
+                className="text-[var(--text-muted)] transition hover:text-[#B5432E]"
                 title={t("v106", "Supprimer")}
               >
                 <Trash2 size={16} />
@@ -3648,7 +3648,7 @@ function JournalCalendar({ entries, onOpen }: { entries: JournalEntry[]; onOpen:
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="cj-display text-lg capitalize text-[#262220]">{cap}</p>
+        <p className="cj-display text-lg capitalize text-[var(--text)]">{cap}</p>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setMonth(new Date(year, m - 1, 1))}
@@ -3666,17 +3666,17 @@ function JournalCalendar({ entries, onOpen }: { entries: JournalEntry[]; onOpen:
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center cj-mono text-[9px] text-[#6b665e]">
+      <div className="grid grid-cols-7 gap-1 text-center cj-mono text-[9px] text-[var(--text-muted)]">
         {weekdays.map((d) => (
           <div key={d} className="truncate px-0.5 pb-1" title={d}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell, i) => (
-          <div key={i} className="min-h-[76px] rounded-lg border border-[#26222014] bg-white/60 p-1.5">
+          <div key={i} className="min-h-[76px] rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-1.5">
             {cell !== null && (
               <>
-                <p className="cj-mono text-[10px] text-[#6b665e]">{cell}</p>
+                <p className="cj-mono text-[10px] text-[var(--text-muted)]">{cell}</p>
                 {(entriesByDay[cell] || []).map((e) => (
                   <button
                     key={e.id}
@@ -3710,8 +3710,8 @@ function DayHeader({ n, title, subtitle }: { n: number; title: string; subtitle:
   return (
     <div>
       <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v238", "Day {n}").replace("{n}", String(n))}</p>
-        <h2 className="cj-display text-3xl text-[#262220]">{title}</h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-[#6b665e]">{subtitle}</p>
+        <h2 className="cj-display text-3xl text-[var(--text)]">{title}</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-muted)]">{subtitle}</p>
     </div>
   );
 }
@@ -3774,14 +3774,14 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
 
   return (
     <div className={`fixed inset-0 z-30 transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
-      <div onClick={onClose} className={`absolute inset-0 bg-[#262220]/30 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
+      <div onClick={onClose} className={`absolute inset-0 bg-[var(--scrim)] transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
       <div
-        style={{ backgroundColor: "#F4EEE0" }}
+        style={{ backgroundColor: "var(--primary-text)" }}
         className={`absolute right-0 top-0 h-full w-[320px] shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="flex items-center justify-between border-b border-[#26222014] px-5 py-4">
-          <h3 className="cj-display text-xl text-[#262220]">{t("v120", "Carnet d'apprentissage")}</h3>
-          <button onClick={onClose} aria-label={t("v296", "Fermer")} className="text-[#4a453f] hover:text-[#262220] focus-visible:ring-2 focus-visible:ring-[#B08D57] rounded-full"><X size={18} /></button>
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+          <h3 className="cj-display text-xl text-[var(--text)]">{t("v120", "Carnet d'apprentissage")}</h3>
+          <button onClick={onClose} aria-label={t("v296", "Fermer")} className="text-[#4a453f] hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[#B08D57] rounded-full"><X size={18} /></button>
         </div>
         <div className="cj-scrollbar h-[calc(100%-64px)] overflow-y-auto p-5">
           {visible.length === 0 ? (
@@ -3795,24 +3795,24 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                 const note = notes[v.word.toLowerCase()];
                 const isMastered = mastered.has(v.word.toLowerCase());
                 return (
-                  <div key={i} style={{ backgroundColor: "#FFFFFF" }} className="group rounded-lg border border-[#26222014] p-3 shadow-sm">
+                  <div key={i} style={{ backgroundColor: "#FFFFFF" }} className="group rounded-lg border border-[var(--border)] p-3 shadow-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-baseline gap-2">
-                        <p className="cj-display text-[16px] text-[#262220]">{v.word}</p>
+                        <p className="cj-display text-[16px] text-[var(--text)]">{v.word}</p>
                         {isMastered && (
                           <span className="flex items-center gap-0.5 rounded-full bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[var(--accent-text)]">
                             <Check size={10} />  {t("v122", "maîtrisé")}
                           </span>
                         )}
                       </div>
-                      <button onClick={() => removeVocab(i)} className="text-[#26222055] opacity-0 transition group-hover:opacity-100 hover:text-[#B5432E]">
+                      <button onClick={() => removeVocab(i)} className="text-[var(--placeholder)] opacity-0 transition group-hover:opacity-100 hover:text-[#B5432E]">
                         <Trash2 size={14} />
                       </button>
                     </div>
                     {v.translation && <p className="mt-1 text-xs font-medium text-[#B08D57]">{v.translation}</p>}
-                    {v.type !== "phrase" && v.def && <p className="mt-1 text-xs leading-relaxed text-[#6b665e]">{v.def}</p>}
+                    {v.type !== "phrase" && v.def && <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">{v.def}</p>}
                     {v.context && v.context.trim().toLowerCase() !== v.word.trim().toLowerCase() && (
-                      <p className="mt-1 text-[11px] italic leading-relaxed text-[#26222055]">{v.context}</p>
+                      <p className="mt-1 text-[11px] italic leading-relaxed text-[var(--placeholder)]">{v.context}</p>
                     )}
                     {note && editingWord !== v.word && (
                       <p className="mt-1.5 rounded bg-[#B08D5714] px-2 py-1 text-xs italic leading-relaxed text-[#7a5f30]">{note}</p>
@@ -3825,11 +3825,11 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                           onChange={(e) => setNoteText(e.target.value)}
                           rows={2}
                           placeholder={t("v123", "Votre note…")}
-                          className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                          className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                         />
                         <div className="mt-1 flex justify-end gap-2">
-                          <button onClick={() => setEditingWord(null)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
-                          <button onClick={() => saveNote(v.word)} className="text-xs font-medium text-[#7a5f30] hover:text-[#262220]">{t("v46", "Enregistrer")}</button>
+                          <button onClick={() => setEditingWord(null)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
+                          <button onClick={() => saveNote(v.word)} className="text-xs font-medium text-[#7a5f30] hover:text-[var(--text)]">{t("v46", "Enregistrer")}</button>
                         </div>
                       </div>
                     ) : (
@@ -3955,46 +3955,46 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v19", "Carnet")}</p>
-            <h2 className="cj-display text-3xl text-[#262220]">{t("v120", "Carnet d'apprentissage")}</h2>
+            <h2 className="cj-display text-3xl text-[var(--text)]">{t("v120", "Carnet d'apprentissage")}</h2>
           </div>
           <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
               {(["sm", "md", "lg"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setSize(s)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${size === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${size === s ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                 >
                   {s === "sm" ? t("v202", "Small") : s === "md" ? t("v213", "Medium") : t("v203", "Large")}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
               <button
                 onClick={() => { setFlashcardMode(flashcardMode === "recall" ? null : "recall"); setFlipped(new Set()); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 {t("v209", "Memorize")}
               </button>
               <button
                 onClick={() => { setFlashcardMode(flashcardMode === "recognise" ? null : "recognise"); setFlipped(new Set()); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recognise" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 
                 {t("v87", "Reconnaître")}
               </button>
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-[#26222014] bg-white/60 p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
               <button
                 onClick={() => setOrder("chrono")}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "chrono" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "chrono" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 
                 {t("v125", "Récent")}
               </button>
               <button
                 onClick={() => { setOrder("random"); setShuffleSeed(Math.floor(Math.random() * 2147483647)); }}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "random" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[#6b665e] hover:text-[#262220]"}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "random" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                 
                 {t("v126", "Aléatoire")}
@@ -4003,14 +4003,14 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
           </div>
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-sm leading-relaxed text-[#6b665e] flex-1 min-w-0">{t("v127", "Tous vos mots, phrases et corrections enregistrés, regroupés par catégorie.")}</p>
+          <p className="text-sm leading-relaxed text-[var(--text-muted)] flex-1 min-w-0">{t("v127", "Tous vos mots, phrases et corrections enregistrés, regroupés par catégorie.")}</p>
           {frdic.enabled && (<div className="w-fit flex items-center justify-between gap-3 rounded-lg border border-[#B08D5744] bg-[#B08D5714] px-4 py-3">
             <div className="flex items-center gap-3">
               {frdic.connected
                 ? <CircleCheck size={18} className="shrink-0 text-[#5C7A5A]" />
                 : <CircleSlash size={18} className="shrink-0 text-[#B5432E]" />}
               <div>
-                <p className="text-sm font-medium text-[#262220]">{frdic.name}</p>
+                <p className="text-sm font-medium text-[var(--text)]">{frdic.name}</p>
                 <p className="text-xs text-[#7a5f30]">
                   {frdic.connected
                     ? `已连接 · ${frdic.mode === "two-way" ? "双向同步" : "仅上传"}`
@@ -4023,7 +4023,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 <>
                   <button
                     onClick={() => { setFrdicEditing(true); setModeInput(frdic.mode); setTokenInput(""); setConnectError(null); setShowFrdicModal(true); }}
-                    className="rounded-lg border border-[#B08D5744] bg-white/70 px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-white/80 disabled:opacity-50"
+                    className="rounded-lg border border-[#B08D5744] bg-[var(--surface)] shadow-sm px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[var(--surface)] shadow-sm disabled:opacity-50"
                   >
                     设置
                   </button>
@@ -4048,13 +4048,13 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
       </div>
 
       {showFrdicModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#262220]/40 p-4" onClick={() => setShowFrdicModal(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-[#F4EEE0] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--scrim)] p-4" onClick={() => setShowFrdicModal(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-[var(--primary-text)] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="cj-display text-xl text-[#262220]">{frdicEditing ? `${frdic.name} 设置` : `连接 ${frdic.name} 账号`}</h3>
-              <button onClick={() => setShowFrdicModal(false)} className="text-[#4a453f] transition hover:text-[#262220]"><X size={18} /></button>
+              <h3 className="cj-display text-xl text-[var(--text)]">{frdicEditing ? `${frdic.name} 设置` : `连接 ${frdic.name} 账号`}</h3>
+              <button onClick={() => setShowFrdicModal(false)} className="text-[#4a453f] transition hover:text-[var(--text)]"><X size={18} /></button>
             </div>
-            <p className="mb-4 text-sm leading-relaxed text-[#6b665e]">
+            <p className="mb-4 text-sm leading-relaxed text-[var(--text-muted)]">
               {frdicEditing ? (
                 <>修改同步模式，或粘贴新的令牌以切换账号。</>
               ) : (
@@ -4067,38 +4067,38 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 </>
               )}
             </p>
-              <label className="mb-1 block text-xs font-medium text-[#6b665e]">{frdic.name} API 令牌{frdicEditing && "（可选）"}</label>
-            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[#26222022] bg-white/70 px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">{frdic.name} API 令牌{frdicEditing && "（可选）"}</label>
+            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
               <input
                 type={showToken ? "text" : "password"}
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder="NIS xxxx…"
-                className="w-full bg-transparent text-sm text-[#262220] outline-none placeholder:text-[#26222055]"
+                className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--placeholder)]"
               />
-              <button onClick={() => setShowToken((s) => !s)} className="shrink-0 whitespace-nowrap text-xs text-[#6b665e] transition hover:text-[#262220]">
+              <button onClick={() => setShowToken((s) => !s)} className="shrink-0 whitespace-nowrap text-xs text-[var(--text-muted)] transition hover:text-[var(--text)]">
                 {showToken ? "隐藏" : "显示"}
               </button>
             </div>
-            {frdicEditing && <p className="mb-3 text-xs text-[#6b665e]">留空保留当前账号。</p>}
-            <p className="mb-1 block text-xs font-medium text-[#6b665e]">同步模式</p>
+            {frdicEditing && <p className="mb-3 text-xs text-[var(--text-muted)]">留空保留当前账号。</p>}
+            <p className="mb-1 block text-xs font-medium text-[var(--text-muted)]">同步模式</p>
             <div className="mb-4 flex gap-2">
               <button
                 onClick={() => setModeInput("push")}
-                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition ${modeInput === "push" ? "border-[#B08D57] bg-[#B08D5714] text-[#7a5f30]" : "border-[#26222022] text-[#6b665e] hover:text-[#262220]"}`}
+                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition ${modeInput === "push" ? "border-[#B08D57] bg-[#B08D5714] text-[#7a5f30]" : "border-[var(--border-strong)] text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                  仅上传<br /><span className="font-normal opacity-70">Cinq jours → {frdic.name}</span>
               </button>
               <button
                 onClick={() => setModeInput("two-way")}
-                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition ${modeInput === "two-way" ? "border-[#B08D57] bg-[#B08D5714] text-[#7a5f30]" : "border-[#26222022] text-[#6b665e] hover:text-[#262220]"}`}
+                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition ${modeInput === "two-way" ? "border-[#B08D57] bg-[#B08D5714] text-[#7a5f30]" : "border-[var(--border-strong)] text-[var(--text-muted)] hover:text-[var(--text)]"}`}
               >
                  双向同步<br /><span className="font-normal opacity-70">Cinq jours ↔ {frdic.name}</span>
               </button>
             </div>
             {connectError && <p className="mb-3 text-xs text-[#B5432E]">{connectError}</p>}
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowFrdicModal(false)} className="rounded-lg px-3 py-2 text-xs font-medium text-[#6b665e] transition hover:text-[#262220]">取消</button>
+              <button onClick={() => setShowFrdicModal(false)} className="rounded-lg px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:text-[var(--text)]">取消</button>
               <button
                 onClick={async () => {
                   const token = tokenInput.trim();
@@ -4140,10 +4140,10 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                       idx={idx}
                       flipped={flipped}
                       setFlipped={setFlipped}
-                      front={<p className={`cj-display ${sizeConf.word} text-[#262220] text-center`}>{v.word}</p>}
-                      back={<p className={`${sizeConf.def} text-[#262220] text-center leading-relaxed`}>{v.translation || v.def || (section.key === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
-                      frontBg="#F4EEE0"
-                      backBg="#F4EEE0"
+                      front={<p className={`cj-display ${sizeConf.word} text-[var(--text)] text-center`}>{v.word}</p>}
+                      back={<p className={`${sizeConf.def} text-[var(--text)] text-center leading-relaxed`}>{v.translation || v.def || (section.key === "phrase" ? t("v20", "Traduction indisponible — réessayez.") : t("v0", "Explication indisponible — réessayez."))}</p>}
+                      frontBg="var(--paper)"
+                      backBg="var(--paper)"
                       pad={sizeConf.pad}
                       flashcardMode={flashcardMode}
                     />
@@ -4154,10 +4154,10 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                   {section.items.map(({ v, idx }) => {
                     const note = notes[v.word.toLowerCase()];
                     return (
-                      <div key={idx} className={`group break-inside-avoid mb-3 rounded-lg border border-[#26222014] bg-[#F4EEE0] shadow-sm ${sizeConf.pad}`}>
+                      <div key={idx} className={`group break-inside-avoid mb-3 rounded-lg border border-[var(--border)] bg-[var(--paper)] shadow-sm ${sizeConf.pad}`}>
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`cj-display ${sizeConf.word} text-[#262220]`}>{v.word}</p>
-                          <button onClick={() => removeVocab(idx)} className="text-[#26222055] opacity-0 transition group-hover:opacity-100 hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
+                          <p className={`cj-display ${sizeConf.word} text-[var(--text)]`}>{v.word}</p>
+                          <button onClick={() => removeVocab(idx)} className="text-[var(--placeholder)] opacity-0 transition group-hover:opacity-100 hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -4166,11 +4166,11 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                         ) : (
                           <>
                             {v.translation && <p className={`mt-1 font-medium text-[#B08D57] ${sizeConf.def}`}>{v.translation}</p>}
-                            {v.def && !v.def.includes("indisponible") && <p className={`mt-1 leading-relaxed text-[#6b665e] ${sizeConf.def}`}>{v.def}</p>}
+                            {v.def && !v.def.includes("indisponible") && <p className={`mt-1 leading-relaxed text-[var(--text-muted)] ${sizeConf.def}`}>{v.def}</p>}
                           </>
                         )}
                         {v.context && v.context.trim().toLowerCase() !== v.word.trim().toLowerCase() && (
-                          <p className={`mt-1 italic leading-relaxed text-[#26222055] ${sizeConf.def}`}>{extractSentence(v.context, v.word)}</p>
+                          <p className={`mt-1 italic leading-relaxed text-[var(--placeholder)] ${sizeConf.def}`}>{extractSentence(v.context, v.word)}</p>
                         )}
                         {note && editingWord !== v.word && (
                           <p className="mt-1.5 rounded bg-[#B08D5714] px-2 py-1 text-xs italic leading-relaxed text-[#7a5f30]">{note}</p>
@@ -4183,11 +4183,11 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                               onChange={(e) => setNoteText(e.target.value)}
                               rows={2}
                               placeholder={t("v123", "Votre note…")}
-                              className="w-full rounded border border-[#B08D5733] bg-white/70 p-2 text-xs text-[#262220] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                              className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                             />
                             <div className="mt-1 flex justify-end gap-2">
-                              <button onClick={() => setEditingWord(null)} className="text-xs text-[#6b665e] hover:text-[#262220]">{t("v215", "Annuler")}</button>
-                              <button onClick={() => saveNote(v.word)} className="text-xs font-medium text-[#7a5f30] hover:text-[#262220]">{t("v46", "Enregistrer")}</button>
+                              <button onClick={() => setEditingWord(null)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
+                              <button onClick={() => saveNote(v.word)} className="text-xs font-medium text-[#7a5f30] hover:text-[var(--text)]">{t("v46", "Enregistrer")}</button>
                             </div>
                           </div>
                         ) : (
@@ -4234,11 +4234,11 @@ function SideTabs({ view, setView }: { view: string | number; setView: (v: strin
             aria-current={active ? "page" : undefined}
             className={`cj-tab-ribbon flex h-11 w-11 flex-col items-center justify-center gap-1 transition-[background-color,color,box-shadow,width] duration-200 md:h-[68px] md:w-full ${
               active
-                ? "bg-[#F4EEE0] text-[#262220] shadow-lg md:-mr-1 md:w-[140px]"
-                : "bg-[#F4EEE01c] text-[#F4EEE0aa] hover:bg-[#F4EEE033]"
-            } ${!active ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4EEE0]"}`}
+                ? "bg-[var(--primary-text)] text-[var(--text)] shadow-lg md:-mr-1 md:w-[140px]"
+                : "bg-[var(--cream-soft)] text-[var(--primary-text)] hover:bg-[var(--cream-soft)]"
+            } ${!active ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08D57] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary-text)]"}`}
           >
-            <Icon size={16} className={active ? "text-[#B08D57]" : "text-[#F4EEE0cc]"} />
+            <Icon size={16} className={active ? "text-[#B08D57]" : "text-[var(--primary-text)]"} />
             <span className="hidden cj-mono text-[10px] font-medium uppercase leading-tight tracking-wide md:block">{item.label}</span>
           </button>
         );
@@ -5008,11 +5008,11 @@ export function CinqJoursApp(props: {
     <div className="cj-root min-h-screen w-full bg-[var(--background)]">
       <FontImport />
       {storageFull && (
-        <div className="mx-5 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#F4EEE033] bg-[#262220] px-5 py-3 md:mx-8">
-          <p className="text-sm text-[#F4EEE0dd]">{t("v259", "Browser storage is full — export your data so nothing is lost.")}</p>
+        <div className="mx-5 mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[var(--cream-border)] bg-[var(--ink)] px-5 py-3 md:mx-8">
+          <p className="text-sm text-[var(--primary-text)]">{t("v259", "Browser storage is full — export your data so nothing is lost.")}</p>
           <button
             onClick={dismissStorageFull}
-            className="cj-mono shrink-0 rounded-full border border-[#F4EEE044] px-3 py-1 text-xs text-[#F4EEE0dd] transition hover:bg-[#F4EEE011]"
+            className="cj-mono shrink-0 rounded-full border border-[var(--cream-border)] px-3 py-1 text-xs text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
             {t("v260", "Got it")}
           </button>
@@ -5023,7 +5023,7 @@ export function CinqJoursApp(props: {
           <Logo size={44} className="shrink-0" />
           <div className="flex flex-col leading-none">
             <h1 className="cj-formal text-2xl text-[var(--primary-text)]">Cinq jours</h1>
-            <span className="cj-mono mt-1 hidden text-[11px] uppercase tracking-wider text-[#F4EEE066] sm:inline">
+            <span className="cj-mono mt-1 hidden text-[11px] uppercase tracking-wider text-[var(--primary-text)] sm:inline">
               {t("v140", "A five-day language learning routine")}
             </span>
           </div>
@@ -5031,19 +5031,19 @@ export function CinqJoursApp(props: {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-[#F4EEE022] px-3.5 py-1.5 text-sm text-[#F4EEE0dd] transition hover:bg-[#F4EEE011]"
+            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3.5 py-1.5 text-sm text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
             <BookMarked size={15} />
             <span className="hidden sm:inline">{t("v19", "Carnet")}</span>
             {carnetSidebarCount > 0 && (
-              <span className="cj-mono rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] text-[#262220]">{carnetSidebarCount}</span>
+              <span className="cj-mono rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] text-[var(--text)]">{carnetSidebarCount}</span>
             )}
           </button>
           <LanguageSwitcher />
           <button
             onClick={() => setSettingsOpen(true)}
             aria-label={t("settings.title", "Paramètres")}
-            className="flex items-center gap-2 rounded-full border border-[#F4EEE022] px-3 py-1.5 text-sm text-[#F4EEE0dd] transition hover:bg-[#F4EEE011]"
+            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3 py-1.5 text-sm text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
             <Settings size={15} />
           </button>
@@ -5052,7 +5052,7 @@ export function CinqJoursApp(props: {
 
       <div className="flex flex-col gap-0 px-3 pb-10 md:flex-row md:gap-2 md:px-6">
         <SideTabs view={view} setView={setView} />
-          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[#F4EEE0] shadow-2xl ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px]" : "min-h-[780px]"}`}>
+          <main className={`flex min-w-0 flex-1 flex-col rounded-2xl bg-[var(--primary-text)] shadow-2xl ${boundedViews ? "max-h-[calc(500vh-9rem)] min-h-[780px]" : "min-h-[780px]"}`}>
           <div className={`flex-1 min-h-0 p-5 pb-6 md:p-9 ${boundedViews ? "overflow-y-auto cj-scrollbar" : ""}`}>
           {view === "source" && (
             <SourceView
@@ -5108,10 +5108,10 @@ export function CinqJoursApp(props: {
           </div>
 
           {view !== "resources" && view !== "journal" && view !== "carnet" && (
-            <div className="mt-auto flex items-center justify-start border-t border-[#26222014] p-5 md:p-9">
+            <div className="mt-auto flex items-center justify-start border-t border-[var(--border)] p-5 md:p-9">
               <button
                 onClick={() => setView(isNumber(view) && view === 5 ? "source" : isNumber(view) ? Math.min(5, view + 1) : 1)}
-                className="flex items-center gap-1 text-sm text-[#6b665e] hover:text-[#262220]"
+                className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
               >
                 {isNumber(view) && view === 5
                   ? t("v143", "Retour à la source")
