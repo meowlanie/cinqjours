@@ -3467,7 +3467,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
         </div>
       )}
 
-      <div className="rounded-xl border border-[#26222014] bg-white/40 p-4">
+      <div className="rounded-xl border border-[#26222014] bg-[#26222006] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v108", "Entrée orale (optionnel)")}</p>
         <p className="mb-3 text-xs text-[#6b665e]">{t("v109", "Enregistrez votre entrée de journal à voix haute.")}</p>
         <Recorder key={recorderKey} label={t("v110", "Enregistrer mon entrée")} persistKey={journalRecordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
