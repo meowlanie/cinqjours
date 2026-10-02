@@ -431,7 +431,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
 
   return (
     <div className="cj-fade-in space-y-4">
-        <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+        <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
           <button
             onClick={() => setView("annotated")}
           aria-pressed={view === "annotated"}
@@ -451,7 +451,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
       </div>
 
       <div
-        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-5 leading-relaxed cj-display text-[17px] text-[var(--text)]"
+        className="rounded-lg border border-[var(--border)] bg-[var(--paper)] p-5 leading-relaxed cj-display text-[17px] text-[var(--text)]"
         onCopy={(e) => {
           const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
@@ -667,7 +667,7 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
         suppressContentEditableWarning
         spellCheck={false}
         onInput={handleInput}
-        className="min-h-[140px] w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none focus:border-[#B08D57]"
+        className="min-h-[140px] w-full rounded-lg border border-[var(--border-strong)] bg-[var(--paper)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none focus:border-[#B08D57]"
       />
       <div className="mt-2 flex justify-end">
         <button
@@ -1219,7 +1219,7 @@ function SourceView(props: SourceViewProps) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <div className="flex w-full items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2.5 md:flex-1">
+        <div className="flex w-full items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2.5 md:flex-1">
           <Link2 size={15} className="shrink-0 text-[#B08D57]" />
           <input
             value={url}
@@ -1317,7 +1317,7 @@ function SourceView(props: SourceViewProps) {
 
         <div
           onMouseUp={editing ? undefined : handleMouseUp}
-          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
+          className={`cj-scrollbar select-text overflow-y-auto rounded-lg border border-[var(--border-strong)] bg-[var(--paper)] px-5 py-5 ${hasTimestamps ? "pr-16" : "pr-5"}`}
           style={{ minHeight: "370px", maxHeight: "760px" }}
         >
           {editing ? (
@@ -1334,7 +1334,7 @@ function SourceView(props: SourceViewProps) {
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder={t("v40", "Collez ici la transcription. Elle sera reformatée automatiquement en cliquant sur « Valider ».")}
-                className="w-full grow resize-none rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-3 text-sm text-[var(--text)] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                className="w-full grow resize-none rounded border border-[#B08D5733] bg-[var(--paper)] p-3 text-sm text-[var(--text)] cj-scrollbar placeholder:text-[#B08D5755] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                 style={{ minHeight: "300px" }}
               />
             </div>
@@ -1486,7 +1486,7 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setSelNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-[var(--paper)] p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
                     <button onClick={() => setSelNoteEditing(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
@@ -1575,7 +1575,7 @@ function SourceView(props: SourceViewProps) {
                     onChange={(e) => setNoteDraft(e.target.value)}
                     rows={2}
                     placeholder={t("v45", "Votre note personnelle…")}
-                    className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                    className="w-full rounded border border-[#B08D5733] bg-[var(--paper)] p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                   />
                   <div className="mt-1 flex justify-end gap-2">
                     <button onClick={() => setNoteEditing(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
@@ -1857,7 +1857,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           rows={10}
           spellCheck={false}
           placeholder={t("v59", "Écrivez votre résumé ici…")}
-          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-sunken)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
+          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
@@ -1988,7 +1988,7 @@ function DayTwo({ transcript, videoId, isTextSource }: { transcript: { t: string
 
       <div className="space-y-3">
         {transcript.map((l, i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
+          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--paper)] p-4">
             <div className="mb-3 flex items-start gap-2">
               <span className="cj-mono mt-1 shrink-0 text-[11px] text-[#B08D57]">{l.t}</span>
               <p className="leading-relaxed text-[var(--text)]">{l.text}</p>
@@ -2327,7 +2327,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
             <p className="cj-mono mb-3 text-[10px] uppercase tracking-wider text-[#B08D57]">{section.title}</p>
             <div className="space-y-4">
               {section.items.map(({ q, i }) => (
-                <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
+                <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--paper)] p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="cj-mono rounded border border-[#B08D5744] bg-[#B08D5714] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[#7a5f30]">
                       {typeLabels(getUiLocale())[q.type] || q.label || t("v219", "Question")}
@@ -2357,7 +2357,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                       onChange={(e) => typeAnswer(i, e.target.value)}
                       disabled={checked}
                       placeholder={t("v83", "Votre réponse…")}
-                      className="w-full rounded border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57] disabled:opacity-60"
+                      className="w-full rounded border border-[var(--border-strong)] bg-[var(--paper)] px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57] disabled:opacity-60"
                     />
                   )}
                   {checked && (
@@ -2468,7 +2468,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
           <div className="mt-6 border-t border-[var(--border)] pt-5">
             <div className="flex items-start justify-between gap-2 mb-3">
               <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v86", "Révision de votre carnet")}</p>
-              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
                 {(["sm", "md", "lg"] as const).map((s) => (
                   <button
                     key={s}
@@ -2480,7 +2480,7 @@ function DayThree({ vocab, sourceText, addVocab, currentSourceId, level, savedCo
                 ))}
               </div>
             </div>
-            <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5 mb-4">
+            <div className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5 mb-4">
               <button
                 onClick={() => { setFlashcardMode("recall"); setFlipped(new Set()); }}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
@@ -2666,7 +2666,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           rows={12}
           spellCheck={false}
           placeholder={t("v91", "Développez votre avis ici…")}
-          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-sunken)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
+          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
@@ -3401,7 +3401,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                 if (e.key === "Escape") setEditingTopic(false);
               }}
               placeholder={t("v258", "Sujet…")}
-              className="min-w-0 flex-1 rounded-lg border border-[#B08D5744] bg-[var(--surface)] shadow-sm px-3 py-1.5 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[#B08D57] focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-[#B08D5744] bg-[var(--surface)] px-3 py-1.5 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[#B08D57] focus:outline-none"
             />
             <button
               onClick={saveOwnTopic}
@@ -3429,7 +3429,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           rows={12}
           spellCheck={false}
           placeholder={t("v107", "Écrivez votre entrée de journal ici…")}
-          className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface-sunken)] p-5 text-[17px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
+          className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-[17px] leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
         />
       )}
 
@@ -3456,7 +3456,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
       </div>
 
       {result && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm p-5">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--paper)] p-5">
           <div className="mb-2 flex items-center justify-between">
             <p className="cj-mono text-[10px] uppercase tracking-wider text-[var(--accent-text)]">{t("v220", "Correction")}</p>
             <button onClick={clear} className="flex items-center gap-1 text-xs text-[var(--text-muted)] transition hover:text-[#B5432E]">
@@ -3483,7 +3483,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                 {t("v65", "Corriger mon enregistrement")}
               </button>
             ) : (
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm p-4">
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4">
                 <JournalMarginalia result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
               </div>
             )}
@@ -3507,7 +3507,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
          <div className="pr-4">
             <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-[var(--paper)] pt-3 pb-1">
              <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v112", "Entrées précédentes")}</p>
-              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+              <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
                <button
                  onClick={() => setHistView("cards")}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${histView === "cards" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
@@ -3673,7 +3673,7 @@ function JournalCalendar({ entries, onOpen }: { entries: JournalEntry[]; onOpen:
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell, i) => (
-          <div key={i} className="min-h-[76px] rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm p-1.5">
+          <div key={i} className="min-h-[76px] rounded-lg border border-[var(--border)] bg-[var(--paper)] p-1.5">
             {cell !== null && (
               <>
                 <p className="cj-mono text-[10px] text-[var(--text-muted)]">{cell}</p>
@@ -3825,7 +3825,7 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                           onChange={(e) => setNoteText(e.target.value)}
                           rows={2}
                           placeholder={t("v123", "Votre note…")}
-                          className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                          className="w-full rounded border border-[#B08D5733] bg-[var(--paper)] p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                         />
                         <div className="mt-1 flex justify-end gap-2">
                           <button onClick={() => setEditingWord(null)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
@@ -3958,7 +3958,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
             <h2 className="cj-display text-3xl text-[var(--text)]">{t("v120", "Carnet d'apprentissage")}</h2>
           </div>
           <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
               {(["sm", "md", "lg"] as const).map((s) => (
                 <button
                   key={s}
@@ -3969,7 +3969,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
               <button
                 onClick={() => { setFlashcardMode(flashcardMode === "recall" ? null : "recall"); setFlipped(new Set()); }}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${flashcardMode === "recall" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
@@ -3984,7 +3984,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 {t("v87", "Reconnaître")}
               </button>
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] shadow-sm p-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
               <button
                 onClick={() => setOrder("chrono")}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${order === "chrono" ? "bg-[var(--background)] text-[var(--primary-text)]" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
@@ -4023,7 +4023,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                 <>
                   <button
                     onClick={() => { setFrdicEditing(true); setModeInput(frdic.mode); setTokenInput(""); setConnectError(null); setShowFrdicModal(true); }}
-                    className="rounded-lg border border-[#B08D5744] bg-[var(--surface)] shadow-sm px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[var(--surface)] shadow-sm disabled:opacity-50"
+                    className="rounded-lg border border-[#B08D5744] bg-[var(--paper)] px-3 py-1.5 text-xs font-medium text-[#7a5f30] transition hover:bg-[var(--paper)] disabled:opacity-50"
                   >
                     设置
                   </button>
@@ -4068,7 +4068,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
               )}
             </p>
               <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">{frdic.name} API 令牌{frdicEditing && "（可选）"}</label>
-            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] shadow-sm px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
+            <div className={`mb-4 flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--paper)] px-3 py-2 ${frdicEditing ? "mb-1" : ""}`}>
               <input
                 type={showToken ? "text" : "password"}
                 value={tokenInput}
@@ -4183,7 +4183,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
                               onChange={(e) => setNoteText(e.target.value)}
                               rows={2}
                               placeholder={t("v123", "Votre note…")}
-                              className="w-full rounded border border-[#B08D5733] bg-[var(--surface)] shadow-sm p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
+                              className="w-full rounded border border-[#B08D5733] bg-[var(--paper)] p-2 text-xs text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-[#B08D57]"
                             />
                             <div className="mt-1 flex justify-end gap-2">
                               <button onClick={() => setEditingWord(null)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]">{t("v215", "Annuler")}</button>
