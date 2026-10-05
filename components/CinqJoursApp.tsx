@@ -1726,11 +1726,11 @@ function ResourcesView({ resources, onSelect, onDelete }: {
               }}
               role="button"
               tabIndex={0}
-              className="group flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--primary-text)] text-left shadow-md transition hover:border-[#B08D57] hover:shadow-lg cursor-pointer"
+              className="group flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--paper)] text-left shadow-md transition hover:border-[#B08D57] hover:shadow-lg cursor-pointer"
             >
               <div className="aspect-video w-full overflow-hidden bg-[var(--fill-muted)]">
                 {isText ? (
-                  <div className="cj-scrollbar h-full w-full overflow-hidden bg-[var(--primary-text)] p-3 text-left">
+                  <div className="cj-scrollbar h-full w-full overflow-hidden bg-[var(--paper)] p-3 text-left">
                     <p className="cj-mono mb-1 text-[9px] uppercase tracking-wider text-[#B08D57]">{t("v34", "Texte")}</p>
                     <p className="text-[11px] leading-snug text-[var(--text)]">{thumbText}</p>
                   </div>
@@ -3789,7 +3789,7 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
                 const note = notes[v.word.toLowerCase()];
                 const isMastered = mastered.has(v.word.toLowerCase());
                 return (
-                  <div key={i} style={{ backgroundColor: "#FFFFFF" }} className="group rounded-lg border border-[var(--border)] p-3 shadow-sm">
+                  <div key={i} className="group rounded-lg border border-[var(--border)] bg-[var(--paper)] p-3 shadow-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-baseline gap-2">
                         <p className="cj-display text-[16px] text-[var(--text)]">{v.word}</p>
