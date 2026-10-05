@@ -423,14 +423,33 @@ function wordDiff(original: string, corrected: string): DiffToken[] {
   return tokens;
 }
 
-function mergeRuns(tokens: DiffToken[]): DiffToken[] {
-  const runs: DiffToken[] = [];
+type DiffBlock =
+  | { type: "same"; text: string }
+  | { type: "replace"; removed: string[]; added: string[] };
+
+function buildBlocks(tokens: DiffToken[]): DiffBlock[] {
+  const blocks: DiffBlock[] = [];
+  let cur: { removed: string[]; added: string[] } | null = null;
+  const flush = () => {
+    if (cur) {
+      blocks.push({ type: "replace", removed: cur.removed, added: cur.added });
+      cur = null;
+    }
+  };
   for (const t of tokens) {
-    const last = runs[runs.length - 1];
-    if (last && last.type === t.type) last.text = `${last.text} ${t.text}`;
-    else runs.push({ type: t.type, text: t.text });
+    if (t.type === "same") {
+      flush();
+      const last = blocks[blocks.length - 1];
+      if (last && last.type === "same") last.text = `${last.text} ${t.text}`;
+      else blocks.push({ type: "same", text: t.text });
+    } else {
+      if (!cur) cur = { removed: [], added: [] };
+      if (t.type === "removed") cur.removed.push(t.text);
+      else cur.added.push(t.text);
+    }
   }
-  return runs;
+  flush();
+  return blocks;
 }
 
 function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrections, removeVocabByWord }: { result: CorrectResult; onAddToCarnet?: (s: Segment) => void; compact?: boolean; hideNotes?: boolean; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
@@ -488,27 +507,31 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
             {segments.map((seg, i) => (
               <Fragment key={i}>
                 {seg.suggestion && seg.suggestion !== seg.text ? (
-                  mergeRuns(wordDiff(seg.text, seg.suggestion)).map((t, k) => (
+                  buildBlocks(wordDiff(seg.text, seg.suggestion)).map((b, k) => (
                     <Fragment key={k}>
-                      {t.type === "removed" ? (
-                        <s className="text-[var(--text-muted)] line-through decoration-[var(--text-muted)] decoration-1">{t.text}</s>
-                      ) : t.type === "added" ? (
-                        <span className="font-medium text-[#B08D57]">{t.text}</span>
+                      {b.type === "same" ? (
+                        <span>{b.text}</span>
                       ) : (
-                        <span>{t.text}</span>
+                        <>
+                          {b.removed.length > 0 && <s className="text-[var(--text-muted)] line-through decoration-[var(--text-muted)] decoration-1">{b.removed.join(" ")}</s>}
+                          {b.removed.length > 0 && b.added.length > 0 ? " " : null}
+                          {b.added.length > 0 && <span className="font-medium text-[#B08D57]">{b.added.join(" ")}</span>}
+                        </>
                       )}
                       {" "}
                     </Fragment>
                   ))
                 ) : (
-                  mergeRuns(wordDiff(seg.text, seg.correction || seg.text)).map((t, k) => (
+                  buildBlocks(wordDiff(seg.text, seg.correction || seg.text)).map((b, k) => (
                     <Fragment key={k}>
-                      {t.type === "removed" ? (
-                        <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
-                      ) : t.type === "added" ? (
-                        <span className="font-medium text-[#3f5a3d]">{t.text}</span>
+                      {b.type === "same" ? (
+                        <span>{b.text}</span>
                       ) : (
-                        <span>{t.text}</span>
+                        <>
+                          {b.removed.length > 0 && <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{b.removed.join(" ")}</s>}
+                          {b.removed.length > 0 && b.added.length > 0 ? " " : null}
+                          {b.added.length > 0 && <span className="font-medium text-[#3f5a3d]">{b.added.join(" ")}</span>}
+                        </>
                       )}
                       {" "}
                     </Fragment>
