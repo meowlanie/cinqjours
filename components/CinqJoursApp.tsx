@@ -423,6 +423,16 @@ function wordDiff(original: string, corrected: string): DiffToken[] {
   return tokens;
 }
 
+function mergeRuns(tokens: DiffToken[]): DiffToken[] {
+  const runs: DiffToken[] = [];
+  for (const t of tokens) {
+    const last = runs[runs.length - 1];
+    if (last && last.type === t.type) last.text = `${last.text} ${t.text}`;
+    else runs.push({ type: t.type, text: t.text });
+  }
+  return runs;
+}
+
 function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrections, removeVocabByWord }: { result: CorrectResult; onAddToCarnet?: (s: Segment) => void; compact?: boolean; hideNotes?: boolean; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { segments } = result;
   const [view, setView] = useState<"annotated" | "corrected">("annotated");
@@ -478,7 +488,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
             {segments.map((seg, i) => (
               <Fragment key={i}>
                 {seg.suggestion && seg.suggestion !== seg.text ? (
-                  wordDiff(seg.text, seg.suggestion).map((t, k) => (
+                  mergeRuns(wordDiff(seg.text, seg.suggestion)).map((t, k) => (
                     <Fragment key={k}>
                       {t.type === "removed" ? (
                         <s className="text-[var(--text-muted)] line-through decoration-[var(--text-muted)] decoration-1">{t.text}</s>
@@ -491,7 +501,7 @@ function CorrectedCopy({ result, onAddToCarnet, compact, hideNotes, savedCorrect
                     </Fragment>
                   ))
                 ) : (
-                  wordDiff(seg.text, seg.correction || seg.text).map((t, k) => (
+                  mergeRuns(wordDiff(seg.text, seg.correction || seg.text)).map((t, k) => (
                     <Fragment key={k}>
                       {t.type === "removed" ? (
                         <s className="text-[#B5432E] line-through decoration-[#B5432E] decoration-1">{t.text}</s>
@@ -1428,7 +1438,7 @@ function SourceView(props: SourceViewProps) {
           <div className="mt-2 flex justify-end gap-2">
             <button
               onClick={() => { setPasting(false); setPasteText(""); setEditing(false); }}
-              className="rounded-full px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
+              className="rounded-full border border-[var(--border)] bg-transparent px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
             >
               {t("v215", "Annuler")}
             </button>
@@ -3068,58 +3078,6 @@ function JournalFlipCard({ entry, audioSrc, showCorrection, addToCarnet, savedCo
   );
 }
 
-function JournalMarginalia({ result, onAddToCarnet, savedCorrections, removeVocabByWord }: {
-  result: CorrectResult;
-  onAddToCarnet?: (s: Segment) => void;
-  savedCorrections?: Set<string>;
-  removeVocabByWord?: (word: string) => void;
-}) {
-  const { segments } = result;
-  const [open, setOpen] = useState<number | null>(null);
-  return (
-    <div className="cj-display text-[17px] leading-relaxed text-[var(--text)]">
-      {segments.map((seg, i) => {
-        const isFlag = seg.flagged && seg.correction && seg.correction !== seg.text;
-        const isSug = !isFlag && seg.suggestion && seg.suggestion !== seg.text;
-        if (!isFlag && !isSug) return <span key={i}>{seg.text}{" "}</span>;
-        const note = isFlag ? seg.correction : seg.suggestion;
-        const tone = isFlag ? "var(--accent-text)" : "#3f5a3d";
-        return (
-          <span
-            key={i}
-            className={`cj-ink relative ${isFlag ? "cj-ink-flag" : "cj-ink-sug"}`}
-            onMouseEnter={() => setOpen(i)}
-            onMouseLeave={() => setOpen((o) => (o === i ? null : o))}
-            onClick={() => setOpen((o) => (o === i ? null : i))}
-            onFocus={() => setOpen(i)}
-            onBlur={() => setOpen((o) => (o === i ? null : o))}
-            tabIndex={0}
-          >
-            {seg.text}
-            {open === i && (
-              <span className="cj-fade-in absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-[var(--border)] bg-[var(--paper)] p-3 text-left text-[12px] normal-case shadow-md">
-                <span className="cj-mono mb-1 block text-[10px] uppercase tracking-wider" style={{ color: tone }}>{isFlag ? (seg.note?.label || t("v220", "Correction")) : t("v222", "Style")}</span>
-                <span className="italic text-[var(--text)]">"{seg.text.length > 60 ? seg.text.slice(0, 60) + "…" : seg.text}" → {note}</span>
-                {seg.note?.comment && <span className="mt-1 block text-[var(--text-muted)]">{seg.note.comment}</span>}
-                {onAddToCarnet && (() => {
-                  const key = (seg.correction || seg.text).toLowerCase();
-                  const saved = savedCorrections?.has(key);
-                  return saved ? (
-                    <button onClick={(e) => { e.stopPropagation(); removeVocabByWord?.(key); }} className="mt-2 flex items-center gap-1 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--accent-text)]"><Check size={11} /> {t("v19", "Carnet")}</button>
-                  ) : (
-                    <button onClick={(e) => { e.stopPropagation(); onAddToCarnet(seg); }} className="mt-2 flex items-center gap-1 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-2 py-0.5 text-[11px] font-medium text-[#7a5f30]"><Plus size={11} /> {t("v19", "Carnet")}</button>
-                  );
-                })()}
-              </span>
-            )}
-            {" "}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
 function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: { addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; }) {
   const { text, setText, result, loading, correct, clear, notice } = useCorrection("journal", 0, 0, "", null);
   const journalPromptKey = `cj-journal-prompt`;
@@ -3154,7 +3112,20 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
       .then((d) => { if (d) { setAudioData(d); setHasRecording(true); } })
       .catch(() => {});
   }, [journalRecordingKey]);
-  const [audioResult, setAudioResult] = useState<CorrectResult | null>(null);
+  const journalAudioResultKey = "cj-correction-journal-audio";
+  const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(journalAudioResultKey);
+      return raw ? (JSON.parse(raw) as CorrectResult) : null;
+    } catch { return null; }
+  });
+  useEffect(() => {
+    try {
+      if (audioResult) writeLs(journalAudioResultKey, JSON.stringify(audioResult));
+      else window.localStorage.removeItem(journalAudioResultKey);
+    } catch { /* ignore */ }
+  }, [audioResult, journalAudioResultKey]);
   const [audioLoading, setAudioLoading] = useState(false);
   const [recorderKey, setRecorderKey] = useState(0);
 
@@ -3463,7 +3434,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
               <RotateCcw size={13} /> {t("v218", "Refaire")}
             </button>
           </div>
-          <JournalMarginalia result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+          <CorrectedCopy result={result} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
         </div>
       )}
 
@@ -3484,7 +3455,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
               </button>
             ) : (
               <div className="rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4">
-                <JournalMarginalia result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
+                <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
               </div>
             )}
           </div>
