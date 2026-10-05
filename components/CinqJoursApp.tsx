@@ -1187,7 +1187,6 @@ function SourceView(props: SourceViewProps) {
     const context = found ? found.trim() : sentencePopup.text;
     addVocab({ word: sentencePopup.text, def: sentenceAiUnavailable ? t("v20", "Traduction indisponible — réessayez.") : (sentenceTranslation || ""), translation: sentenceAiUnavailable ? "" : (sentenceTranslation || ""), context, sourceId: videoId ?? undefined, type: "phrase" });
     setToast(`« ${sentencePopup.text.slice(0, 40)}${sentencePopup.text.length > 40 ? "…" : ""} » ${t("v147","ajouté au carnet")}`);
-    setSentencePopup(null);
     setTimeout(() => setToast(null), 2200);
   };
 
@@ -1207,7 +1206,6 @@ function SourceView(props: SourceViewProps) {
     const surface = stripPunctKeepCase(popup.word);
     addVocab({ word, surface, def: popup.aiUnavailable ? t("v0", "Explication indisponible — réessayez.") : popup.def, translation: popup.translation || "", context: popup.context, sourceId: videoId ?? undefined, type: "vocab" });
     setToast(`« ${word} » ${t("v147","ajouté au carnet")}`);
-    setPopup(null);
     setTimeout(() => setToast(null), 2200);
   };
 
@@ -1546,24 +1544,18 @@ function SourceView(props: SourceViewProps) {
               )}
             </div>
 
-            {savedSentences.includes(sentencePopup.text.toLowerCase()) ? (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
-                <button
-                  onClick={() => removeVocabByWord(sentencePopup.text.toLowerCase())}
-                  className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
-                >
-                  {t("v267", "Retirer")}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={saveSentenceToCarnet}
-                className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
-              >
-                <Plus size={13} />  {t("v18", "Ajouter au carnet")}
-              </button>
-            )}
+            <button
+              onClick={savedSentences.includes(sentencePopup.text.toLowerCase())
+                ? () => removeVocabByWord(sentencePopup.text.toLowerCase())
+                : saveSentenceToCarnet}
+              className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728]"
+            >
+              {savedSentences.includes(sentencePopup.text.toLowerCase()) ? (
+                <><Check size={13} />  {t("v48", "Ajouté au carnet")}</>
+              ) : (
+                <><Plus size={13} />  {t("v18", "Ajouter au carnet")}</>
+              )}
+            </button>
           </div>
         )}
 
@@ -1635,25 +1627,19 @@ function SourceView(props: SourceViewProps) {
               )}
             </div>
 
-            {savedWords.has(stripPunct(popup.base || popup.word)) ? (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]"><Check size={13} />  {t("v48", "Ajouté au carnet")}</span>
-                <button
-                  onClick={() => removeVocabByWord(stripPunct(popup.base || popup.word))}
-                  className="text-[11px] text-[#B08D57] hover:text-[#7a5f30]"
-                >
-                  {t("v267", "Retirer")}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={savePopupWord}
-                disabled={popupLoading}
-                className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728] disabled:opacity-50"
-              >
-                <Plus size={13} />  {t("v18", "Ajouter au carnet")}
-              </button>
-            )}
+            <button
+              onClick={savedWords.has(stripPunct(popup.base || popup.word))
+                ? () => removeVocabByWord(stripPunct(popup.base || popup.word))
+                : savePopupWord}
+              disabled={popupLoading && !savedWords.has(stripPunct(popup.base || popup.word))}
+              className="mt-3 flex items-center gap-1.5 rounded-full border border-[#B08D5744] bg-[#B08D5714] px-3 py-1.5 text-xs font-medium text-[#7a5f30] hover:bg-[#B08D5728] disabled:opacity-50"
+            >
+              {savedWords.has(stripPunct(popup.base || popup.word)) ? (
+                <><Check size={13} />  {t("v48", "Ajouté au carnet")}</>
+              ) : (
+                <><Plus size={13} />  {t("v18", "Ajouter au carnet")}</>
+              )}
+            </button>
           </div>
         )}
 
