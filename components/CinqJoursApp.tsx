@@ -1697,8 +1697,8 @@ function ResourcesView({ resources, onSelect, onDelete }: {
             const isText = r.type === "text" || (typeof r.video_id === "string" && r.video_id.startsWith("text-"));
             const thumbText = isText
               ? (Array.isArray(r.transcript)
-                  ? (r.transcript as { t: string; text: string }[]).map((l) => l.text).join(" ").slice(0, 240)
-                  : String(r.title || "")).slice(0, 240)
+                  ? (r.transcript as { t: string; text: string }[]).map((l) => l.text).join(" ").slice(0, 600)
+                  : String(r.title || "")).slice(0, 600)
               : "";
             return (
             <div
@@ -1716,8 +1716,7 @@ function ResourcesView({ resources, onSelect, onDelete }: {
             >
               <div className="aspect-video w-full overflow-hidden bg-[var(--fill-muted)]">
                 {isText ? (
-                  <div className="cj-scrollbar h-full w-full overflow-hidden bg-[var(--paper)] p-3 text-left">
-                    <p className="cj-mono mb-1 text-[9px] uppercase tracking-wider text-[#B08D57]">{t("v34", "Texte")}</p>
+                  <div className="h-full w-full overflow-hidden bg-[var(--paper)] p-2.5 text-left">
                     <p className="text-[11px] leading-snug text-[var(--text)]">{thumbText}</p>
                   </div>
                 ) : (
