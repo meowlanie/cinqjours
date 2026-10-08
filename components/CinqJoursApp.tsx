@@ -397,28 +397,37 @@ function wordDiff(original: string, corrected: string): DiffToken[] {
   const orig = original.split(/\s+/).filter(Boolean);
   const corr = corrected.split(/\s+/).filter(Boolean);
   const norm = (w: string) => w.toLowerCase().replace(/[.,!?;:"'«»()]/g, "");
+  const n = orig.length;
+  const m = corr.length;
+
+  // Longest-common-subsequence lengths — minimizes the number of changed words
+  // so insertions/deletions/reorders don't cascade into spurious diffs.
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = norm(orig[i]) === norm(corr[j])
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
 
   const tokens: DiffToken[] = [];
-  let i = 0, j = 0;
-
-  while (i < orig.length && j < corr.length) {
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
     if (norm(orig[i]) === norm(corr[j])) {
       tokens.push({ type: "same", text: orig[i] });
       i++; j++;
-    } else if (i + 1 < orig.length && norm(orig[i + 1]) === norm(corr[j])) {
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
       tokens.push({ type: "removed", text: orig[i] });
       i++;
-    } else if (j + 1 < corr.length && norm(orig[i]) === norm(corr[j + 1])) {
+    } else {
       tokens.push({ type: "added", text: corr[j] });
       j++;
-    } else {
-      tokens.push({ type: "removed", text: orig[i] });
-      tokens.push({ type: "added", text: corr[j] });
-      i++; j++;
     }
   }
-  while (i < orig.length) { tokens.push({ type: "removed", text: orig[i] }); i++; }
-  while (j < corr.length) { tokens.push({ type: "added", text: corr[j] }); j++; }
+  while (i < n) { tokens.push({ type: "removed", text: orig[i] }); i++; }
+  while (j < m) { tokens.push({ type: "added", text: corr[j] }); j++; }
 
   return tokens;
 }
@@ -427,12 +436,28 @@ type DiffBlock =
   | { type: "same"; text: string }
   | { type: "replace"; removed: string[]; added: string[] };
 
+// Strips everything but letters (accents kept) and lowercases, so a correction
+// that differs only by case, punctuation or whitespace is treated as a no-op.
+// Accents are deliberately preserved so genuine accent errors (ou/où, a/à) stay flagged.
+const normalize = (s: string): string => s.toLowerCase().replace(/[^\p{L}]/gu, "");
+
 function buildBlocks(tokens: DiffToken[]): DiffBlock[] {
   const blocks: DiffBlock[] = [];
   let cur: { removed: string[]; added: string[] } | null = null;
   const flush = () => {
     if (cur) {
-      blocks.push({ type: "replace", removed: cur.removed, added: cur.added });
+      const removedText = cur.removed.join(" ");
+      const addedText = cur.added.join(" ");
+      // A replace block whose removed and added text are equivalent (identical,
+      // or differing only by case/punctuation/whitespace, or a pure reorder)
+      // adds no information — render it as plain text instead.
+      if (normalize(removedText) === normalize(addedText)) {
+        const last = blocks[blocks.length - 1];
+        if (last && last.type === "same") last.text = `${last.text} ${removedText}`;
+        else blocks.push({ type: "same", text: removedText });
+      } else {
+        blocks.push({ type: "replace", removed: cur.removed, added: cur.added });
+      }
       cur = null;
     }
   };
@@ -3501,31 +3526,29 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
                  </button>
              </div>
            </div>
-           {entries.length > 0 ? (
-             histView === "cards" ? (
-               <div className="columns-2 gap-3">
-                 {entries.map((e) => (
-                   <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="relative mb-3 cursor-pointer break-inside-avoid rounded-lg border border-[var(--border)] bg-[var(--paper)] px-2 py-3 shadow-sm transition hover:border-[var(--border-muted)]">
-                     <div className="flex items-start justify-between gap-2">
-                       <p className="cj-mono text-[9px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
-                       <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[var(--text-muted)] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
-                         <Trash2 size={14} />
-                       </button>
-                     </div>
-                     {e.prompt && !e.prompt.startsWith("Écrivez librement") ? (
-                       <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{truncateWords(e.prompt, 18)}</p>
-                     ) : null}
-                     {e.text && <p className="mt-2 line-clamp-[10] text-sm leading-relaxed text-[var(--text)]">{e.text}</p>}
-                     {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
-                   </div>
-                 ))}
-               </div>
-             ) : (
-               <JournalCalendar entries={entries} onOpen={(e) => { setOpenEntry(e); setShowCorrection(false); }} />
-             )
-           ) : (
-             <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{t("v297", "No entries yet.")}</p>
-           )}
+            {histView === "cal" ? (
+              <JournalCalendar entries={entries} onOpen={(e) => { setOpenEntry(e); setShowCorrection(false); }} />
+            ) : entries.length > 0 ? (
+              <div className="columns-2 gap-3">
+                {entries.map((e) => (
+                  <div key={e.id} onClick={() => { setOpenEntry(e); setShowCorrection(false); }} className="relative mb-3 cursor-pointer break-inside-avoid rounded-lg border border-[var(--border)] bg-[var(--paper)] px-2 py-3 shadow-sm transition hover:border-[var(--border-muted)]">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="cj-mono text-[9px] uppercase tracking-wide text-[#B08D57]">{e.date}</p>
+                      <button onClick={(ev) => { ev.stopPropagation(); deleteEntry(e.id); }} className="text-[var(--text-muted)] transition hover:text-[#B5432E]" title={t("v106", "Supprimer")}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    {e.prompt && !e.prompt.startsWith("Écrivez librement") ? (
+                      <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{truncateWords(e.prompt, 18)}</p>
+                    ) : null}
+                    {e.text && <p className="mt-2 line-clamp-[10] text-sm leading-relaxed text-[var(--text)]">{e.text}</p>}
+                    {(audioMap[e.id] || e.audio) && <AudioBar src={audioMap[e.id] || e.audio} />}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-1 text-xs italic leading-relaxed text-[var(--text-muted)]">{t("v297", "No entries yet.")}</p>
+            )}
           </div>
          </div>
        </aside>

@@ -60,9 +60,9 @@ IMPORTANT :
   - flagged=true UNIQUEMENT pour les erreurs OBJECTIVES vérifiables (orthographe, grammaire, conjugaison, accord, syntaxe, vocabulaire incorrect${source.trim() ? ", infidélité au texte source" : ""}).
   - En cas de doute, laisse flagged=false.
   - Si une phrase est grammaticalement correcte mais maladroite, lourde ou peu naturelle, garde flagged=false mais propose une reformulation plus naturelle dans "suggestion".
-${isSpeaking
-    ? "- Pour les suggestions de style : privilégie un ton décontracté, conversationnel, comme le parlerait un natif à l'oral."
-    : "- Pour les suggestions de style : privilégie un registre soutenu, élégant et naturel, ni trop familier ni trop formel."}
+  ${isSpeaking
+    ? "- Pour les suggestions de style : accepte aussi bien le registre courant que le registre familier (ton conversationnel, comme le parlerait un natif à l'oral)."
+    : "- Pour les suggestions de style : conserve le registre courant de l'apprenant (ne le formalise pas)."}
 
 Découpe le texte en phrases. Pour chaque phrase :
 - "text" : la phrase originale INCHANGÉE.
@@ -116,8 +116,8 @@ Use this source text as a reference. Correct language errors AND flag (flagged) 
     : "";
 
   const styleNote = isSpeaking
-    ? "For style suggestions: prefer a casual, conversational tone, as a native would speak."
-    : "For style suggestions: prefer a polished, elegant and natural register, neither too familiar nor too formal.";
+    ? "For style suggestions: accept both the current register and a familiar/conversational register, as a native would speak."
+    : "For style suggestions: preserve the learner's current register (do not formalize).";
 
   const britishSpelling = target === "en" || translation === "en"
     ? "  - Prefer British spelling (e.g. colour, organise, centre); American variants are also accepted.\n"
