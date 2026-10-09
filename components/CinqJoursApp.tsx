@@ -3308,7 +3308,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
     <div className="cj-fade-in relative flex flex-col gap-4 xl:flex-row xl:items-stretch xl:gap-0">
       <section className="cj-paper xl:w-1/2 rounded-2xl xl:rounded-r-none p-6 shadow-[0_2px_0_var(--hairline)] space-y-5 xl:h-[calc(100dvh-1rem)] xl:overflow-y-auto cj-scrollbar-hidden">
       <div>
-        <p className="cj-mono text-[10px] uppercase tracking-[0.2em] text-[var(--accent-text)]">Journal</p>
+        <p className="cj-mono text-[10px] uppercase tracking-[0.2em] text-[var(--accent-text)]">{t("v229", "Journal")}</p>
         <h2 className="cj-formal mt-1 text-2xl leading-tight text-[var(--text)]">{dateStr}</h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{t("v252", "Write a journal entry freely or click 'Generate a topic' for inspiration.")}</p>
         {generating ? (
@@ -3750,7 +3750,7 @@ function VocabDrawer({ open, onClose, vocab, currentSourceId, removeVocab, notes
         className={`absolute right-0 top-0 h-full w-[320px] shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-          <h3 className="cj-display text-xl text-[var(--text)]">{t("v120", "Carnet d'apprentissage")}</h3>
+          <h3 className="cj-display text-xl text-[var(--text)]">{t("v19", "Carnet")}</h3>
           <button onClick={onClose} aria-label={t("v296", "Fermer")} className="text-[#4a453f] hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[#B08D57] rounded-full"><X size={18} /></button>
         </div>
         <div className="cj-scrollbar h-[calc(100%-64px)] overflow-y-auto p-5">
@@ -3924,8 +3924,7 @@ function CarnetView({ vocab, targetLang, notes, setNote, removeVocab, frdic }: {
       <div>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v19", "Carnet")}</p>
-            <h2 className="cj-display text-3xl text-[var(--text)]">{t("v120", "Carnet d'apprentissage")}</h2>
+            <h2 className="cj-display text-3xl text-[var(--text)]">{t("v19", "Carnet")}</h2>
           </div>
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--paper)] p-0.5">
