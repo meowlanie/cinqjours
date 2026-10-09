@@ -644,25 +644,35 @@ function escapeHtml(s: string): string {
 function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (text: string) => void }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  const mistakeWords = useMemo(() => {
-    const set = new Set<string>();
+  // Position-aware list of which original words are genuine mistakes. A global
+  // Set would underline every occurrence of a mistaken word form, including
+  // correct ones elsewhere, so we track word positions per segment instead.
+  const isMistake = useMemo(() => {
+    const arr: boolean[] = [];
     segments.forEach((s) => {
-      wordDiff(s.text, s.correction || s.text).forEach((t) => {
-        if (t.type === "removed") {
-          set.add(t.text.toLowerCase().replace(/[.,!?;:"'«»()]/g, ""));
+      const blocks = buildBlocks(wordDiff(s.text, s.correction || s.text));
+      blocks.forEach((b) => {
+        if (b.type === "same") {
+          const n = b.text.split(/\s+/).filter(Boolean).length;
+          for (let k = 0; k < n; k++) arr.push(false);
+        } else {
+          const noop = normalize(b.removed.join(" ")) === normalize(b.added.join(" "));
+          for (let k = 0; k < b.removed.length; k++) arr.push(!noop);
         }
       });
     });
-    return set;
+    return arr;
   }, [segments]);
 
   const applyMarks = (text: string): string => {
+    let wordIdx = 0;
     return text
       .split(/(\s+)/)
       .map((part) => {
         if (part.trim()) {
-          const norm = part.toLowerCase().replace(/[.,!?;:"'«»()]/g, "");
-          if (mistakeWords.has(norm)) {
+          const marked = isMistake[wordIdx] ?? false;
+          wordIdx++;
+          if (marked) {
             return `<span style="text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: #B5432E; text-underline-offset: 3px;">${escapeHtml(part)}</span>`;
           }
         }
@@ -671,51 +681,10 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
       .join("");
   };
 
-  const saveCaret = (): number | null => {
-    const el = ref.current;
-    const sel = window.getSelection();
-    if (!el || !sel || sel.rangeCount === 0 || !el.contains(sel.anchorNode)) return null;
-    const range = sel.getRangeAt(0);
-    const pre = document.createRange();
-    pre.selectNodeContents(el);
-    pre.setEnd(range.startContainer, range.startOffset);
-    return pre.toString().length;
-  };
-
-  const restoreCaret = (offset: number) => {
-    const el = ref.current;
-    const sel = window.getSelection();
-    if (!el || !sel) return;
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-    let current = 0;
-    let node = walker.nextNode();
-    while (node) {
-      const len = node.textContent?.length || 0;
-      if (current + len >= offset) {
-        const range = document.createRange();
-        range.setStart(node, Math.max(0, offset - current));
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        return;
-      }
-      current += len;
-      node = walker.nextNode();
-    }
-  };
-
   useEffect(() => {
     if (ref.current) ref.current.innerHTML = applyMarks(segments.map((s) => s.text).join(" "));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleInput = () => {
-    const el = ref.current;
-    if (!el) return;
-    const caret = saveCaret();
-    el.innerHTML = applyMarks(el.innerText);
-    if (caret !== null) restoreCaret(caret);
-  };
 
   return (
     <div>
@@ -724,7 +693,6 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
         contentEditable
         suppressContentEditableWarning
         spellCheck={false}
-        onInput={handleInput}
         className="min-h-[140px] w-full rounded-lg border border-[var(--border-strong)] bg-[var(--paper)] p-4 text-[15px] leading-relaxed text-[var(--text)] outline-none focus:border-[#B08D57]"
       />
       <div className="mt-2 flex justify-end">

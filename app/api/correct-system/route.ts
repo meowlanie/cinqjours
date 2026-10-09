@@ -76,8 +76,19 @@ export async function POST(req: Request) {
     const matches = await checkText(text, target);
     const sentences = splitSentences(text);
 
+    // Self-correction only flags objective mistakes (spelling, grammar,
+    // punctuation, agreement, conjugation, false friends...). getCategoryKind()
+    // defaults unknown categories to "spelling", so a single `!== "style"` check
+    // lets subjective rules (redundancy, register, colloquial, argot) slip through
+    // and underline correct words. Deny-list the explicitly subjective categories
+    // instead; keep everything else (MISC carries real grammar such as
+    // conjugation, and faux-amis are treated as objective, so both stay).
+    const SUBJECTIVE = ["style", "redond", "registre", "familier", "argot", "colloquial"];
+    const isObjective = (m: LTMatch) => !SUBJECTIVE.some((s) => m.rule.category.id.toLowerCase().includes(s));
+    const objectiveMatches = matches.filter(isObjective);
+
     const segments: Segment[] = sentences.map((s) => {
-      const sentenceMatches = matches.filter(
+      const sentenceMatches = objectiveMatches.filter(
         (m) => m.offset >= s.start && m.offset < s.end
       );
 
@@ -85,7 +96,7 @@ export async function POST(req: Request) {
         return { text: s.text, flagged: false, note: null, correction: s.text };
       }
 
-      const correction = applyReplacements(s.text, s.start, matches);
+      const correction = applyReplacements(s.text, s.start, objectiveMatches);
       const firstMatch = sentenceMatches[0];
 
       return {
