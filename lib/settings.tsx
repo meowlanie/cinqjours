@@ -5,6 +5,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -92,27 +94,13 @@ export interface SettingsValue {
 
 const SettingsContext = createContext<SettingsValue | null>(null);
 
-// Read persisted settings synchronously during the first client render so the
-// UI never paints in a default language and then switches (the flash). The
-// module-level `current*` mirrors are updated here so the standalone `t()` is
-// correct on the very first render too. `readLs` already guards the missing
-// `window` during SSR, so server rendering still falls back to "en".
-function initUi(): LangCode {
-  const v = readLs(LS.ui, UI_LANGUAGES, "en");
-  currentUiLocale = v;
-  return v;
-}
-function initTarget(): LangCode {
-  const v = readLs(LS.target, TARGET_LANGUAGES, "en");
-  currentTargetLang = v;
-  return v;
-}
-function initTrans(): LangCode {
-  const v = readLs(LS.trans, TRANSLATION_LANGUAGES, "en");
-  currentTranslationLang = v;
-  return v;
-}
-function initOnboarded(): boolean {
+// Persisted settings live in localStorage, which the server cannot read. If we
+// loaded them in a `useState` initializer, the first client render would differ
+// from the server render (e.g. French vs English) and React would throw a
+// hydration mismatch. Instead, state starts at the same defaults the server
+// uses, and the stored values are applied in a layout effect right after
+// hydration — before paint, so there is no visible language flash.
+function readOnboarded(): boolean {
   try {
     return window.localStorage.getItem(LS.onboarded) === "1";
   } catch {
@@ -120,15 +108,38 @@ function initOnboarded(): boolean {
   }
 }
 
+// useLayoutEffect logs a warning when a component is server-rendered; on the
+// server fall back to useEffect (which never runs there anyway).
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [uiLocale, setUi] = useState<LangCode>(initUi);
-  const [targetLang, setTarget] = useState<LangCode>(initTarget);
-  const [translationLang, setTrans] = useState<LangCode>(initTrans);
-  const [level, setLvl] = useState<Level>(() => readLs(LS.level, LEVELS, "advanced"));
-  const [onboarded, setOnboarded] = useState<boolean>(initOnboarded);
+  const [uiLocale, setUi] = useState<LangCode>("en");
+  const [targetLang, setTarget] = useState<LangCode>("en");
+  const [translationLang, setTrans] = useState<LangCode>("en");
+  const [level, setLvl] = useState<Level>("advanced");
+  const [onboarded, setOnboarded] = useState<boolean>(false);
+
+  const hasLoadedRef = useRef(false);
+  useIsomorphicLayoutEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+    const ui = readLs(LS.ui, UI_LANGUAGES, "en");
+    const target = readLs(LS.target, TARGET_LANGUAGES, "en");
+    const trans = readLs(LS.trans, TRANSLATION_LANGUAGES, "en");
+    // Update the mirrors here (not in a passive effect) so they hold the loaded
+    // locale before the re-render these setters trigger; the standalone `t()`
+    // then reads the right value. Setters keep the mirrors in sync afterwards.
+    currentUiLocale = ui;
+    currentTargetLang = target;
+    currentTranslationLang = trans;
+    setUi(ui);
+    setTarget(target);
+    setTrans(trans);
+    setLvl(readLs(LS.level, LEVELS, "advanced"));
+    setOnboarded(readOnboarded());
+  }, []);
 
   useEffect(() => {
-    currentUiLocale = uiLocale;
     document.documentElement.lang = uiLocale;
   }, [uiLocale]);
 
