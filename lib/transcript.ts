@@ -68,8 +68,15 @@ function decodeEntities(text: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (raw, n) => {
+      const code = Number(n);
+      return code > 0 && code < 0x110000 ? String.fromCodePoint(code) : raw;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (raw, n) => {
+      const code = parseInt(n, 16);
+      return code > 0 && code < 0x110000 ? String.fromCodePoint(code) : raw;
+    });
 }
 
 const SENTENCE_END_PASTE = /[.!?…:»"」。！？」』]\s*$/;
@@ -227,59 +234,114 @@ export function parsePastedText(raw: string): TranscriptLine[] {
   return isTimestamped(lines) ? parseTimestamped(lines) : parsePlainSentences(lines);
 }
 
-/** Parse a raw caption track body (JSON3 preferred, XML fallback) into lines. */
+function captionText(raw: string): string {
+  return decodeEntities(raw.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+}
+
+/** Parse a raw caption track body (JSON3, srv3 `<p t>`, or legacy `<text>` XML). */
 export function parseTrackContent(text: string): RawLine[] {
   if (!text || text.trim() === "") throw new Error("Sous-titres vides (restriction PoToken).");
-  try {
-    const json = JSON.parse(text);
-    const events: { tStartMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
-    return events
-      .filter((e) => Array.isArray(e.segs))
-      .map((e) => {
-        const captionText = (e.segs || [])
-          .map((s) => s.utf8 || "")
-          .join("")
-          .replace(/\n/g, " ")
-          .trim();
-        return { text: captionText, offset: e.tStartMs ?? 0, duration: 0 };
-      })
-      .filter((c) => c.text);
-  } catch {
-    const xml: RawLine[] = [];
-    const re = /<text start="([\d.]+)" dur="([\d.]+)">([\s\S]*?)<\/text>/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      const body = decodeEntities(m[3].replace(/<[^>]+>/g, "").trim());
-      if (body) {
-        xml.push({ text: body, offset: Math.round(parseFloat(m[1]) * 1000), duration: Math.round(parseFloat(m[2]) * 1000) });
-      }
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const json = JSON.parse(text);
+      const events: { tStartMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
+      const lines = events
+        .filter((e) => Array.isArray(e.segs))
+        .map((e) => {
+          const caption = (e.segs || [])
+            .map((s) => s.utf8 || "")
+            .join("")
+            .replace(/\n/g, " ")
+            .trim();
+          return { text: caption, offset: e.tStartMs ?? 0, duration: 0 };
+        })
+        .filter((c) => c.text);
+      if (lines.length > 0) return lines;
+    } catch {
+      // fall through to XML
     }
-    if (xml.length === 0) throw new Error("Format de sous-titres non reconnu.");
-    return xml;
   }
+
+  const srv3: RawLine[] = [];
+  const pRe = /<p\b([^>]*)>([\s\S]*?)<\/p>/g;
+  let p: RegExpExecArray | null;
+  while ((p = pRe.exec(text)) !== null) {
+    const t = p[1].match(/\bt="(\d+)"/);
+    if (!t) continue;
+    const d = p[1].match(/\bd="(\d+)"/);
+    const body = captionText(p[2]);
+    if (body) srv3.push({ text: body, offset: Number(t[1]), duration: d ? Number(d[1]) : 0 });
+  }
+  if (srv3.length > 0) return srv3;
+
+  const xml: RawLine[] = [];
+  const re = /<text\b([^>]*)>([\s\S]*?)<\/text>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const start = m[1].match(/\bstart="([\d.]+)"/);
+    if (!start) continue;
+    const dur = m[1].match(/\bdur="([\d.]+)"/);
+    const body = captionText(m[2]);
+    if (body) {
+      xml.push({
+        text: body,
+        offset: Math.round(parseFloat(start[1]) * 1000),
+        duration: Math.round(parseFloat(dur?.[1] ?? "0") * 1000),
+      });
+    }
+  }
+  if (xml.length === 0) throw new Error("Format de sous-titres non reconnu.");
+  return xml;
 }
 
-/** Fetch a caption track (JSON3 format preferred, XML fallback). */
-export async function fetchTrack(track: CaptionTrack, preferFr: boolean): Promise<RawLine[]> {
+/** Manual captions in the requested language, then auto-generated, then English, then anything. */
+export function selectCaptionTrack(tracks: CaptionTrack[], preferLang: string | null): CaptionTrack {
+  const matches = (t: CaptionTrack, lang: string) => {
+    const code = (t.languageCode || "").toLowerCase();
+    return code === lang || code.startsWith(`${lang}-`);
+  };
+  const manual = (t: CaptionTrack) => t.kind !== "asr";
+  const pref = preferLang?.toLowerCase().split("-")[0];
+  if (pref) {
+    const manualPref = tracks.find((t) => matches(t, pref) && manual(t));
+    if (manualPref) return manualPref;
+    const asrPref = tracks.find((t) => matches(t, pref));
+    if (asrPref) return asrPref;
+  }
+  const manualEn = tracks.find((t) => matches(t, "en") && manual(t));
+  if (manualEn) return manualEn;
+  const asrEn = tracks.find((t) => matches(t, "en"));
+  if (asrEn) return asrEn;
+  return tracks.find(manual) ?? tracks[0];
+}
+
+export const INNERTUBE_ANDROID_KEY = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w";
+export const INNERTUBE_IOS_KEY = "AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc";
+
+/** Fetch a caption track. srv3 XML first (what the Android client returns), then JSON3. */
+export async function fetchTrack(track: CaptionTrack, preferLang: string | null = null): Promise<RawLine[]> {
   const base = track.baseUrl.replace(/&amp;/g, "&");
-  const url = `${base}&fmt=json3`;
-  const res = await fetch(url, {
-    headers: {
-      "Accept-Language": preferFr ? "fr,en;q=0.9" : "en;q=0.9",
-    },
-  });
-  if (!res.ok) throw new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
-
-  const text = await res.text();
-  return parseTrackContent(text);
-}
-
-function selectTrack(tracks: CaptionTrack[], wantFr: boolean): CaptionTrack {
-  if (wantFr) {
-    const fr = tracks.find((t) => t.languageCode === "fr" || t.languageCode?.startsWith("fr-"));
-    if (fr) return fr;
+  const absolute = base.startsWith("//") ? `https:${base}` : base;
+  const url = new URL(absolute);
+  url.searchParams.delete("fmt");
+  const headers = { "Accept-Language": preferLang ? `${preferLang},en;q=0.8` : "en;q=0.9" };
+  let lastError: Error | null = null;
+  for (const fmt of ["3", "json3"]) {
+    url.searchParams.set("fmt", fmt);
+    const res = await fetch(url.toString(), { headers, signal: AbortSignal.timeout(12000) });
+    if (!res.ok) {
+      lastError = new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
+      continue;
+    }
+    try {
+      const lines = parseTrackContent(await res.text());
+      if (lines.length > 0) return lines;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
   }
-  return tracks.find((t) => t.kind !== "asr") ?? tracks[0];
+  throw lastError ?? new Error("Sous-titres vides.");
 }
 
 interface PlayerResponse {
@@ -291,36 +353,54 @@ interface PlayerResponse {
 /**
  * Fetch captions directly from the browser, bypassing any server-side
  * network restrictions (the browser reaches YouTube even when the server
- * cannot). Uses the InnerTube player API, which is CORS-accessible.
+ * cannot). Pretends to be the Android app — the identity that still returns
+ * caption tracks. A browser cannot set the Android User-Agent; the server
+ * route does that when this call is blocked.
  */
-export async function fetchTranscriptClient(videoId: string): Promise<{ transcript: TranscriptLine[]; title: string | null; lang: string | null }> {
+export async function fetchTranscriptClient(videoId: string, preferLang: string | null = null): Promise<{ transcript: TranscriptLine[]; title: string | null; lang: string | null }> {
   const clients = [
-    { clientName: "WEB", clientVersion: "2.20240504.01.00" },
-    { clientName: "WEB", clientVersion: "1.20231129.00.00" },
-    { clientName: "ANDROID", clientVersion: "20.10.38" },
+    { clientName: "ANDROID", clientVersion: "20.10.38", key: INNERTUBE_ANDROID_KEY },
+    { clientName: "IOS", clientVersion: "19.45.4", key: INNERTUBE_IOS_KEY },
   ];
 
   let lastError: Error | null = null;
 
   for (const client of clients) {
     try {
-      const res = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
+      const res = await fetch(`https://www.youtube.com/youtubei/v1/player?key=${client.key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context: { client }, videoId }),
+        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({
+          videoId,
+          contentCheckOk: true,
+          racyCheckOk: true,
+          context: {
+            client: {
+              clientName: client.clientName,
+              clientVersion: client.clientVersion,
+              hl: preferLang || "en",
+              gl: "US",
+            },
+          },
+        }),
       });
       if (!res.ok) {
         lastError = new Error(`InnerTube HTTP ${res.status}`);
         continue;
       }
       const data = (await res.json()) as PlayerResponse;
+      const status = data.playabilityStatus?.status;
+      if (status === "AGE_VERIFICATION_REQUIRED" || status === "AGE_CHECK_REQUIRED") {
+        throw new Error("Vidéo réservée aux adultes (age-restricted).");
+      }
       const tracks: CaptionTrack[] = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
       if (tracks.length === 0) {
         lastError = new Error("Aucun sous-titre listé par InnerTube.");
         continue;
       }
-      const track = selectTrack(tracks, true);
-      const raw = await fetchTrack(track, true);
+      const track = selectCaptionTrack(tracks, preferLang);
+      const raw = await fetchTrack(track, preferLang);
       if (raw.length === 0) {
         lastError = new Error("Sous-titres vides.");
         continue;
@@ -332,6 +412,7 @@ export async function fetchTranscriptClient(videoId: string): Promise<{ transcri
       };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
+      if (lastError.message.includes("age-restricted")) throw lastError;
     }
   }
 

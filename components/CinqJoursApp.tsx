@@ -4720,11 +4720,12 @@ export function CinqJoursApp(props: {
       let transcriptToSave: { t: string; text: string }[] | null = null;
       let apiTitle: string | null = null;
       let apiVideoId: string | null = null;
+      let importError: string | null = null;
 
       // 1) Try client-side first (browser = residential IP, avoids datacenter blocks)
       if (id) {
         try {
-          const clientRes = await fetchTranscriptClient(id);
+          const clientRes = await fetchTranscriptClient(id, getLangCodes().targetLang);
           if (clientRes.transcript.length > 0) {
             transcriptToSave = clientRes.transcript;
             apiTitle = clientRes.title;
@@ -4747,6 +4748,8 @@ export function CinqJoursApp(props: {
           if (data.title) apiTitle = data.title;
           if (Array.isArray(data.transcript) && data.transcript.length) {
             transcriptToSave = data.transcript;
+          } else if (typeof data.error === "string") {
+            importError = data.error;
           }
         } catch {
           // server fallback failed, fall through to extension
@@ -4779,6 +4782,8 @@ export function CinqJoursApp(props: {
 
       if (transcriptToSave) {
         setTranscript(transcriptToSave);
+      } else if (importError) {
+        setToast(importError);
       }
 
       if (vid) {

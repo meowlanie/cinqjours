@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { extractYouTubeId, groupIntoSentences, parseTrackContent, type CaptionTrack, type RawLine } from "@/lib/transcript";
+import { ProxyAgent } from "undici";
+import { execSync } from "node:child_process";
+import { extractYouTubeId, groupIntoSentences, parseTrackContent, selectCaptionTrack, INNERTUBE_ANDROID_KEY, INNERTUBE_IOS_KEY, type CaptionTrack, type RawLine } from "@/lib/transcript";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -22,46 +24,91 @@ interface PlayerResponse {
 interface ClientConfig {
   name: string;
   version: string;
-  ua?: string;
-  /** Adds an "api_key" query param (needed by some WEB-family clients). */
-  needsKey?: boolean;
+  ua: string;
+  key: string;
 }
 
-// ANDROID & TVHTML5_SIMPLY_EMBEDDED_PLAYER first: they are PoToken-exempt and
-// read captions reliably in 2025+. From datacenter IPs the ANDROID client can
-// answer LOGIN_REQUIRED, in which case visitorData from a first probe call
-// usually un-blocks it (see fetchCaptionsInnerTube below).
+// Android first: it is PoToken-exempt when called with the public Android key
+// and a matching User-Agent. iOS is the next identity. WEB is last and needs
+// a visitorData minted from the homepage.
 const CLIENTS: ClientConfig[] = [
-  { name: "ANDROID", version: "20.10.38", ua: ANDROID_UA },
-  { name: "ANDROID", version: "19.09.37", ua: ANDROID_UA },
-  { name: "TVHTML5_SIMPLY_EMBEDDED_PLAYER", version: "2.0", ua: BROWSER_UA },
-  { name: "WEB_EMBEDDED_PLAYER", version: "1.20241008.00.00", ua: BROWSER_UA, needsKey: true },
-  { name: "IOS", version: "19.09.3", ua: "com.google.ios.youtube/19.09.3 (iPhone16,3; U; CPU iOS 17_5 like Mac OS X)" },
-  { name: "ANDROID_MUSIC", version: "6.33.52", ua: "com.google.android.apps.youtube.music/6.33.52 (Linux; U; Android 14; en_US) gzip" },
+  { name: "ANDROID", version: "20.10.38", ua: ANDROID_UA, key: INNERTUBE_ANDROID_KEY },
+  { name: "IOS", version: "19.45.4", ua: "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1_0 like Mac OS X)", key: INNERTUBE_IOS_KEY },
+  { name: "WEB", version: "2.20241126.01.00", ua: BROWSER_UA, key: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8" },
 ];
 
-// Public key used by YouTube's own web client; harmless to reuse for
-// WEB-family fallback clients.
-const INNERTUBE_API_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+// YouTube is unreachable directly from some networks (e.g. behind the GFW), but
+// a local proxy provides access. The browser honors the macOS system proxy;
+// Node's fetch does not, so we attach an explicit dispatcher. Resolution order:
+// YT_PROXY / HTTPS_PROXY env, then the macOS system proxy. On hosts with neither
+// (e.g. Vercel) this is null and requests go direct.
+let proxyAgentCache: ProxyAgent | null | undefined;
+
+function systemProxyUrl(): string | null {
+  const env =
+    process.env.YT_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.https_proxy ||
+    process.env.HTTP_PROXY ||
+    process.env.http_proxy;
+  if (env) return env;
+  if (process.platform !== "darwin") return null;
+  try {
+    const out = execSync("scutil --proxy", { encoding: "utf8", timeout: 3000 });
+    const field = (k: string): string | null => out.match(new RegExp(`${k}\\s*:\\s*(\\S+)`))?.[1] ?? null;
+    for (const [enable, host, port] of [
+      ["HTTPSEnable", "HTTPSProxy", "HTTPSPort"],
+      ["HTTPEnable", "HTTPProxy", "HTTPPort"],
+    ] as const) {
+      if (field(enable) === "1") {
+        const h = field(host);
+        const p = field(port);
+        if (h && p) return `http://${h}:${p}`;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function getProxyAgent(): ProxyAgent | null {
+  if (proxyAgentCache !== undefined) return proxyAgentCache;
+  proxyAgentCache = null;
+  const url = systemProxyUrl();
+  if (url) {
+    try {
+      proxyAgentCache = new ProxyAgent(url);
+    } catch {
+      proxyAgentCache = null;
+    }
+  }
+  return proxyAgentCache;
+}
 
 async function fetchWithTimeout(url: string, init: RequestInit, ms = 15000): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
+  const agent = getProxyAgent();
+  const attempt = (dispatcher: ProxyAgent | null): Promise<Response> => {
+    const opts: RequestInit & { dispatcher?: ProxyAgent } = { ...init, signal: controller.signal };
+    if (dispatcher) opts.dispatcher = dispatcher;
+    return fetch(url, opts);
+  };
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    return await attempt(agent);
+  } catch (err) {
+    // Proxy itself unreachable -> retry direct (but not if we simply timed out).
+    const aborted = controller.signal.aborted || (err instanceof Error && err.name === "AbortError");
+    if (agent && !aborted) return await attempt(null);
+    throw err;
   } finally {
     clearTimeout(timer);
   }
 }
 
 function selectTrack(tracks: CaptionTrack[], preferLang: string | null): CaptionTrack {
-  if (preferLang) {
-    const preferred = tracks.find(
-      (t) => t.languageCode === preferLang || t.languageCode?.startsWith(`${preferLang}-`),
-    );
-    if (preferred) return preferred;
-  }
-  return tracks.find((t) => t.kind !== "asr") ?? tracks[0];
+  return selectCaptionTrack(tracks, preferLang);
 }
 
 /** One InnerTube player call for a given client. Returns raw parsed body or null on any error. */
@@ -70,29 +117,30 @@ async function callInnerTube(
   client: ClientConfig,
   visitorData?: string
 ): Promise<PlayerResponse | null> {
-  const key = client.needsKey ? `&key=${INNERTUBE_API_KEY}` : "";
   const res = await fetchWithTimeout(
-    `https://www.youtube.com/youtubei/v1/player?prettyPrint=false${key}`,
+    `https://www.youtube.com/youtubei/v1/player?key=${client.key}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(client.ua ? { "User-Agent": client.ua } : {}),
+        "User-Agent": client.ua,
       },
       body: JSON.stringify({
+        videoId,
+        contentCheckOk: true,
+        racyCheckOk: true,
         context: {
           client: {
             clientName: client.name,
             clientVersion: client.version,
-            hl: "fr",
+            hl: "en",
             gl: "US",
             ...(visitorData ? { visitorData } : {}),
           },
         },
-        videoId,
       }),
     },
-    20000
+    15000
   );
   if (!res.ok) return null;
   const text = await res.text();
@@ -104,28 +152,39 @@ async function callInnerTube(
   }
 }
 
-/** Fetch one caption track as JSON3, with the ANDROID UA (avoids PoToken empties). */
+/** Fetch one caption track. srv3 XML first, JSON3 if that body is empty. */
 async function fetchTrackLines(track: CaptionTrack, preferLang: string | null): Promise<RawLine[]> {
   const base = track.baseUrl.replace(/&amp;/g, "&");
-
-  const url = new URL(base);
+  const absolute = base.startsWith("//") ? `https:${base}` : base;
+  const url = new URL(absolute);
   url.searchParams.delete("fmt");
   url.searchParams.delete("kind");
-  url.searchParams.set("fmt", "json3");
 
-  const res = await fetchWithTimeout(
-    url.toString(),
-    {
-      headers: {
-        "User-Agent": ANDROID_UA,
-        "Accept-Language": preferLang ? `${preferLang},fr;q=0.8,en;q=0.6` : "en;q=0.9",
+  let lastError: Error | null = null;
+  for (const fmt of ["3", "json3"]) {
+    url.searchParams.set("fmt", fmt);
+    const res = await fetchWithTimeout(
+      url.toString(),
+      {
+        headers: {
+          "User-Agent": ANDROID_UA,
+          "Accept-Language": preferLang ? `${preferLang},en;q=0.8` : "en;q=0.9",
+        },
       },
-    },
-    15000
-  );
-  if (!res.ok) throw new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
-  const text = await res.text();
-  return parseTrackContent(text);
+      15000
+    );
+    if (!res.ok) {
+      lastError = new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
+      continue;
+    }
+    try {
+      const lines = parseTrackContent(await res.text());
+      if (lines.length > 0) return lines;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+  throw lastError ?? new Error("Sous-titres vides.");
 }
 
 /** Try clients in order; return the first that yields caption tracks. */
@@ -141,42 +200,39 @@ async function fetchCaptionsInnerTube(videoId: string, preferLang: string | null
   let capturedVisitorData: string | null = null;
   let best: { status: string | null; reason: string | null } | null = null;
 
-  // Prefer a visitorData minted by the homepage (a plain GET, rarely
-  // captcha'd) over one returned by a rejected player call.
-  try {
-    const res = await fetchWithTimeout(
-      "https://www.youtube.com/?hl=fr&gl=US",
-      { headers: { "User-Agent": BROWSER_UA } },
-      12000
-    );
-    const html = await res.text();
-    const m = html.match(/"VISITOR_DATA":"([^"]+)"/);
-    if (m?.[1]) {
-      capturedVisitorData = m[1].replace(/\\u0026/g, "&");
-      debug.push(`homepage visitorData OK (${capturedVisitorData.slice(0, 12)}…)`);
-    }
-  } catch {
-    debug.push("homepage visitorData failed");
-  }
-
   for (const client of CLIENTS) {
-    // Attempt 1: bare probe. Even when rejected (LOGIN_REQUIRED), YouTube
-    // usually returns a visitorData in responseContext.
-    let data = await callInnerTube(videoId, client, capturedVisitorData ?? undefined);
-    if (data && data.responseContext?.visitorData) {
-      capturedVisitorData = data.responseContext.visitorData;
+    // WEB is the identity YouTube bot-checks. Only try it after the app
+    // clients fail, and only with a visitorData from the homepage.
+    if (client.name === "WEB" && !capturedVisitorData) {
+      try {
+        const res = await fetchWithTimeout(
+          "https://www.youtube.com/?hl=en&gl=US",
+          { headers: { "User-Agent": BROWSER_UA } },
+          8000
+        );
+        const html = await res.text();
+        const m = html.match(/"VISITOR_DATA":"([^"]+)"/);
+        if (m?.[1]) {
+          capturedVisitorData = m[1].replace(/\\u0026/g, "&");
+          debug.push(`homepage visitorData OK (${capturedVisitorData.slice(0, 12)}…)`);
+        }
+      } catch {
+        debug.push("homepage visitorData failed");
+      }
     }
 
-    // Attempt 2: replay with captured visitorData when we couldn't get
-    // caption tracks from the probe.
-    if (capturedVisitorData) {
-      const replay = await callInnerTube(videoId, client, capturedVisitorData);
-      if (replay) data = replay;
-    }
+    const data = await callInnerTube(
+      videoId,
+      client,
+      client.name === "WEB" ? capturedVisitorData ?? undefined : undefined
+    );
 
     if (!data) {
       debug.push(`${client.name}: network/invalid`);
       continue;
+    }
+    if (data.responseContext?.visitorData) {
+      capturedVisitorData = data.responseContext.visitorData;
     }
 
     const status = data.playabilityStatus?.status ?? null;
@@ -186,6 +242,8 @@ async function fetchCaptionsInnerTube(videoId: string, preferLang: string | null
     debug.push(`${client.name}@${client.version}: status=${status ?? "?"}, tracks=${tracks.length}${title ? ", title=OK" : ""}`);
 
     if (status && status !== "OK" && !best) best = { status, reason };
+    // Age gates are properties of the video, not the client. Stop retrying.
+    if (status === "AGE_VERIFICATION_REQUIRED" || status === "AGE_CHECK_REQUIRED") break;
 
     if (tracks.length > 0) {
       try {
@@ -353,13 +411,13 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Corps de requête invalide.", build: "v5-android" }, { status: 400 });
+    return NextResponse.json({ error: "Corps de requête invalide.", build: "v6-android-key" }, { status: 400 });
   }
 
   const url = body.url?.trim();
   const videoId = extractYouTubeId(url || "");
   if (!videoId) {
-    return NextResponse.json({ error: "Lien YouTube non reconnu.", build: "v5-android" }, { status: 400 });
+    return NextResponse.json({ error: "Lien YouTube non reconnu.", build: "v6-android-key" }, { status: 400 });
   }
 
   // Prefer subtitles in the language the user is learning, falling back to any
@@ -367,7 +425,7 @@ export async function POST(req: Request) {
   const preferLang: string | null = body.target?.trim() || null;
 
   const oembedTitle = await getTitle(url!);
-  const notFound = { videoId, transcript: [], title: oembedTitle, count: 0, build: "v5-android" };
+  const notFound = { videoId, transcript: [], title: oembedTitle, count: 0, build: "v6-android-key" };
 
   // --- Step 1: InnerTube, primary path — no watch page, no key needed ---
   let result: Awaited<ReturnType<typeof fetchCaptionsInnerTube>>;
@@ -375,7 +433,7 @@ export async function POST(req: Request) {
     result = await fetchCaptionsInnerTube(videoId, preferLang);
   } catch {
     return NextResponse.json(
-      { ...notFound, error: "Impossible de joindre YouTube depuis le serveur.", build: "v5-android" },
+      { ...notFound, error: "Impossible de joindre YouTube depuis le serveur.", build: "v6-android-key" },
       { status: 200 }
     );
   }
@@ -390,7 +448,7 @@ export async function POST(req: Request) {
       sourceLanguage: result.lang,
       count: transcript.length,
       error: null,
-      build: "v5-android",
+      build: "v6-android-key",
     });
   }
 
@@ -409,7 +467,7 @@ export async function POST(req: Request) {
           sourceLanguage: alt.lang,
           count: transcript.length,
           error: null,
-          build: "v5-android",
+          build: "v6-android-key",
         });
       } else {
         debug.push("get_video_info: no usable player_response");
@@ -432,15 +490,18 @@ export async function POST(req: Request) {
         sourceLanguage: tt.lang,
         count: transcript.length,
         error: null,
-        build: "v5-android",
+        build: "v6-android-key",
       });
     }
   }
 
   const blockReason = describeUnplayable(result?.status ?? null, result?.reason ?? null);
-  if (blockReason) {
+  // LOGIN_REQUIRED from a datacenter is often a client block, not a private video.
+  // Only an age gate is a hard stop; everything else still tries the watch page.
+  const ageBlocked = result?.status === "AGE_VERIFICATION_REQUIRED" || result?.status === "AGE_CHECK_REQUIRED";
+  if (ageBlocked && blockReason) {
     return NextResponse.json(
-      { ...notFound, title: result?.title ?? null, error: blockReason, build: "v5-android", debug },
+      { ...notFound, title: result?.title ?? null, error: blockReason, build: "v6-android-key", debug },
       { status: 200 }
     );
   }
@@ -492,18 +553,18 @@ export async function POST(req: Request) {
         sourceLanguage: track.languageCode ?? null,
         count: transcript.length,
         error: null,
-        build: "v5-android",
+        build: "v6-android-key",
       });
     } catch (err) {
       return NextResponse.json(
-        { ...notFound, error: err instanceof Error ? err.message : "Échec de lecture des sous-titres.", build: "v5-android" },
+        { ...notFound, error: err instanceof Error ? err.message : "Échec de lecture des sous-titres.", build: "v6-android-key" },
         { status: 200 }
       );
     }
   }
 
   return NextResponse.json(
-    { ...notFound, error: "Cette vidéo ne possède pas de sous-titres lisibles depuis ce serveur.", build: "v5-android", debug },
+    { ...notFound, error: blockReason || "Cette vidéo ne possède pas de sous-titres lisibles depuis ce serveur.", build: "v6-android-key", debug },
     { status: 200 }
   );
 }
