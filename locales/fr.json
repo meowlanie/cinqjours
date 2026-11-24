@@ -239,5 +239,15 @@
   "v301": "Aucune vidéo détectée dans l'onglet YouTube. Rechargez l'onglet.",
   "v302": "Impossible de récupérer les sous-titres depuis YouTube.",
   "v303": "Échec de la récupération des sous-titres.",
-  "v304": "Impossible d'importer la transcription depuis YouTube."
+  "v304": "Impossible d'importer la transcription depuis YouTube.",
+  "v305": "Extension",
+  "v306": "Installer l'extension Cinq jours",
+  "v307": "Importez les sous-titres depuis votre onglet YouTube connecté, sans les coller manuellement.",
+  "v308": "Télécharger le pack de l'extension",
+  "v309": "Comment installer",
+  "v310": "Décompressez le fichier téléchargé.",
+  "v311": "Ouvrez chrome://extensions (ou edge://extensions) et activez le mode développeur.",
+  "v312": "Cliquez sur « Charger l'extension non empaquetée », puis sélectionnez ce dossier.",
+  "v313": "Sur une vidéo YouTube, cliquez sur l'icône de l'extension : la transcription apparaît ici.",
+  "v314": "Déjà installée ? Après une mise à jour, rechargez l'extension depuis chrome://extensions."
 }

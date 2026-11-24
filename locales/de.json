@@ -239,5 +239,15 @@
   "v301": "Kein Video im YouTube-Tab erkannt. Laden Sie den Tab neu.",
   "v302": "Untertitel konnten nicht von YouTube abgerufen werden.",
   "v303": "Abruf der Untertitel fehlgeschlagen.",
-  "v304": "Transkript konnte nicht von YouTube importiert werden."
+  "v304": "Transkript konnte nicht von YouTube importiert werden.",
+  "v305": "Erweiterung",
+  "v306": "Cinq-jours-Erweiterung installieren",
+  "v307": "Importieren Sie Untertitel direkt aus Ihrem angemeldeten YouTube-Tab, ohne sie manuell einzufügen.",
+  "v308": "Erweiterungspaket herunterladen",
+  "v309": "So installieren Sie die Erweiterung",
+  "v310": "Entzippen Sie die heruntergeladene Datei.",
+  "v311": "Öffnen Sie chrome://extensions (oder edge://extensions) und aktivieren Sie den Entwicklermodus.",
+  "v312": "Klicken Sie auf „Entpackte Erweiterung laden“ und wählen Sie diesen Ordner.",
+  "v313": "Klicken Sie auf einem YouTube-Video auf das Erweiterungssymbol – die Transkription erscheint hier.",
+  "v314": "Bereits installiert? Laden Sie die Erweiterung nach einem Update unter chrome://extensions neu."
 }

@@ -5,7 +5,7 @@ import {
   BookMarked, Mic, Play, Square, Check, X, Plus, Volume2, Settings, Download,
   PenLine, MessageCircle, ChevronRight, Trash2, Link2,
   RotateCcw, Sparkles, ChevronLeft, History, ArrowUpRight, Loader2, Save, CircleCheck, CircleSlash,
-  PlayCircle, FileText, Pause, NotebookPen
+  PlayCircle, FileText, Pause, NotebookPen, Puzzle
 } from "lucide-react";
 import { extractYouTubeId, fetchTranscriptClient, parseTrackContent, groupIntoSentences, parsePastedText } from "@/lib/transcript";
 import { putAudio, getAudio, deleteAudio, deleteAudioByPrefix } from "@/lib/journalStore";
@@ -21,6 +21,7 @@ import { dictProviderForTarget } from "@/lib/dictProviders";
 import { pinyin } from "pinyin-pro";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SettingsModal } from "@/components/SettingsModal";
+import { ExtensionModal } from "@/components/ExtensionModal";
 import { Logo } from "@/components/Logo";
 
 /* ---------------------------------------------------------------
@@ -931,6 +932,7 @@ interface SourceViewProps {
   vocabCount: number;
   addVocab: (e: { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }) => void;
   onImport: (url: string) => Promise<void>;
+  onOpenExtensionGuide: () => void;
   onPasteTranscript: (raw: string) => void;
   notes: Record<string, string>;
   setNote: (word: string, note: string) => void;
@@ -967,7 +969,7 @@ interface PopupEntry {
 function SourceView(props: SourceViewProps) {
   const {
     url, setUrl, videoId, setVideoId, transcript, onTranscriptChange,
-    importing, importHint, vocabCount, addVocab, onImport,
+    importing, importHint, vocabCount, addVocab, onImport, onOpenExtensionGuide,
     onPasteTranscript, notes, setNote, savedWords, savedSentences, removeVocabByWord,
     isTextSource, textModeVersion, onStartReadingMode, videoWidth, setVideoWidth,
   } = props;
@@ -1237,12 +1239,23 @@ function SourceView(props: SourceViewProps) {
 
   return (
     <div className="cj-fade-in space-y-6" ref={containerRef}>
-      <div>
-        <h2 className="cj-display text-3xl text-[var(--text)]">{t("v24", "La source")}</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
-          
-          {t("v25", "Collez un lien YouTube. La transcription sert de matière première aux cinq jours.\n          La préférence de sous-titres est le français, sinon la langue disponible.")}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="cj-display text-3xl text-[var(--text)]">{t("v24", "La source")}</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            
+            {t("v25", "Collez un lien YouTube. La transcription sert de matière première aux cinq jours.\n          La préférence de sous-titres est le français, sinon la langue disponible.")}
+          </p>
+        </div>
+        <button
+          onClick={onOpenExtensionGuide}
+          aria-label={t("v306", "Installer l'extension Cinq jours")}
+          title={t("v306", "Installer l'extension Cinq jours")}
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-1.5 text-xs leading-none text-[var(--accent-text)] transition hover:bg-[var(--accent)]"
+        >
+          <Puzzle size={14} />
+          <span className="hidden sm:inline">{t("v305", "Extension")}</span>
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -5015,6 +5028,7 @@ export function CinqJoursApp(props: {
 
   const isNumber = (v: string | number): v is number => typeof v === "number";
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [extensionOpen, setExtensionOpen] = useState(false);
 
   // Browser storage went full: a write was dropped. Warn instead of losing data.
   const [storageFull, setStorageFull] = useState(readStorageFullFlag);
@@ -5058,9 +5072,9 @@ export function CinqJoursApp(props: {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3.5 py-1.5 text-sm leading-none text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
+            className="flex h-[29px] items-center gap-1.5 rounded-full border border-[var(--cream-border)] px-3 text-xs leading-none text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
-            <BookMarked size={15} />
+            <BookMarked size={14} />
             <span className="hidden sm:inline">{t("v19", "Carnet")}</span>
             {carnetSidebarCount > 0 && (
               <span className="cj-mono rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] text-[var(--text)]">{carnetSidebarCount}</span>
@@ -5070,7 +5084,7 @@ export function CinqJoursApp(props: {
           <button
             onClick={() => setSettingsOpen(true)}
             aria-label={t("settings.title", "Paramètres")}
-            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3 py-1.5 text-sm text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
+            className="flex h-[29px] items-center gap-2 rounded-full border border-[var(--cream-border)] px-3 text-sm leading-none text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
             <Settings size={15} />
           </button>
@@ -5095,6 +5109,7 @@ export function CinqJoursApp(props: {
               vocabCount={carnetSidebarCount}
               addVocab={addVocab}
               onImport={handleImport}
+              onOpenExtensionGuide={() => setExtensionOpen(true)}
               onPasteTranscript={handlePasteTranscript}
               notes={notes}
               setNote={setNote}
@@ -5156,6 +5171,7 @@ export function CinqJoursApp(props: {
       <VocabDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} vocab={vocab} currentSourceId={videoId} removeVocab={removeVocab} notes={notes} setNote={setNote} frdicConnected={frdicConnected} />
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ExtensionModal open={extensionOpen} onClose={() => setExtensionOpen(false)} />
 
       {toast && (
         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#5C7A5A] px-4 py-1.5 text-xs font-medium text-white shadow-lg cj-fade-in">

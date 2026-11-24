@@ -6,6 +6,9 @@ the app's unauthenticated importer cannot read from its server IP.
 
 ## Install (load unpacked)
 
+You can download a versioned ZIP from the **Extension** button in the app header.
+Unzip it first, then select the extracted folder below.
+
 1. Chrome/Edge: open `chrome://extensions` (Edge: `edge://extensions`) and enable
    **Developer mode**.
 2. Click **Load unpacked** and select this `extension/` folder.
