@@ -7,7 +7,7 @@ export function LanguageSwitcher() {
   const { uiLocale, setUiLocale, t } = useSettings();
   return (
     <div
-      className="flex items-center gap-0.5 rounded-full border border-[var(--cream-border)] px-1 py-0.5 text-xs"
+      className="flex items-center gap-0.5 rounded-full border border-[var(--cream-border)] px-1 py-1 text-xs"
       aria-label={t("settings.ui", "Langue de l'interface")}
     >
       {UI_LANGUAGES.map((l) => (
