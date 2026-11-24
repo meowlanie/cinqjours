@@ -2,7 +2,7 @@
 
 Companion browser extension (Chrome/Edge, Manifest V3) that imports a signed-in
 YouTube video and its captions into Cinq jours with **one click** — for videos
-YouTube withholds from the app's unauthenticated importer (private / login-required).
+the app's unauthenticated importer cannot read from its server IP.
 
 ## Install (load unpacked)
 
@@ -28,10 +28,12 @@ extension for them — still using your signed-in YouTube session.
 ## Notes
 
 - The app is reached at `https://cinqjours.app` (and `http://localhost` during
-  local development). No server endpoint is involved: captions travel only from
-  your browser, through the extension, to the page via `postMessage`.
+  local development). Captions travel from your browser, through the extension,
+  to the page via `postMessage`. Gated caption URLs need a Web PoToken, which the
+  extension requests from the app's `/api/transcribe?videoId=…` endpoint; no
+  caption text is sent to that endpoint.
 - No video file is downloaded — the app references the video by its YouTube ID and
-  imports the transcript. Inline playback of strictly-private videos depends on
-  YouTube's embed policy.
+  imports the transcript. Inline playback depends on YouTube's embed policy.
 - Security: the extension only acts on the `cjq:*` messages it injects into
-  cinqjours.app. Nothing is stored or uploaded except to YouTube and to the page.
+  cinqjours.app. The only persisted value is your Cinq jours target language in
+  `chrome.storage.local`.

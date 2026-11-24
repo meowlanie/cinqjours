@@ -88,6 +88,8 @@ const msgQuota = () => t("v223", "Quota IA dépassé — réessayez plus tard.")
 const msgAi = () => t("v224", "Service IA indisponible — réessayez plus tard.");
 const LS_LAST_SOURCE = "cj-last-source-id";
 
+const makeResourceKey = (id: string) => `${id}-${Date.now()}`;
+
 function rememberSourceId(id: string | null) {
   try {
     if (id) writeLs(LS_LAST_SOURCE, id);
@@ -925,6 +927,7 @@ interface SourceViewProps {
   transcript: { t: string; text: string }[];
   onTranscriptChange: (t: { t: string; text: string }[]) => void;
   importing: boolean;
+  importHint?: string | null;
   vocabCount: number;
   addVocab: (e: { word: string; def: string; context?: string; translation?: string; sourceId?: string; surface?: string; type?: "vocab" | "phrase" | "correction" }) => void;
   onImport: (url: string) => Promise<void>;
@@ -964,7 +967,7 @@ interface PopupEntry {
 function SourceView(props: SourceViewProps) {
   const {
     url, setUrl, videoId, setVideoId, transcript, onTranscriptChange,
-    importing, vocabCount, addVocab, onImport,
+    importing, importHint, vocabCount, addVocab, onImport,
     onPasteTranscript, notes, setNote, savedWords, savedSentences, removeVocabByWord,
     isTextSource, textModeVersion, onStartReadingMode, videoWidth, setVideoWidth,
   } = props;
@@ -1268,6 +1271,12 @@ function SourceView(props: SourceViewProps) {
           <FileText size={14} />  {t("v26", "Lire un texte")}
         </button>
       </div>
+
+      {importHint && (
+        <p role="status" className="rounded-lg border border-[#B5432E44] bg-[#B5432E14] px-3 py-2 text-xs text-[#B5432E]">
+          {importHint}
+        </p>
+      )}
 
       <div className={videoWidth >= 100 ? "" : "flex items-start gap-4"}>
         <div
@@ -4272,6 +4281,10 @@ export function CinqJoursApp(props: {
   const activeId = activeDict?.id ?? null;
 
   const [toast, setToast] = useState<string | null>(null);
+  const [importHint, setImportHint] = useState<string | null>(null);
+  // Paste-link and one-click extension imports can race; only the newest run
+  // is allowed to write transcript/video state.
+  const importRun = useRef(0);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2500);
@@ -4706,6 +4719,7 @@ export function CinqJoursApp(props: {
   };
 
   const handleImport = async (sourceUrl: string) => {
+    const run = ++importRun.current;
     const id = extractYouTubeId(sourceUrl);
     if (id) {
       setVideoId(id);
@@ -4714,6 +4728,7 @@ export function CinqJoursApp(props: {
     setImporting(true);
     setTranscript([]);
     setVideoTitle(null);
+    setImportHint(null);
     try {
       const clientTitleP = fetchTitleClient(sourceUrl);
 
@@ -4721,6 +4736,8 @@ export function CinqJoursApp(props: {
       let apiTitle: string | null = null;
       let apiVideoId: string | null = null;
       let importError: string | null = null;
+      let serverBlocked = false;
+      let extensionInstalled = false;
 
       // 1) Try client-side first (browser = residential IP, avoids datacenter blocks)
       if (id) {
@@ -4731,11 +4748,28 @@ export function CinqJoursApp(props: {
             apiTitle = clientRes.title;
           }
         } catch {
-          // client-side failed, fall through to server
+          // client-side failed, try the extension next
         }
       }
 
-      // 2) Server fallback (if client-side didn't yield a transcript)
+      // 2) Extension bridge — uses the user's signed-in YouTube session. Try it
+      // before the server because the server's datacenter IP can be bot-gated.
+      if (!transcriptToSave && id) {
+        extensionInstalled = await isExtensionInstalled();
+        if (extensionInstalled) {
+          try {
+            const ext = await requestCaptionsViaExtension(id, targetLang);
+            if (ext?.rawTrack) {
+              transcriptToSave = groupIntoSentences(parseTrackContent(ext.rawTrack));
+              apiTitle = apiTitle || ext.title || null;
+            }
+          } catch {
+            /* extension returned an error, fall through to server */
+          }
+        }
+      }
+
+      // 3) Server fallback (last resort; also tells us when YouTube blocks it)
       if (!transcriptToSave) {
         try {
           const apiRes = await fetch("/api/transcribe", {
@@ -4748,33 +4782,19 @@ export function CinqJoursApp(props: {
           if (data.title) apiTitle = data.title;
           if (Array.isArray(data.transcript) && data.transcript.length) {
             transcriptToSave = data.transcript;
-          } else if (typeof data.error === "string") {
-            importError = data.error;
+          } else {
+            serverBlocked = data.blocked === true;
+            if (typeof data.error === "string") importError = data.error;
           }
         } catch {
-          // server fallback failed, fall through to extension
+          // server fallback failed, nothing more to try
         }
       }
 
-      // 3) Extension bridge — uses the user's signed-in YouTube session to fetch
-      // captions that the server/browser alone cannot reach.
-      if (!transcriptToSave && id) {
-        if (await isExtensionInstalled()) {
-          try {
-            const ext = await requestCaptionsViaExtension(id, targetLang);
-            if (ext?.rawTrack) {
-              transcriptToSave = groupIntoSentences(parseTrackContent(ext.rawTrack));
-              apiTitle = apiTitle || ext.title || null;
-            }
-          } catch {
-            /* extension returned an error */
-          }
-        } else {
-          // extension not installed; nothing more to try
-        }
-      }
+      if (importRun.current !== run) return;
 
       const clientTitle = await clientTitleP;
+      if (importRun.current !== run) return;
       const title = apiTitle || clientTitle || null;
       const vid = apiVideoId || id;
       if (vid) setVideoId(vid);
@@ -4782,8 +4802,15 @@ export function CinqJoursApp(props: {
 
       if (transcriptToSave) {
         setTranscript(transcriptToSave);
+      } else if (serverBlocked) {
+        // The server could not read this video; the browser extension is the
+        // next thing to try, whether or not it is already installed.
+        setImportHint(t("v298", "Cette vidéo n'a pas pu être importée depuis le serveur. Réessayez avec l'extension Cinq jours."));
       } else if (importError) {
-        setToast(importError);
+        // Server errors are French-only; show a localized generic message and
+        // keep the raw reason in the console.
+        console.warn("[cjq] import error", importError);
+        setToast(t("v304", "Impossible d'importer la transcription depuis YouTube."));
       }
 
       if (vid) {
@@ -4792,42 +4819,53 @@ export function CinqJoursApp(props: {
           url: sourceUrl,
           title,
           date: new Date().toISOString(),
-          key: `${vid}-${Date.now()}`,
+          key: makeResourceKey(vid),
         };
-        const existing = resources.find((r) => r.video_id === vid);
-        if (transcriptToSave) {
-          if (existing) {
-            setResources([{ ...existing, transcript: transcriptToSave, title: existing.title || metaBase.title }, ...resources.filter((r) => r.video_id !== vid)]);
-          } else {
-            setResources([{ ...metaBase, transcript: transcriptToSave, type: "video" }, ...resources]);
+        setResources((prev) => {
+          const existing = prev.find((r) => r.video_id === vid);
+          if (transcriptToSave) {
+            if (existing) {
+              return [
+                { ...existing, transcript: transcriptToSave, title: (existing.title as string | null) || metaBase.title },
+                ...prev.filter((r) => r.video_id !== vid),
+              ];
+            }
+            return [{ ...metaBase, transcript: transcriptToSave, type: "video" }, ...prev];
           }
-        } else {
-          if (existing) setResources([existing, ...resources.filter((r) => r.video_id !== vid)]);
-          else setResources([{ ...metaBase, type: "video" }, ...resources]);
-        }
+          if (existing) return [existing, ...prev.filter((r) => r.video_id !== vid)];
+          return [{ ...metaBase, type: "video" }, ...prev];
+        });
       }
     } catch {
       // import failed silently
     } finally {
-      setImporting(false);
+      if (importRun.current === run) setImporting(false);
     }
   };
 
+  const lastExtImport = useRef<{ videoId: string; at: number } | null>(null);
   const pendingExt = useRef(
     new Map<string, (data: { rawTrack: string; title?: string | null }) => void>()
   );
-  const pongResolvers = useRef<(() => void) | null>(null);
-  const handleImportRef = useRef<(u: string) => void>(() => {});
-  handleImportRef.current = handleImport;
+  const pongResolvers = useRef<Array<() => void>>([]);
 
   /** Fast check that the Cinq jours browser extension is installed on this site. */
   const isExtensionInstalled = (): Promise<boolean> => {
     return new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(false), 800);
-      pongResolvers.current = () => {
+      let settled = false;
+      const resolver = () => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
         resolve(true);
       };
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        pongResolvers.current = pongResolvers.current.filter((r) => r !== resolver);
+        resolve(false);
+      }, 800);
+      pongResolvers.current.push(resolver);
       window.postMessage({ type: "cjq:ping" }, "*");
     });
   };
@@ -4860,18 +4898,23 @@ export function CinqJoursApp(props: {
           // extension returned no captions; silently ignore
           return;
         }
+        lastExtImport.current = { videoId: d.videoId, at: Date.now() };
+        importRun.current += 1;
+        setImportHint(null);
+        setImporting(false);
         setTranscript(lines);
         setVideoId(d.videoId);
         if (d.title) setVideoTitle(d.title);
         setSourceType("video");
         setView("source");
-        setToast(t("v241", "Vidéo et transcription importées depuis l'extension."));
+        // No success toast: the transcript appearing in the source view is
+        // enough, and repeated bridge deliveries made the toast flash.
         const metaBase = {
           video_id: d.videoId,
           url: `https://www.youtube.com/watch?v=${d.videoId}`,
           title: d.title ?? null,
           date: new Date().toISOString(),
-          key: `${d.videoId}-${Date.now()}`,
+          key: makeResourceKey(d.videoId),
         };
         setResources((prev) => {
           const existing = prev.find((r) => r.video_id === d.videoId);
@@ -4887,7 +4930,7 @@ export function CinqJoursApp(props: {
         // extension data unreadable; silently ignore
       }
     },
-    [setResources, setTranscript, setVideoId, setVideoTitle, setSourceType, setView, setToast]
+    [setResources, setTranscript, setVideoId, setVideoTitle, setSourceType, setView, setImportHint, setImporting]
   );
 
   useEffect(() => {
@@ -4895,10 +4938,8 @@ export function CinqJoursApp(props: {
       const d = e.data;
       if (!d || typeof d !== "object") return;
       if (d.type === "cjq:pong") {
-        if (pongResolvers.current) {
-          pongResolvers.current();
-          pongResolvers.current = null;
-        }
+        const resolve = pongResolvers.current.shift();
+        if (resolve) resolve();
       } else if (d.type === "cjq:captions") {
         const res = pendingExt.current.get(d.requestId);
         if (res) {
@@ -4906,16 +4947,28 @@ export function CinqJoursApp(props: {
           res({ rawTrack: d.rawTrack, title: d.title });
         }
       } else if (d.type === "cjq:import") {
+        // Ignore repeated deliveries of the same import (e.g. a retried tab
+        // message); the dedupe key is recorded only after valid captions parse.
+        const prev = lastExtImport.current;
+        if (prev && prev.videoId === d.videoId && Date.now() - prev.at < 2500) return;
         applyExtensionImportData({ videoId: d.videoId, title: d.title, rawTrack: d.rawTrack });
-      } else if (d.type === "cjq:retry") {
-        if (videoId) handleImportRef.current(`https://www.youtube.com/watch?v=${videoId}`);
       } else if (d.type === "cjq:error") {
-        // extension error silently ignored
+        // Extension errors arrive as stable codes so they can be localized.
+        if (typeof d.detail === "string" && d.detail.trim()) {
+          console.warn("[cjq] extension error detail", d.detail);
+        }
+        const extErrors: Record<string, string> = {
+          reclick: t("v299", "Cliquez à nouveau sur l'icône de l'extension dans l'onglet YouTube."),
+          inject: t("v300", "Impossible d'injecter l'extension dans l'onglet YouTube. Rechargez l'onglet."),
+          "no-video": t("v301", "Aucune vidéo détectée dans l'onglet YouTube. Rechargez l'onglet."),
+          "no-captions": t("v302", "Impossible de récupérer les sous-titres depuis YouTube."),
+        };
+        setToast(extErrors[d.code] || t("v303", "Échec de la récupération des sous-titres."));
       }
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [applyExtensionImportData, videoId]);
+  }, [applyExtensionImportData]);
 
   useEffect(() => {
     if (targetLang) {
@@ -5005,7 +5058,7 @@ export function CinqJoursApp(props: {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3.5 py-1.5 text-sm text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
+            className="flex items-center gap-2 rounded-full border border-[var(--cream-border)] px-3.5 py-1.5 text-sm leading-none text-[var(--primary-text)] transition hover:bg-[var(--cream-soft)]"
           >
             <BookMarked size={15} />
             <span className="hidden sm:inline">{t("v19", "Carnet")}</span>
@@ -5038,6 +5091,7 @@ export function CinqJoursApp(props: {
               transcript={transcript}
               onTranscriptChange={onTranscriptChange}
               importing={importing}
+              importHint={importHint}
               vocabCount={carnetSidebarCount}
               addVocab={addVocab}
               onImport={handleImport}

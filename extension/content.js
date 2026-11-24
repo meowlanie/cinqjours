@@ -52,6 +52,14 @@ function pickTrack(tracks, preferLang) {
   return manual || tracks[0];
 }
 
+function orderTracks(tracks, preferLang) {
+  const preferred = pickTrack(tracks, preferLang);
+  const ordered = [];
+  if (preferred) ordered.push(preferred);
+  for (const t of tracks || []) if (t !== preferred) ordered.push(t);
+  return ordered;
+}
+
 function escapeXml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -146,17 +154,17 @@ function getClientVersion() {
   return (window.ytcfg?.get?.("INNERTUBE_CLIENT_VERSION")) || "2.20240101.00.00";
 }
 
-async function callGetTranscript(params, lang, diagnostics) {
+async function callGetTranscript(params, lang, diagnostics, apiKey, clientVersion) {
   const res = await fetch(
     "https://www.youtube.com/youtubei/v1/get_transcript?key=" +
-      encodeURIComponent(getApiKey()) +
+      encodeURIComponent(apiKey || getApiKey()) +
       "&prettyPrint=false",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        context: { client: { clientName: "WEB", clientVersion: getClientVersion() } },
+        context: { client: { clientName: "WEB", clientVersion: clientVersion || getClientVersion() } },
         params,
       }),
     }
@@ -170,11 +178,13 @@ async function callGetTranscript(params, lang, diagnostics) {
 }
 
 // --- Method 1: pre-computed params from the page ---
-async function fetchTranscriptFromPage(diag) {
-  const params = extractTranscriptParams();
+async function fetchTranscriptFromPage(diag, pageData) {
+  // Prefer the params read from the page's MAIN world; the innerHTML regex is
+  // only a fallback and misses modern YouTube markup.
+  const params = (pageData && pageData.transcriptParams) || extractTranscriptParams();
   diag.paramsFound = !!params;
   if (!params) return null;
-  const xml = await callGetTranscript(params, null, diag);
+  const xml = await callGetTranscript(params, null, diag, pageData && pageData.apiKey, pageData && pageData.clientVersion);
   return xml || null;
 }
 
@@ -190,7 +200,7 @@ function buildTranscriptParams(videoId, lang, fieldTags) {
   return btoa(unescape(encodeURIComponent(s)));
 }
 
-async function fetchTranscriptGuessed(videoId, lang, diag) {
+async function fetchTranscriptGuessed(videoId, lang, diag, pageData) {
   const encodings = [
     [0x12, 0x1a],
     [0x0a, 0x12],
@@ -198,7 +208,7 @@ async function fetchTranscriptGuessed(videoId, lang, diag) {
   for (const tags of encodings) {
     try {
       const params = buildTranscriptParams(videoId, lang, tags);
-      const xml = await callGetTranscript(params, lang, diag);
+      const xml = await callGetTranscript(params, lang, diag, pageData && pageData.apiKey, pageData && pageData.clientVersion);
       if (xml) return xml;
     } catch (e) {
       diag.guessError = String(e);
@@ -208,19 +218,10 @@ async function fetchTranscriptGuessed(videoId, lang, diag) {
 }
 
 // --- Method 3: direct baseUrl / timedtext fetch ---
-function getPoToken() {
-  try {
-    const y = extractYtInitialPlayerResponse();
-    return y?.serviceIntegrityDimensions?.poToken || null;
-  } catch {
-    return null;
-  }
-}
-
 async function fetchWithPot(url, diag, key) {
   const res = await fetch(url, {
     credentials: "include",
-    headers: { "User-Agent": "Mozilla/5.0", "Accept-Language": "fr,en;q=0.9" },
+    headers: { "Accept-Language": "en;q=0.9" },
   });
   diag[key] = res.status;
   if (res.ok) {
@@ -230,7 +231,7 @@ async function fetchWithPot(url, diag, key) {
   return null;
 }
 
-async function fetchTrackText(track, videoId, diag) {
+async function fetchTrackText(track, videoId, diag, pageData) {
   // Fetch the baseUrl UNCHANGED — its signature is computed over the existing
   // params, so deleting/replacing them invalidates it and YouTube returns 200
   // with an empty body. Only append fmt=json3 if missing.
@@ -241,11 +242,16 @@ async function fetchTrackText(track, videoId, diag) {
   let text = await fetchWithPot(url, diag, "baseUrlStatus");
   if (text) return text;
 
-  // 2. baseUrl + PoToken (required for gated videos).
-  const pot = getPoToken();
+  // 2. baseUrl + PoToken (required for gated videos). Prefer the PoToken read
+  // from the page's MAIN world; the isolated-world parse usually finds none.
+  const pot = pageData && pageData.poToken;
   if (pot) {
     diag.potFound = true;
-    const potUrl = url + (url.includes("?") ? "&" : "?") + "pot=" + encodeURIComponent(pot) + "&c=WEB";
+    const potQuery = [
+      /[?&]pot=/.test(url) ? null : `pot=${encodeURIComponent(pot)}`,
+      /[?&]c=/.test(url) ? null : "c=WEB",
+    ].filter(Boolean).join("&");
+    const potUrl = potQuery ? `${url}${url.includes("?") ? "&" : "?"}${potQuery}` : url;
     text = await fetchWithPot(potUrl, diag, "baseUrlPotStatus");
     if (text) return text;
   } else {
@@ -267,45 +273,11 @@ async function fetchTrackText(track, videoId, diag) {
   return null;
 }
 
-// --- Method 4: scrape YouTube's transcript panel (DOM + network interception) ---
-// Bypasses the caption API entirely (reads what YouTube already rendered / fetched).
+// --- Method 4: scrape YouTube's transcript panel from the DOM ---
+// Bypasses the caption API entirely (reads what YouTube already rendered).
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
-
-// Hook fetch ONCE to capture YouTube's own successful transcript responses
-// (the page issues them with a valid PoToken when the panel opens).
-(function installTranscriptHook() {
-  if (window.__cjqHookInstalled) return;
-  window.__cjqHookInstalled = true;
-  window.__cjqTranscriptSamples = [];
-  try {
-    const orig = window.fetch;
-    window.fetch = function (...args) {
-      const p = orig.apply(this, args);
-      try {
-        const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
-        if (/get_transcript|\/youtubei\/v1\/browse/.test(url)) {
-          p.then(async (res) => {
-            try {
-              const text = await res.clone().text();
-              if (/transcriptCueRenderer|transcriptSegmentRenderer/.test(text)) {
-                window.__cjqTranscriptSamples.push(text);
-              }
-            } catch {
-              /* ignore */
-            }
-          }).catch(() => {});
-        }
-      } catch {
-        /* ignore */
-      }
-      return p;
-    };
-  } catch {
-    /* ignore */
-  }
-})();
 
 function transcriptPanel() {
   return document.querySelector(
@@ -362,7 +334,7 @@ function findTranscriptButton() {
 }
 
 // Open the "…" overflow menu and click a "transcript" item (language-agnostic).
-function openViaMoreMenu() {
+async function openViaMoreMenu() {
   const toOpen =
     document.querySelector("#actions ytd-menu-renderer button") ||
     document.querySelector("#actions button") ||
@@ -370,7 +342,8 @@ function openViaMoreMenu() {
     document.querySelector("#actions yt-button-shape button");
   if (!toOpen) return false;
   clickElement(toOpen);
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 20; i++) {
+    await sleep(100);
     const items = document.querySelectorAll(
       "ytd-menu-service-item-renderer, ytd-menu-navigation-item-renderer"
     );
@@ -392,9 +365,9 @@ async function openTranscriptPanel(diag) {
     /* ignore */
   }
   let btn = null;
-  for (let i = 0; i < 20 && !btn; i++) {
+  for (let i = 0; i < 10 && !btn; i++) {
     btn = findTranscriptButton();
-    if (!btn) await sleep(200);
+    if (!btn) await sleep(150);
   }
   if (btn) {
     diag.domButtonFound = true;
@@ -404,7 +377,7 @@ async function openTranscriptPanel(diag) {
     return true;
   }
   diag.domButtonFound = false;
-  diag.domViaMenu = openViaMoreMenu();
+  diag.domViaMenu = await openViaMoreMenu();
   return diag.domViaMenu;
 }
 
@@ -439,34 +412,13 @@ function countSegments() {
   return document.querySelectorAll("ytd-transcript-segment-renderer").length;
 }
 
-// Parse an intercepted transcript network response into XML.
-function parseInterceptedResponse(text) {
-  const data = JSON.parse(text);
-  const cues = collectCues(data, []);
-  return cues.length ? cuesToXml(cues) : null;
-}
-
 async function fetchTranscriptFromDOM(diag) {
-  if (window.__cjqTranscriptSamples.length === 0 && countSegments() === 0) {
+  if (countSegments() === 0) {
     await openTranscriptPanel(diag);
-    // Poll for either intercepted data or rendered segments.
-    for (let i = 0; i < 40; i++) {
-      await sleep(250);
-      if (window.__cjqTranscriptSamples.length > 0 || countSegments() > 0) break;
-    }
-  }
-
-  // Prefer intercepted network response (cleanest signal).
-  for (const sample of window.__cjqTranscriptSamples.splice(0)) {
-    try {
-      const xml = parseInterceptedResponse(sample);
-      if (xml) {
-        diag.domOpened = true;
-        diag.domSource = "network";
-        return xml;
-      }
-    } catch (e) {
-      diag.parseError = String(e);
+    // The app waits ~12s for an extension reply; keep this fallback inside it.
+    for (let i = 0; i < 16; i++) {
+      await sleep(200);
+      if (countSegments() > 0) break;
     }
   }
 
@@ -480,10 +432,10 @@ async function fetchTranscriptFromDOM(diag) {
   const panel = transcriptPanel();
   const scroller =
     panel?.querySelector("#segments-container") || panel?.querySelector("#content") || panel || document.scrollingElement;
-  for (let i = 0; i < 400; i++) {
+  for (let i = 0; i < 60; i++) {
     const before = countSegments();
     if (scroller) scroller.scrollTop = scroller.scrollHeight;
-    await sleep(120);
+    await sleep(100);
     if (countSegments() === before && i > 2) break;
   }
 
@@ -548,13 +500,19 @@ if (!window.__cjqYtInjected) {
     if (msg.type === "cjq:fetch") {
       (async () => {
         try {
+          const pageData = msg.pageData || null;
           const meta = currentVideoMeta();
-          const tracks = msg.captionTracks || meta.captionTracks;
-          const videoId = msg.videoId || meta.videoId;
-          const title = msg.title || meta.title;
+          const tracks =
+            (msg.captionTracks && msg.captionTracks.length && msg.captionTracks) ||
+            (pageData && pageData.captionTracks) || meta.captionTracks || [];
+          const videoId = msg.videoId || (pageData && pageData.videoId) || meta.videoId;
+          const title = msg.title || (pageData && pageData.title) || meta.title;
 
           const diag = {
             videoId: videoId || null,
+            pageTracks: pageData ? pageData.captionTracks.length : null,
+            pageParams: pageData ? !!pageData.transcriptParams : null,
+            pagePot: pageData ? !!pageData.poToken : null,
             trackCount: tracks.length,
             trackLangs: tracks.map((t) => t.languageCode),
             paramsFound: false,
@@ -573,24 +531,30 @@ if (!window.__cjqYtInjected) {
           };
 
           if (!videoId) {
-            sendResponse({ rawTrack: null, error: "Aucun identifiant vidéo trouvé." });
+            sendResponse({ rawTrack: null, error: "No video id found." });
             return;
           }
 
-          let raw = await fetchTranscriptFromPage(diag);
-          if (!raw) {
-            const ordered = [];
-            const preferred = pickTrack(tracks, msg.targetLang);
-            if (preferred) ordered.push(preferred);
-            for (const t of tracks) if (t !== preferred) ordered.push(t);
+          let raw = null;
+          const ordered = orderTracks(tracks, msg.targetLang);
+          // Gated caption URLs need a PoToken; try them first when we have one,
+          // since the get_transcript params baked into the page are often stale.
+          if (pageData && pageData.poToken) {
             for (const t of ordered) {
-              raw = await fetchTranscriptGuessed(videoId, t.languageCode, diag);
+              raw = await fetchTrackText(t, videoId, diag, pageData);
               if (raw) break;
             }
           }
+          if (!raw) raw = await fetchTranscriptFromPage(diag, pageData);
           if (!raw) {
-            for (const t of tracks) {
-              raw = await fetchTrackText(t, videoId, diag);
+            for (const t of ordered) {
+              raw = await fetchTranscriptGuessed(videoId, t.languageCode, diag, pageData);
+              if (raw) break;
+            }
+          }
+          if (!raw && !(pageData && pageData.poToken)) {
+            for (const t of ordered) {
+              raw = await fetchTrackText(t, videoId, diag, pageData);
               if (raw) break;
             }
           }
@@ -609,6 +573,9 @@ if (!window.__cjqYtInjected) {
           const shortDiag = {};
           for (const k of [
             "videoId",
+            "pageTracks",
+            "pageParams",
+            "pagePot",
             "trackCount",
             "trackLangs",
             "paramsFound",
@@ -627,7 +594,7 @@ if (!window.__cjqYtInjected) {
           }
           sendResponse({
             rawTrack: null,
-            error: "Échec. diag: " + JSON.stringify(shortDiag),
+            error: "Caption extraction failed. diag: " + JSON.stringify(shortDiag),
           });
         } catch (e) {
           sendResponse({ rawTrack: null, error: String(e) });

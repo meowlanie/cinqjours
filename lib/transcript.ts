@@ -1,6 +1,3 @@
-export const YOUTUBE_USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
 export interface CaptionTrack {
   baseUrl: string;
   languageCode: string;
@@ -16,6 +13,17 @@ export interface RawLine {
 export interface TranscriptLine {
   t: string;
   text: string;
+}
+
+/** Caption URLs carrying `xpe` in their exp list return an empty body without a PoToken. */
+export function requiresPoToken(url: string): boolean {
+  const exp = /[?&]exp=([^&]*)/.exec(url)?.[1];
+  if (!exp) return false;
+  try {
+    return decodeURIComponent(exp).split(",").includes("xpe");
+  } catch {
+    return exp.split(",").includes("xpe");
+  }
 }
 
 export function extractYouTubeId(url: string): string | null {
@@ -39,25 +47,52 @@ function toTimestamp(ms: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+const PARAGRAPH_MIN_WORDS = 60;
+const PARAGRAPH_MAX_WORDS = 100;
+const PARAGRAPH_MIN_CHARS = 160;
+const PARAGRAPH_MAX_CHARS = 320;
+const PARAGRAPH_PAUSE_MS = 900;
+
+/**
+ * Group caption cues into readable paragraphs instead of one line per sentence.
+ * Break at a natural pause, or at a sentence boundary once the paragraph is
+ * long enough; hard-cap the length so a run-on transcript still wraps.
+ */
 export function groupIntoSentences(captions: RawLine[]): TranscriptLine[] {
   const lines: TranscriptLine[] = [];
   let buffer = "";
   let startOffset = captions[0]?.offset ?? 0;
-  const END = /[.!?…:»"]\s*$/;
+  const END = /[.!?…:»"。！？；：、」』]\s*$/;
+
+  const flush = () => {
+    const text = buffer.replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
+    if (text) lines.push({ t: toTimestamp(startOffset), text });
+    buffer = "";
+  };
 
   for (let i = 0; i < captions.length; i++) {
     const item = captions[i];
+    const chunk = item.text.trim();
+    if (!chunk) continue;
     if (!buffer) startOffset = item.offset;
-    buffer += (buffer ? " " : "") + item.text.trim();
+    buffer += (buffer ? " " : "") + chunk;
 
     const next = captions[i + 1];
-    const gapBig = next && next.offset - (item.offset + item.duration) > 600;
-    if (END.test(buffer) || buffer.split(/\s+/).length >= 24 || gapBig) {
-      lines.push({ t: toTimestamp(startOffset), text: buffer.replace(/\[.*?\]/g, "").trim() });
-      buffer = "";
+    // Some caption formats omit durations; assume a short cue so a missing
+    // duration doesn't get mistaken for a paragraph break on every line.
+    const end = item.duration > 0
+      ? item.offset + item.duration
+      : (next ? Math.max(item.offset, next.offset - 700) : item.offset + 700);
+    const pause = next ? Math.max(0, next.offset - end) : 0;
+    const spaced = /\s/.test(buffer);
+    const size = spaced ? buffer.split(/\s+/).length : Array.from(buffer).length;
+    const maxSize = spaced ? PARAGRAPH_MAX_WORDS : PARAGRAPH_MAX_CHARS;
+    const minSize = spaced ? PARAGRAPH_MIN_WORDS : PARAGRAPH_MIN_CHARS;
+    if (pause > PARAGRAPH_PAUSE_MS || size >= maxSize || (END.test(buffer) && size >= minSize)) {
+      flush();
     }
   }
-  if (buffer.trim()) lines.push({ t: toTimestamp(startOffset), text: buffer.replace(/\[.*?\]/g, "").trim() });
+  flush();
 
   return lines.filter((l) => l.text.length > 0);
 }
@@ -240,12 +275,12 @@ function captionText(raw: string): string {
 
 /** Parse a raw caption track body (JSON3, srv3 `<p t>`, or legacy `<text>` XML). */
 export function parseTrackContent(text: string): RawLine[] {
-  if (!text || text.trim() === "") throw new Error("Sous-titres vides (restriction PoToken).");
+  if (!text || text.trim() === "") throw new Error("Sous-titres vides.");
   const trimmed = text.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
       const json = JSON.parse(text);
-      const events: { tStartMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
+      const events: { tStartMs?: number; dDurationMs?: number; segs?: { utf8?: string }[] }[] = json.events ?? [];
       const lines = events
         .filter((e) => Array.isArray(e.segs))
         .map((e) => {
@@ -254,7 +289,9 @@ export function parseTrackContent(text: string): RawLine[] {
             .join("")
             .replace(/\n/g, " ")
             .trim();
-          return { text: caption, offset: e.tStartMs ?? 0, duration: 0 };
+          // Without the real duration every cue looks like a long pause and
+          // groupIntoSentences starts a new line for each one.
+          return { text: caption, offset: e.tStartMs ?? 0, duration: e.dDurationMs ?? 0 };
         })
         .filter((c) => c.text);
       if (lines.length > 0) return lines;
@@ -323,13 +360,14 @@ export const INNERTUBE_IOS_KEY = "AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc";
 export async function fetchTrack(track: CaptionTrack, preferLang: string | null = null): Promise<RawLine[]> {
   const base = track.baseUrl.replace(/&amp;/g, "&");
   const absolute = base.startsWith("//") ? `https:${base}` : base;
-  const url = new URL(absolute);
-  url.searchParams.delete("fmt");
+  // Keep the signed query byte-for-byte: URLSearchParams re-encodes commas in
+  // `sparams`, which invalidates the signature and yields an empty body.
+  const raw = absolute.replace(/([?&])fmt=[^&]*&?/, "$1").replace(/[?&]$/, "");
   const headers = { "Accept-Language": preferLang ? `${preferLang},en;q=0.8` : "en;q=0.9" };
   let lastError: Error | null = null;
   for (const fmt of ["3", "json3"]) {
-    url.searchParams.set("fmt", fmt);
-    const res = await fetch(url.toString(), { headers, signal: AbortSignal.timeout(12000) });
+    const url = `${raw}${raw.includes("?") ? "&" : "?"}fmt=${fmt}`;
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(12000) });
     if (!res.ok) {
       lastError = new Error(`Sous-titres indisponibles (HTTP ${res.status}).`);
       continue;

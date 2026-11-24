@@ -232,5 +232,12 @@
   "v294": "Flip card",
   "v295": "Flip to see correction",
   "v296": "Close",
-  "v297": "No entries yet."
+  "v297": "No entries yet.",
+  "v298": "This video could not be imported from the server. Try again with the Cinq jours extension.",
+  "v299": "Click the extension icon again while on the YouTube tab.",
+  "v300": "Could not inject the extension into the YouTube tab. Reload the tab.",
+  "v301": "No video detected in the YouTube tab. Reload the tab.",
+  "v302": "Could not retrieve captions from YouTube.",
+  "v303": "Failed to retrieve captions.",
+  "v304": "Could not import the transcript from YouTube."
 }

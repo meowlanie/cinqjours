@@ -13,15 +13,22 @@ function pickTrack(tracks, preferLang) {
 }
 
 // Service-worker fallback fetch (used only when no YouTube tab is open/injectable).
-async function fetchTrackTextSW(track, videoId) {
+async function fetchTrackTextSW(track, poToken) {
   try {
-    const u = new URL(track.baseUrl.replace(/&amp;/g, "&"));
-    u.searchParams.delete("fmt");
-    u.searchParams.delete("kind");
-    u.searchParams.set("fmt", "json3");
-    const res = await fetch(u.toString(), {
+    // Keep the signed query byte-for-byte. URLSearchParams re-encodes commas in
+    // `sparams` and invalidates the signature, so strip fmt as raw text only.
+    const base = track.baseUrl.replace(/&amp;/g, "&");
+    const absolute = base.startsWith("//") ? `https:${base}` : base;
+    const raw = absolute.replace(/([?&])fmt=[^&]*&?/, "$1").replace(/[?&]$/, "");
+    const hasPot = /[?&]pot=/.test(raw);
+    const hasClient = /[?&]c=/.test(raw);
+    const potParams = poToken
+      ? `${hasPot ? "" : "&pot=" + encodeURIComponent(poToken)}${hasClient ? "" : "&c=WEB"}`
+      : "";
+    const url = `${raw}${potParams}${raw.includes("?") ? "&" : "?"}fmt=json3`;
+    const res = await fetch(url, {
       credentials: "include",
-      headers: { "User-Agent": "Mozilla/5.0", "Accept-Language": "fr,en;q=0.9" },
+      headers: { "Accept-Language": "en;q=0.9" },
     });
     if (res.ok) {
       const text = await res.text();
@@ -43,13 +50,19 @@ function getTargetLang() {
   });
 }
 
+function isAppUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname === "cinqjours.app" || u.hostname === "www.cinqjours.app" ||
+      u.hostname === "localhost" || u.hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
 function findCjqTab(tabs) {
   const list = tabs || [];
-  return (
-    list.find((t) => t.url && t.url.includes("cinqjours.app")) ||
-    list.find((t) => t.url && t.url.startsWith("http://localhost")) ||
-    null
-  );
+  return list.find((t) => t.url && isAppUrl(t.url)) || null;
 }
 
 function waitSend(tabId, payload, attempts) {
@@ -61,8 +74,7 @@ function waitSend(tabId, payload, attempts) {
   });
 }
 
-function sendToApp(videoId, title, rawTrack) {
-  const payload = { type: "cjq:import", videoId, title: title ?? null, rawTrack };
+function deliverToApp(payload) {
   chrome.tabs.query({}, (tabs) => {
     const tab = findCjqTab(tabs);
     if (tab && tab.id != null) {
@@ -79,29 +91,81 @@ function sendToApp(videoId, title, rawTrack) {
   });
 }
 
-function sendAppError(videoId, message) {
-  chrome.tabs.query({}, (tabs) => {
-    const tab = findCjqTab(tabs);
-    if (tab && tab.id != null) {
-      chrome.tabs.update(tab.id, { active: true });
-      chrome.tabs.sendMessage(tab.id, { type: "cjq:error", videoId, message }, () => {
-        if (chrome.runtime.lastError) console.warn("[cjq] error delivery failed", chrome.runtime.lastError.message);
-      });
-    }
-  });
+function sendToApp(videoId, title, rawTrack) {
+  // Duplicate delivery is filtered in the app; repeated imports of the same
+  // video must still be allowed here.
+  deliverToApp({ type: "cjq:import", videoId, title: title ?? null, rawTrack });
+}
+
+/**
+ * Errors are sent as stable codes so the app can localize them; the raw detail
+ * stays in the extension console for debugging.
+ */
+function sendAppError(videoId, code, detail) {
+  if (detail) console.warn("[cjq] " + code, detail);
+  deliverToApp({ type: "cjq:error", videoId, code, detail: detail || null });
 }
 
 function tabsReady() {
   return new Promise((resolve) => chrome.tabs.query({}, (t) => resolve(t || [])));
 }
 
+function waitForTabComplete(tabId, timeoutMs) {
+  timeoutMs = timeoutMs || 10000;
+  return new Promise((resolve) => {
+    let loadingSeen = false;
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      chrome.tabs.onUpdated.removeListener(listener);
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const listener = (id, info) => {
+      if (id !== tabId) return;
+      if (info.status === "loading") loadingSeen = true;
+      else if (info.status === "complete" && loadingSeen) finish(true);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError) finish(false);
+      else if (tab && tab.status === "loading") loadingSeen = true;
+    });
+  });
+}
+
 function findYoutubeTab(tabs) {
-  const list = tabs || [];
-  return list.find((t) => t.url && /youtube\.com|youtube\.fr|youtu\.be/.test(t.url) && /[?&]v=/.test(t.url)) || null;
+  const list = (tabs || []).filter(isYoutubeWatch);
+  // The tab the user is actually looking at wins; otherwise fall back to the
+  // first watch tab. Query order alone made imports stick to an older video.
+  return list.find((t) => t.active) || list[0] || null;
+}
+
+function youtubeVideoIdFromUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1) || null;
+    if (u.hostname.endsWith("youtube.com") || u.hostname.endsWith("youtube.fr")) {
+      return u.searchParams.get("v") || (u.pathname.startsWith("/shorts/") ? u.pathname.split("/")[2] : null);
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function findYoutubeTabFor(tabs, videoId) {
+  const list = (tabs || []).filter(isYoutubeWatch);
+  if (videoId) {
+    return list.find((t) => youtubeVideoIdFromUrl(t.url) === videoId) || null;
+  }
+  return findYoutubeTab(list);
 }
 
 function isYoutubeWatch(tab) {
-  return !!(tab && tab.url && /youtube\.com|youtube\.fr|youtu\.be/.test(tab.url) && /[?&]v=/.test(tab.url));
+  return !!(tab && tab.url && youtubeVideoIdFromUrl(tab.url));
 }
 
 // Make sure content.js is present in the YouTube tab; inject it on demand if not.
@@ -136,11 +200,18 @@ function sendExtract(tabId) {
   );
 }
 
-function sendFetch(tabId, info, preferLang) {
+function sendFetch(tabId, info, preferLang, pageData) {
   return new Promise((resolve) =>
     chrome.tabs.sendMessage(
       tabId,
-      { type: "cjq:fetch", videoId: info.videoId, captionTracks: info.captionTracks, title: info.title, targetLang: preferLang },
+      {
+        type: "cjq:fetch",
+        videoId: info.videoId,
+        captionTracks: info.captionTracks,
+        title: info.title,
+        targetLang: preferLang,
+        pageData: pageData || null,
+      },
       (r) => {
         if (chrome.runtime.lastError) {
           console.warn("[cjq] fetch: receiver not ready:", chrome.runtime.lastError.message);
@@ -153,10 +224,91 @@ function sendFetch(tabId, info, preferLang) {
   );
 }
 
-// One-click import. Only ever acts on the ACTIVE tab (the one you clicked from),
-// because clicking the toolbar action grants the `activeTab` permission for it —
-// no host_permissions needed. If you click while on a non-YouTube tab, it focuses
-// an open YouTube tab and asks you to click the icon again there.
+/**
+ * Content scripts live in an isolated world: `window.ytInitialPlayerResponse`
+ * and `window.ytInitialData` are invisible to them. Inject into the page's MAIN
+ * world instead, where the real objects (and ytcfg) live. The function is
+ * serialized, so it must stay self-contained.
+ */
+async function mintPoToken(videoId) {
+  if (!videoId) return null;
+  try {
+    const res = await fetch(`${APP_URL}/api/transcribe?videoId=${encodeURIComponent(videoId)}`);
+    if (!res.ok) {
+      console.warn("[cjq] PoToken endpoint HTTP", res.status);
+      return null;
+    }
+    const data = await res.json();
+    return data.pot || null;
+  } catch (e) {
+    console.warn("[cjq] PoToken endpoint failed", e);
+    return null;
+  }
+}
+
+async function extractPageData(tabId) {
+  try {
+    const injected = await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        try {
+          let transcriptParams = null;
+          const findParams = (obj, depth) => {
+            if (!obj || typeof obj !== "object" || depth > 12 || transcriptParams) return;
+            if (obj.getTranscriptEndpoint && obj.getTranscriptEndpoint.params) {
+              transcriptParams = obj.getTranscriptEndpoint.params;
+              return;
+            }
+            for (const k in obj) {
+              if (k === "__proto__" || k === "prototype") continue;
+              const v = obj[k];
+              if (v && typeof v === "object") findParams(v, depth + 1);
+            }
+          };
+          try { if (window.ytInitialData) findParams(window.ytInitialData, 0); } catch { /* ignore */ }
+
+          const y = window.ytInitialPlayerResponse || null;
+          const tracks =
+            (y && y.captions && y.captions.playerCaptionsTracklistRenderer &&
+              y.captions.playerCaptionsTracklistRenderer.captionTracks) || [];
+          const videoId =
+            (y && y.videoDetails && y.videoDetails.videoId) ||
+            new URLSearchParams(location.search).get("v") || null;
+          const title =
+            (y && y.videoDetails && y.videoDetails.title) ||
+            document.title.replace(/\s*-\s*YouTube$/, "").trim() || null;
+          const poToken =
+            (y && y.serviceIntegrityDimensions && y.serviceIntegrityDimensions.poToken) || null;
+
+          const cfg = window.ytcfg || {};
+          const get = typeof cfg.get === "function" ? (k) => cfg.get(k) : () => null;
+          return {
+            videoId,
+            captionTracks: tracks,
+            title,
+            transcriptParams,
+            poToken,
+            apiKey: get("INNERTUBE_API_KEY") || "AIzaSyAO_FJ2SlqU8Q4IZoHfKFWCCXObxKut7cw",
+            clientVersion: get("INNERTUBE_CLIENT_VERSION") || "2.20240101.00.00",
+          };
+        } catch (e) {
+          return { error: String(e) };
+        }
+      },
+    });
+    const result = injected && injected[0] && injected[0].result;
+    if (!result || result.error) return null;
+    return result;
+  } catch (e) {
+    console.warn("[cjq] MAIN-world extract failed", e);
+    return null;
+  }
+}
+
+// One-click import. Only ever acts on the ACTIVE tab (the one you clicked from).
+// If you click while on a non-YouTube tab, it focuses an open YouTube tab and
+// asks you to click the icon again there.
 chrome.action.onClicked.addListener(async (tab) => {
   const tabs = await tabsReady();
 
@@ -175,7 +327,7 @@ chrome.action.onClicked.addListener(async (tab) => {
       /* ignore */
     }
     chrome.tabs.update(ytTab.id, { active: true });
-    sendAppError(null, "Cliquez à nouveau sur l'icône de l'extension dans l'onglet YouTube.");
+    sendAppError(null, "reclick");
     return;
   }
 
@@ -188,51 +340,108 @@ chrome.action.onClicked.addListener(async (tab) => {
 async function importFromTab(tabId) {
   const ready = await ensureContentScript(tabId);
   if (ready !== true) {
-    sendAppError(null, "Impossible d'injecter le script dans l'onglet YouTube : " + (typeof ready === "string" ? ready : "rechargez l'onglet."));
+    sendAppError(null, "inject", typeof ready === "string" ? ready : null);
     return;
   }
 
+  // MAIN-world data is authoritative; the isolated-world extract stays as a
+  // fallback for pages where script injection is restricted.
+  let pageData = await extractPageData(tabId);
+  // YouTube is an SPA: an in-site navigation changes the URL while
+  // ytInitialPlayerResponse can still describe the previous video. Reload once
+  // so the player data (and its signed caption URLs) match the current video.
+  let urlId = null;
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab && tab.url) urlId = youtubeVideoIdFromUrl(tab.url);
+    if (urlId && pageData && pageData.videoId !== urlId) {
+      console.warn("[cjq] stale player response; reloading watch tab", pageData.videoId, urlId);
+      const navigated = waitForTabComplete(tabId);
+      await chrome.tabs.reload(tabId);
+      if (!(await navigated)) {
+        sendAppError(urlId, "inject", "watch tab did not finish reloading");
+        return;
+      }
+      await ensureContentScript(tabId);
+      pageData = await extractPageData(tabId);
+    }
+  } catch (e) {
+    console.warn("[cjq] stale-page check failed", e);
+  }
   const info = await sendExtract(tabId);
-  if (!info || !info.videoId) {
+  const videoId = urlId || (pageData && pageData.videoId) || (info && info.videoId);
+  const captionTracks =
+    (pageData && pageData.captionTracks && pageData.captionTracks.length && pageData.captionTracks) ||
+    (info && info.captionTracks) || [];
+  const title = (pageData && pageData.title) || (info && info.title) || null;
+  if (!videoId) {
     console.warn("[cjq] No video detected on the YouTube tab.");
-    sendAppError(null, "Aucune vidéo détectée sur l'onglet YouTube. Rechargez l'onglet YouTube.");
+    sendAppError(null, "no-video");
     return;
   }
+  if (pageData && !pageData.poToken) pageData.poToken = await mintPoToken(videoId);
 
   const preferLang = await getTargetLang();
-  const fetched = await sendFetch(tabId, info, preferLang);
+  const fetched = await sendFetch(tabId, { videoId, captionTracks, title }, preferLang, pageData);
   if (!fetched || !fetched.rawTrack) {
-    sendAppError(info.videoId, (fetched && fetched.error) || "Impossible de récupérer les sous-titres depuis YouTube.");
+    sendAppError(videoId, "no-captions", fetched && fetched.error);
     return;
   }
-  sendToApp(info.videoId, info.title ?? null, fetched.rawTrack);
+  sendToApp(videoId, fetched.title || title, fetched.rawTrack);
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.type !== "cjq:need-captions") return;
   (async () => {
+    const reply = (rawTrack, title, error) => {
+      if (!sender.tab || sender.tab.id == null) return;
+      chrome.tabs.sendMessage(
+        sender.tab.id,
+        { type: "cjq:captions", requestId: msg.requestId, rawTrack: rawTrack || null, title: title || null, error: error || null },
+        () => {
+          if (chrome.runtime.lastError) console.warn("[cjq] captions delivery failed", chrome.runtime.lastError.message);
+        }
+      );
+    };
     try {
       const videoId = msg.videoId;
       const preferLang = msg.targetLang || (await getTargetLang());
       const tabs = await tabsReady();
-      const ytTab = findYoutubeTab(tabs);
+      const ytTab = findYoutubeTabFor(tabs, videoId);
       let raw = null;
       let title = null;
       if (ytTab && ytTab.id != null) {
         await ensureContentScript(ytTab.id);
-        const f = await new Promise((resolve) =>
-          chrome.tabs.sendMessage(ytTab.id, { type: "cjq:fetch", videoId, targetLang: preferLang }, (r) => {
-            if (chrome.runtime.lastError) {
-              console.warn("[cjq] yt fetch: receiver not ready:", chrome.runtime.lastError.message);
-              resolve(null);
-            } else {
-              resolve(r);
-            }
-          })
-        );
-        raw = f && f.rawTrack;
-        title = f && f.title;
-        if (!raw && f && f.error) console.warn("[cjq] yt fetch failed:", f.error);
+        let pageData = await extractPageData(ytTab.id);
+        const pageMismatch = !!pageData && !!videoId && pageData.videoId !== videoId;
+        if (pageMismatch) {
+          // A wrong-video tab's tracks, params, PoToken and DOM panel must never
+          // be used for this import; fall through to the InnerTube SW path.
+          console.warn("[cjq] YouTube tab is on a different video; ignoring page data", pageData.videoId, videoId);
+          pageData = null;
+        }
+        if (pageData && !pageData.poToken) {
+          pageData.poToken = await mintPoToken(videoId || pageData.videoId);
+        }
+        if (!pageMismatch) {
+          const f = await new Promise((resolve) =>
+            chrome.tabs.sendMessage(
+              ytTab.id,
+              { type: "cjq:fetch", videoId, targetLang: preferLang, pageData },
+              (r) => {
+                if (chrome.runtime.lastError) {
+                  console.warn("[cjq] yt fetch: receiver not ready:", chrome.runtime.lastError.message);
+                  resolve(null);
+                } else {
+                  resolve(r);
+                }
+              }
+            )
+          );
+          raw = f && f.rawTrack;
+          title = f && f.title;
+          if (!raw && f && f.error) console.warn("[cjq] yt fetch failed:", f.error);
+        }
       }
       if (!raw) {
         // Fallback: SW InnerTube fetch (works only for public videos; private
@@ -259,23 +468,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
           title = title || data?.videoDetails?.title || null;
           const track = pickTrack(tracks, preferLang);
-          raw = track ? await fetchTrackTextSW(track, videoId) : null;
+          const swPot = await mintPoToken(videoId);
+          raw = track ? await fetchTrackTextSW(track, swPot) : null;
         } catch (e) {
           console.warn("[cjq] SW player fetch failed", e);
         }
       }
-      if (sender.tab && sender.tab.id != null) {
-        chrome.tabs.sendMessage(
-          sender.tab.id,
-          { type: "cjq:captions", requestId: msg.requestId, rawTrack: raw, title },
-          () => {
-            if (chrome.runtime.lastError) console.warn("[cjq] captions delivery failed", chrome.runtime.lastError.message);
-          }
-        );
-      }
+      reply(raw, title);
     } catch (e) {
       console.error("[cjq] need-captions failed", e);
+      reply(null, null, String(e));
     }
   })();
-  return true;
+  return false;
 });

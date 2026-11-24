@@ -35,8 +35,9 @@ chrome.runtime.onMessage.addListener((msg) => {
       "*"
     );
   } else if (msg.type === "cjq:error") {
-    window.postMessage({ type: "cjq:error", videoId: msg.videoId, message: msg.message }, "*");
-  } else if (msg.type === "cjq:retry") {
-    window.postMessage({ type: "cjq:retry" }, "*");
+    window.postMessage(
+      { type: "cjq:error", videoId: msg.videoId, code: msg.code, detail: msg.detail },
+      "*"
+    );
   }
 });

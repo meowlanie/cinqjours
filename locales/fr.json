@@ -232,5 +232,12 @@
   "v294": "Retourner la carte",
   "v295": "Retourner pour voir la correction",
   "v296": "Fermer",
-  "v297": "Aucune entrée pour l'instant."
+  "v297": "Aucune entrée pour l'instant.",
+  "v298": "Cette vidéo n'a pas pu être importée depuis le serveur. Réessayez avec l'extension Cinq jours.",
+  "v299": "Cliquez à nouveau sur l'icône de l'extension dans l'onglet YouTube.",
+  "v300": "Impossible d'injecter l'extension dans l'onglet YouTube. Rechargez l'onglet.",
+  "v301": "Aucune vidéo détectée dans l'onglet YouTube. Rechargez l'onglet.",
+  "v302": "Impossible de récupérer les sous-titres depuis YouTube.",
+  "v303": "Échec de la récupération des sous-titres.",
+  "v304": "Impossible d'importer la transcription depuis YouTube."
 }
