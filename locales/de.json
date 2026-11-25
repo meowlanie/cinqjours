@@ -245,9 +245,9 @@
   "v307": "Importieren Sie Untertitel direkt aus Ihrem angemeldeten YouTube-Tab, ohne sie manuell einzufügen.",
   "v308": "Erweiterungspaket herunterladen",
   "v309": "So installieren Sie die Erweiterung",
-  "v310": "Entzippen Sie die heruntergeladene Datei.",
+  "v310": "Entzippen Sie die heruntergeladene Datei. Sie erhalten einen Ordner.",
   "v311": "Öffnen Sie chrome://extensions (oder edge://extensions) und aktivieren Sie den Entwicklermodus.",
-  "v312": "Klicken Sie auf „Entpackte Erweiterung laden“ und wählen Sie diesen Ordner.",
+  "v312": "Klicken Sie auf „Entpackte Erweiterung laden“ und wählen Sie den entpackten Ordner.",
   "v313": "Klicken Sie auf einem YouTube-Video auf das Erweiterungssymbol – die Transkription erscheint hier.",
   "v314": "Bereits installiert? Laden Sie die Erweiterung nach einem Update unter chrome://extensions neu."
 }

@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   Check,
   Download,
+  FileArchive,
   FolderOpen,
   Info,
   MousePointerClick,
@@ -30,9 +31,9 @@ export function ExtensionModal({ open, onClose }: { open: boolean; onClose: () =
   if (!open) return null;
 
   const steps = [
-    { icon: Download, text: t("v310", "Décompressez le fichier téléchargé.") },
+    { icon: FileArchive, text: t("v310", "Décompressez le fichier téléchargé. Vous obtiendrez un dossier.") },
     { icon: FolderOpen, text: t("v311", "Ouvrez chrome://extensions (ou edge://extensions) et activez le mode développeur.") },
-    { icon: Check, text: t("v312", "Cliquez sur « Charger l'extension non empaquetée », puis sélectionnez ce dossier.") },
+    { icon: Check, text: t("v312", "Cliquez sur « Charger l'extension non empaquetée », puis sélectionnez le dossier décompressé.") },
     { icon: MousePointerClick, text: t("v313", "Sur une vidéo YouTube, cliquez sur l'icône de l'extension : la transcription apparaît ici.") },
   ];
 
