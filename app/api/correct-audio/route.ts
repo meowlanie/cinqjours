@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { aiTranscribeAudio, parseJson, transcribeAudio } from "@/lib/ai";
-import { professorOf, inLang, type LangCode } from "@/lib/languages";
+import { professorOf, inLang, registerStyleRule, type LangCode } from "@/lib/languages";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -68,7 +68,7 @@ ${context}
 IMPORTANT :
 - flagged=true UNIQUEMENT pour les erreurs OBJECTIVES vérifiables (grammaire, conjugaison, accord, syntaxe, vocabulaire incorrect).
 - En cas de doute, laisse flagged=false.
-- N'impose pas un registre soutenu ; accepte le registre courant comme le registre familier.
+${registerStyleRule("speaking", "fr")}
 ${target === "en" ? "- Accepte indifféremment l'orthographe américaine et britannique (ex. color/colour, organize/organise, recognize/recognise).\n" : ""}
 - Si une phrase est grammaticalement correcte mais maladroite, lourde ou peu naturelle, garde flagged=false mais propose une reformulation plus naturelle dans "suggestion".
 

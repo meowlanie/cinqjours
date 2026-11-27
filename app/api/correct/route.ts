@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { aiChat, parseJson } from "@/lib/ai";
-import { professorOf, inLang, correctionCategoryLabel, apiMessage, type LangCode } from "@/lib/languages";
+import { professorOf, inLang, correctionCategoryLabel, apiMessage, registerStyleRule, type CorrectionTask, type LangCode } from "@/lib/languages";
 
 export const runtime = "nodejs";
 
-type Task = "summary" | "writing" | "speaking" | "journal";
+type Task = CorrectionTask;
 
 interface Segment {
   text: string;
@@ -21,7 +21,6 @@ function fallbackSegments(text: string): Segment[] {
 
 export function buildPrompt(task: Task, userText: string, sourceText: string, target: LangCode = "fr", translation: LangCode = "en") {
   const source = (sourceText || userText).trim();
-  const isSpeaking = task === "speaking";
 
   const labels = {
     grammar: correctionCategoryLabel(translation, "grammar"),
@@ -60,9 +59,7 @@ IMPORTANT :
   - flagged=true UNIQUEMENT pour les erreurs OBJECTIVES vérifiables (orthographe, grammaire, conjugaison, accord, syntaxe, vocabulaire incorrect${source.trim() ? ", infidélité au texte source" : ""}).
   - En cas de doute, laisse flagged=false.
   - Si une phrase est grammaticalement correcte mais maladroite, lourde ou peu naturelle, garde flagged=false mais propose une reformulation plus naturelle dans "suggestion".
-  ${isSpeaking
-    ? "- Pour les suggestions de style : accepte aussi bien le registre courant que le registre familier (ton conversationnel, comme le parlerait un natif à l'oral)."
-    : "- Pour les suggestions de style : conserve le registre courant de l'apprenant (ne le formalise pas)."}
+  ${registerStyleRule(task, "fr")}
 
 Découpe le texte en phrases. Pour chaque phrase :
 - "text" : la phrase originale INCHANGÉE.
@@ -115,9 +112,7 @@ SOURCE TEXT (${inLang(target)}):
 Use this source text as a reference. Correct language errors AND flag (flagged) the sentences that contradict the source or do not faithfully reflect its content. A correct reformulation is not an error.`
     : "";
 
-  const styleNote = isSpeaking
-    ? "For style suggestions: accept both the current register and a familiar/conversational register, as a native would speak."
-    : "For style suggestions: preserve the learner's current register (do not formalize).";
+  const styleNote = registerStyleRule(task, "en");
 
   const britishSpelling = target === "en" || translation === "en"
     ? "  - Prefer British spelling (e.g. colour, organise, centre); American variants are also accepted.\n"

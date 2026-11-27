@@ -40,6 +40,21 @@ export function inLang(code: LangCode): string {
   return `en ${llmName(code)}`;
 }
 
+export type CorrectionTask = "summary" | "writing" | "speaking" | "journal";
+
+/** Register guidance shared by text and audio correction prompts. */
+export function registerStyleRule(task: CorrectionTask, promptLang: "fr" | "en"): string {
+  const speaking = task === "speaking";
+  if (promptLang === "fr") {
+    return speaking
+      ? "- Pour les suggestions de style : accepte le registre courant et le registre familier (ton conversationnel, comme le parlerait un natif à l'oral). Ne signale pas le familier comme une faute. Cette règle vaut pour toutes les langues cibles."
+      : "- Pour les suggestions de style : accepte le registre courant de l'apprenant et, si le texte source est une œuvre littéraire, le registre littéraire. Ne signale pas ces registres comme des fautes et n'impose pas un ton conversationnel. Cette règle vaut pour toutes les langues cibles.";
+  }
+  return speaking
+    ? '- For style suggestions: accept the learner\'s "courant" (current/standard) and "familier" (familiar/colloquial) registers, as a native speaker would talk. Do not flag familiar wording as an error. This applies to all target languages.'
+    : '- For style suggestions: accept the learner\'s "courant" (current/standard) register and, if the source text is a literary piece, a "littéraire"/literary register. Do not flag those registers as errors or force a conversational tone. This applies to all target languages.';
+}
+
 /** BCP-47 locale matching a target language, for date/number formatting. */
 export function localeOf(code: LangCode): string {
   switch (code) {

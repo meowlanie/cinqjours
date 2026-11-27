@@ -713,12 +713,9 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
 /* ---------------------------------------------------------------
    AUDIO CORRECTION — optional transcript review before correction
 --------------------------------------------------------------- */
-type AudioCorrectionTask = "summary" | "speaking" | "journal";
-
-function AudioCorrectionActions({ audioData, source, task, onResult, onError }: {
+function AudioCorrectionActions({ audioData, source, onResult, onError }: {
   audioData: string;
   source: string;
-  task: AudioCorrectionTask;
   onResult: (result: CorrectResult) => void;
   onError: (message: string) => void;
 }) {
@@ -787,7 +784,7 @@ function AudioCorrectionActions({ audioData, source, task, onResult, onError }: 
       const res = await fetch("/api/correct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task, text: draft, source, ...langOptions() }),
+        body: JSON.stringify({ task: "speaking", text: draft, source, ...langOptions() }),
       });
       const data = await res.json().catch(() => ({}));
       const fail = aiFailureMessage(res, data);
@@ -2065,7 +2062,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               audioData ? (
-                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} task="summary" onResult={setAudioResult} onError={setErrorToast} />
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} onResult={setAudioResult} onError={setErrorToast} />
               ) : null
             ) : (
               <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
@@ -3007,7 +3004,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               audioData ? (
-                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} task="speaking" onResult={setAudioResult} onError={setErrorToast} />
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} onResult={setAudioResult} onError={setErrorToast} />
               ) : null
             ) : (
               <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
@@ -3528,7 +3525,7 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
               audioData ? (
-                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={prompt} task="journal" onResult={setAudioResult} onError={setErrorToast} />
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={prompt} onResult={setAudioResult} onError={setErrorToast} />
               ) : null
             ) : (
               <div className="rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4">
