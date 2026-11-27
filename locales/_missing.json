@@ -174,5 +174,12 @@
   "v311": "Ouvrez chrome://extensions (ou edge://extensions) et activez le mode développeur.",
   "v312": "Cliquez sur « Charger l'extension non empaquetée », puis sélectionnez le dossier décompressé.",
   "v313": "Sur une vidéo YouTube, cliquez sur l'icône de l'extension : la transcription apparaît ici.",
-  "v314": "Déjà installée ? Après une mise à jour, rechargez l'extension depuis chrome://extensions."
+  "v314": "Déjà installée ? Après une mise à jour, rechargez l'extension depuis chrome://extensions.",
+  "v315": "Relire la transcription d'abord",
+  "v316": "Transcription",
+  "v317": "Modifiez la transcription, puis corrigez-la.",
+  "v318": "Utiliser cette transcription",
+  "v319": "Retranscrire",
+  "v320": "Retour",
+  "v321": "La transcription automatique peut contenir des erreurs. Relisez-la d'abord si l'exactitude compte."
 }

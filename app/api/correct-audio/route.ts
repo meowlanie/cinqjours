@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { aiTranscribeAudio, parseJson } from "@/lib/ai";
+import { aiTranscribeAudio, parseJson, transcribeAudio } from "@/lib/ai";
 import { professorOf, inLang, type LangCode } from "@/lib/languages";
 
 export const runtime = "nodejs";
@@ -13,12 +13,12 @@ interface Segment {
   suggestion?: string | null;
 }
 
-function audioErrors(target: LangCode): { invalid: string; missing: string; key: string } {
-  const map: Record<LangCode, { invalid: string; missing: string; key: string }> = {
-    fr: { invalid: "Corps de requête invalide.", missing: "Audio manquant.", key: "MISTRAL_API_KEY manquante." },
-    en: { invalid: "Invalid request body.", missing: "Audio missing.", key: "MISTRAL_API_KEY missing." },
-    de: { invalid: "Ungültiger Anfragekörper.", missing: "Audio fehlt.", key: "MISTRAL_API_KEY fehlt." },
-    zh: { invalid: "请求正文无效。", missing: "缺少音频。", key: "MISTRAL_API_KEY 缺失。" },
+function audioErrors(target: LangCode): { invalid: string; missing: string; key: string; empty: string } {
+  const map: Record<LangCode, { invalid: string; missing: string; key: string; empty: string }> = {
+    fr: { invalid: "Corps de requête invalide.", missing: "Audio manquant.", key: "MISTRAL_API_KEY manquante.", empty: "Aucune parole détectée." },
+    en: { invalid: "Invalid request body.", missing: "Audio missing.", key: "MISTRAL_API_KEY missing.", empty: "No speech detected." },
+    de: { invalid: "Ungültiger Anfragekörper.", missing: "Audio fehlt.", key: "MISTRAL_API_KEY fehlt.", empty: "Keine Sprache erkannt." },
+    zh: { invalid: "请求正文无效。", missing: "缺少音频。", key: "MISTRAL_API_KEY 缺失。", empty: "未检测到语音。" },
   };
   return map[target] ?? map.fr;
 }
@@ -26,7 +26,7 @@ function audioErrors(target: LangCode): { invalid: string; missing: string; key:
 // Mistral Voxtral returns free-form JSON; the structure is enforced via the prompt.
 
 export async function POST(req: Request) {
-  let body: { audio?: string; source?: string; target?: string; translation?: string };
+  let body: { audio?: string; source?: string; target?: string; translation?: string; transcribeOnly?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -43,6 +43,21 @@ export async function POST(req: Request) {
 
   if (!process.env.MISTRAL_API_KEY) {
     return NextResponse.json({ segments: [], fallback: true, error: errs.key });
+  }
+
+  if (body.transcribeOnly) {
+    try {
+      const transcript = await transcribeAudio(audio, target);
+      if (!transcript) return NextResponse.json({ error: errs.empty, transcript: "" });
+      return NextResponse.json({ transcript });
+    } catch (err) {
+      const status = (err as { status?: number })?.status;
+      const message = err instanceof Error ? err.message : "Erreur IA.";
+      if (status === 429) {
+        return NextResponse.json({ transcript: "", quotaExceeded: true, error: message }, { status: 429 });
+      }
+      return NextResponse.json({ transcript: "", error: message });
+    }
   }
 
   const context = source ? `\n\nTEXTE SOURCE (contexte) :\n"""${source.slice(0, 4000)}"""` : "";
@@ -67,7 +82,7 @@ Découpe la transcription en phrases. Pour chaque phrase :
 Réponds UNIQUEMENT en JSON : {"segments":[...]}`;
 
   try {
-    const raw = await aiTranscribeAudio(audio, prompt);
+    const raw = await aiTranscribeAudio(audio, prompt, target);
 
     const parsed = parseJson(raw) as { segments?: Segment[] } | null;
 

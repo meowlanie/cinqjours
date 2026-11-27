@@ -711,6 +711,162 @@ function SelfCorrectBox({ segments, onDone }: { segments: Segment[]; onDone: (te
 }
 
 /* ---------------------------------------------------------------
+   AUDIO CORRECTION — optional transcript review before correction
+--------------------------------------------------------------- */
+type AudioCorrectionTask = "summary" | "speaking" | "journal";
+
+function AudioCorrectionActions({ audioData, source, task, onResult, onError }: {
+  audioData: string;
+  source: string;
+  task: AudioCorrectionTask;
+  onResult: (result: CorrectResult) => void;
+  onError: (message: string) => void;
+}) {
+  const [reviewing, setReviewing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState<"direct" | "transcribe" | "correct" | null>(null);
+
+  const langOptions = () => ({ target: getLangCodes().targetLang, translation: getUiLocale() });
+
+  const applySegments = (data: { segments?: Segment[]; fallback?: boolean }) => {
+    if (Array.isArray(data.segments) && data.segments.length > 0 && !data.fallback) {
+      onResult({ segments: data.segments, fallback: false });
+      return true;
+    }
+    return false;
+  };
+
+  const correctDirectly = async () => {
+    setBusy("direct");
+    try {
+      const res = await fetch("/api/correct-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio: audioData, source, ...langOptions() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const fail = aiFailureMessage(res, data);
+      if (fail) onError(fail);
+      else if (!applySegments(data)) onError(msgAi());
+    } catch {
+      onError(t("v100", "Erreur réseau lors de la correction audio."));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const loadTranscript = async () => {
+    setBusy("transcribe");
+    try {
+      const res = await fetch("/api/correct-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio: audioData, transcribeOnly: true, ...langOptions() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const fail = aiFailureMessage(res, data);
+      if (fail) {
+        onError(fail);
+      } else if (res.ok && typeof data.transcript === "string" && data.transcript.trim()) {
+        setDraft(data.transcript.trim());
+        setReviewing(true);
+      } else {
+        onError(data?.error || msgAi());
+      }
+    } catch {
+      onError(t("v100", "Erreur réseau lors de la correction audio."));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const correctDraft = async () => {
+    if (!draft.trim()) return;
+    setBusy("correct");
+    try {
+      const res = await fetch("/api/correct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task, text: draft, source, ...langOptions() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const fail = aiFailureMessage(res, data);
+      if (fail) onError(fail);
+      else if (!applySegments(data)) onError(msgAi());
+    } catch {
+      onError(msgAi());
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (reviewing) {
+    return (
+      <div className="space-y-2">
+        <p className="cj-mono text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v316", "Transcript")}</p>
+        <p className="text-xs text-[var(--text-muted)]">{t("v317", "Edit the transcript, then correct it.")}</p>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={6}
+          spellCheck={false}
+          className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] p-3 text-sm leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--placeholder)] focus:border-[#B08D57]"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={correctDraft}
+            disabled={!draft.trim() || busy !== null}
+            className="flex items-center gap-2 rounded-full bg-[var(--background)] px-4 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-40"
+          >
+            {busy === "correct" ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+            {t("v318", "Use this transcript")}
+          </button>
+          <button
+            onClick={loadTranscript}
+            disabled={busy !== null}
+            className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-2 text-xs font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
+          >
+            {busy === "transcribe" ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
+            {t("v319", "Re-transcribe")}
+          </button>
+          <button
+            onClick={() => setReviewing(false)}
+            disabled={busy !== null}
+            className="flex items-center gap-1 text-xs text-[var(--text-muted)] transition hover:text-[var(--text)] disabled:opacity-40"
+          >
+            <ChevronLeft size={13} /> {t("v320", "Back")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={correctDirectly}
+          disabled={busy !== null}
+          className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
+        >
+          {busy === "direct" && <Loader2 size={15} className="animate-spin" />}
+          {t("v65", "Corriger mon enregistrement")}
+        </button>
+        <button
+          onClick={loadTranscript}
+          disabled={busy !== null}
+          className="flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-text)] transition hover:opacity-80 disabled:opacity-40"
+        >
+          {busy === "transcribe" ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+          {t("v315", "Review transcript first")}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-[var(--text-muted)]">{t("v321", "Automatic transcription may contain mistakes. Review it first if accuracy matters.")}</p>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------
    SHARED TEXT CORRECTION HOOK (Days 1 & 4)
 --------------------------------------------------------------- */
  function resourceSegment(sourceId: string | null): string {
@@ -1804,7 +1960,6 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       return raw ? (JSON.parse(raw) as CorrectResult) : null;
     } catch { return null; }
   });
-  const [audioLoading, setAudioLoading] = useState(false);
   const [audioData, setAudioData] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1849,33 +2004,6 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
   const finishSelfCorrect = (edited: string) => {
     setText(edited);
     setSelfMode(false);
-  };
-
-  const correctAudio = async () => {
-    if (!audioData) return;
-    setAudioLoading(true);
-    try {
-      const audioPayload = audioData;
-      const res = await fetch("/api/correct-audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: audioPayload, source: sourceText, target: getLangCodes().targetLang, translation: getUiLocale() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      const fail = aiFailureMessage(res, data);
-      if (fail) {
-        setErrorToast(fail);
-        setAudioLoading(false);
-        return;
-      }
-      if (res.ok && Array.isArray(data.segments) && data.segments.length && !data.fallback) {
-        setAudioResult({ segments: data.segments as Segment[], fallback: false });
-        setAudioLoading(false);
-        return;
-      }
-    } catch { /* ignore */ }
-    setErrorToast(msgAi());
-    setAudioLoading(false);
   };
 
   return (
@@ -1936,15 +2064,9 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
         {hasRecording && (
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
-              <button
-                onClick={correctAudio}
-                disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
-              >
-                {audioLoading && <Loader2 size={15} className="animate-spin" />}
-                
-                {t("v65", "Corriger mon enregistrement")}
-              </button>
+              audioData ? (
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} task="summary" onResult={setAudioResult} onError={setErrorToast} />
+              ) : null
             ) : (
               <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
             )}
@@ -2771,7 +2893,6 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       return raw ? (JSON.parse(raw) as CorrectResult) : null;
     } catch { return null; }
   });
-  const [audioLoading, setAudioLoading] = useState(false);
   const [audioData, setAudioData] = useState<string | null>(null);
 
   useEffect(() => {
@@ -2854,33 +2975,6 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
     setTimeout(() => setToast(null), 2200);
   };
 
-  const correctAudio = async () => {
-    if (!audioData) return;
-    setAudioLoading(true);
-    try {
-      const audioPayload = audioData;
-      const res = await fetch("/api/correct-audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: audioPayload, source: sourceText, target: getLangCodes().targetLang, translation: getUiLocale() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      const fail = aiFailureMessage(res, data);
-      if (fail) {
-        setErrorToast(fail);
-        setAudioLoading(false);
-        return;
-      }
-      if (res.ok && Array.isArray(data.segments) && data.segments.length && !data.fallback) {
-        setAudioResult({ segments: data.segments as Segment[], fallback: false });
-        setAudioLoading(false);
-        return;
-      }
-    } catch { /* ignore */ }
-    setErrorToast(msgAi());
-    setAudioLoading(false);
-  };
-
   return (
     <div className="cj-fade-in space-y-5">
       <DayHeader n={5} title={t("v93", "Expression orale")} subtitle={t("v251", "Practise your speaking with the generated topic.")} />
@@ -2912,15 +3006,9 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
         {hasRecording && (
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
-              <button
-                onClick={correctAudio}
-                disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
-              >
-                {audioLoading && <Loader2 size={15} className="animate-spin" />}
-                
-                {t("v65", "Corriger mon enregistrement")}
-              </button>
+              audioData ? (
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={sourceText} task="speaking" onResult={setAudioResult} onError={setErrorToast} />
+              ) : null
             ) : (
               <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />
             )}
@@ -3151,7 +3239,6 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
       else window.localStorage.removeItem(journalAudioResultKey);
     } catch { /* ignore */ }
   }, [audioResult, journalAudioResultKey]);
-  const [audioLoading, setAudioLoading] = useState(false);
   const [recorderKey, setRecorderKey] = useState(0);
 
   const [entries, setEntries] = useState<JournalEntry[]>(() => {
@@ -3254,36 +3341,6 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
   const finishSelfCorrect = (edited: string) => {
     setText(edited);
     setSelfMode(false);
-  };
-
-  const correctAudio = async () => {
-    if (!audioData) return;
-    setAudioLoading(true);
-    try {
-      const audioPayload = audioData;
-      const res = await fetch("/api/correct-audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: audioPayload, target: getLangCodes().targetLang, translation: getUiLocale() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      const fail = aiFailureMessage(res, data);
-      if (fail) {
-        setErrorToast(fail);
-        setAudioLoading(false);
-        return;
-      }
-      if (res.ok && Array.isArray(data.segments) && data.segments.length && !data.fallback) {
-        setAudioResult({ segments: data.segments as Segment[], fallback: false });
-        setAudioLoading(false);
-        return;
-      }
-      setErrorToast(data?.error || msgAi());
-      setAudioLoading(false);
-    } catch {
-      setErrorToast(t("v100", "Erreur réseau lors de la correction audio."));
-      setAudioLoading(false);
-    }
   };
 
   const saveEntry = async () => {
@@ -3470,14 +3527,9 @@ function JournalView({ addVocab, level, savedCorrections, removeVocabByWord }: {
         {hasRecording && (
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
-              <button
-                onClick={correctAudio}
-                disabled={audioLoading}
-                className="flex items-center gap-2 rounded-full bg-[var(--background)] px-5 py-2 text-sm font-medium text-[var(--primary-text)] transition hover:bg-[var(--background-hover)] disabled:opacity-50"
-              >
-                {audioLoading && <LoadingDots />}
-                {t("v65", "Corriger mon enregistrement")}
-              </button>
+              audioData ? (
+                <AudioCorrectionActions key={audioData ? `${audioData.length}-${audioData.slice(-24)}` : "none"} audioData={audioData} source={prompt} task="journal" onResult={setAudioResult} onError={setErrorToast} />
+              ) : null
             ) : (
               <div className="rounded-xl border border-[var(--border)] bg-[var(--paper)] p-4">
                 <CorrectedCopy result={audioResult} onAddToCarnet={addToCarnet} savedCorrections={savedCorrections} removeVocabByWord={removeVocabByWord} />

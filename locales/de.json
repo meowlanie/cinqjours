@@ -249,5 +249,12 @@
   "v311": "Öffnen Sie chrome://extensions (oder edge://extensions) und aktivieren Sie den Entwicklermodus.",
   "v312": "Klicken Sie auf „Entpackte Erweiterung laden“ und wählen Sie den entpackten Ordner.",
   "v313": "Klicken Sie auf einem YouTube-Video auf das Erweiterungssymbol – die Transkription erscheint hier.",
-  "v314": "Bereits installiert? Laden Sie die Erweiterung nach einem Update unter chrome://extensions neu."
+  "v314": "Bereits installiert? Laden Sie die Erweiterung nach einem Update unter chrome://extensions neu.",
+  "v315": "Transkript zuerst prüfen",
+  "v316": "Transkript",
+  "v317": "Bearbeiten Sie das Transkript und korrigieren Sie es anschließend.",
+  "v318": "Dieses Transkript verwenden",
+  "v319": "Erneut transkribieren",
+  "v320": "Zurück",
+  "v321": "Die automatische Transkription kann Fehler enthalten. Prüfen Sie sie zuerst, wenn Genauigkeit wichtig ist."
 }

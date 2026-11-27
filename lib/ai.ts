@@ -127,7 +127,7 @@ export async function aiChat(messages: ChatMessage[], opts: { maxTokens?: number
   });
 }
 
-export async function aiTranscribeAudio(dataUrl: string, prompt: string): Promise<string> {
+export async function transcribeAudio(dataUrl: string, language = "fr"): Promise<string> {
   const meta = dataUrl.match(/^data:audio\/([a-z0-9]+)(?:;codecs=[^;,]*)?;base64,/i);
   if (!meta) throw new Error("Format audio invalide.");
   const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
@@ -137,7 +137,6 @@ export async function aiTranscribeAudio(dataUrl: string, prompt: string): Promis
   const key = process.env.MISTRAL_API_KEY;
   if (!key) throw new Error("MISTRAL_API_KEY n'est pas configurée (variable d'environnement manquante).");
 
-  // 1) Speech-to-text via Mistral's dedicated transcription endpoint
   const fd = new FormData();
   fd.append(
     "file",
@@ -145,7 +144,7 @@ export async function aiTranscribeAudio(dataUrl: string, prompt: string): Promis
     `audio.${format}`
   );
   fd.append("model", process.env.MISTRAL_MODEL || "voxtral-mini-latest");
-  fd.append("language", "fr");
+  fd.append("language", language || "fr");
   fd.append("response_format", "text");
 
   const transRes = await fetchWithTimeout(`${MISTRAL_BASE}/audio/transcriptions`, {
@@ -172,9 +171,13 @@ export async function aiTranscribeAudio(dataUrl: string, prompt: string): Promis
       /* ignore */
     }
   }
+  return transcript;
+}
+
+export async function aiTranscribeAudio(dataUrl: string, prompt: string, language = "fr"): Promise<string> {
+  const transcript = await transcribeAudio(dataUrl, language);
   if (!transcript) return JSON.stringify({ segments: [] });
 
-  // 2) Correction + segmentation via a text chat model
   const correctionPrompt = `${prompt}\n\nTRANSCRIPTION :\n"""${transcript.slice(0, 6000)}"""\n\nRéponds UNIQUEMENT en JSON valide (sans texte autour, sans bloc de code) : {"segments":[...]}`;
 
   return mistralGenerate(

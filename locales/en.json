@@ -249,5 +249,12 @@
   "v311": "Open chrome://extensions (or edge://extensions) and turn on Developer mode.",
   "v312": "Click Load unpacked, then select the unzipped folder.",
   "v313": "On a YouTube video, click the extension icon — the transcript appears here.",
-  "v314": "Already installed? After an update, reload the extension from chrome://extensions."
+  "v314": "Already installed? After an update, reload the extension from chrome://extensions.",
+  "v315": "Review transcript first",
+  "v316": "Transcript",
+  "v317": "Edit the transcript, then correct it.",
+  "v318": "Use this transcript",
+  "v319": "Re-transcribe",
+  "v320": "Back",
+  "v321": "Automatic transcription may contain mistakes. Review it first if accuracy matters."
 }
