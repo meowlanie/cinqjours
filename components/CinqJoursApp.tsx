@@ -1795,6 +1795,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
   const [selfKey, setSelfKey] = useState(0);
 
   const audioResultKey = `cj-correction-audio-v2-${resourceSegment(sourceId)}`;
+  const recordingKey = `cj-recording-day1-${resourceSegment(sourceId)}`;
   const [hasRecording, setHasRecording] = useState(false);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
     if (typeof window === "undefined") return null;
@@ -1807,10 +1808,10 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
   const [audioData, setAudioData] = useState<string | null>(null);
 
   useEffect(() => {
-    getAudio("cj-recording-day1")
+    getAudio(recordingKey)
       .then((d) => { if (d) { setAudioData(d); setHasRecording(true); } })
       .catch(() => {});
-  }, []);
+  }, [recordingKey]);
 
   useEffect(() => {
     try {
@@ -1930,7 +1931,7 @@ function DayOne({ sourceText, addVocab, savedCorrections, removeVocabByWord, sou
       <div className="rounded-lg border border-[var(--border)] bg-[var(--fill-muted)] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v62", "Résumé oral (optionnel)")}</p>
         <p className="mb-3 text-xs text-[var(--text-muted)]">{t("v63", "Enregistrez votre résumé à voix haute.")}</p>
-        <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey={`cj-recording-day1-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        <Recorder label={t("v64", "Enregistrer mon résumé")} persistKey={recordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
 
         {hasRecording && (
           <div className="mt-4 border-t border-[var(--border)] pt-4">
@@ -2761,6 +2762,7 @@ function DayFour({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
 --------------------------------------------------------------- */
 function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, removeVocabByWord, sourceId }: { sourceText: string; sourceTitle: string | null; addVocab: (e: { word: string; def: string; context?: string; type?: "vocab" | "phrase" | "correction" }) => void; level: string; savedCorrections?: Set<string>; removeVocabByWord?: (word: string) => void; sourceId: string | null; }) {
   const audioResultKey = `cj-correction-day5-${resourceSegment(sourceId)}`;
+  const recordingKey = `cj-recording-day5-${resourceSegment(sourceId)}`;
   const [hasRecording, setHasRecording] = useState(false);
   const [audioResult, setAudioResult] = useState<CorrectResult | null>(() => {
     if (typeof window === "undefined") return null;
@@ -2773,10 +2775,10 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
   const [audioData, setAudioData] = useState<string | null>(null);
 
   useEffect(() => {
-    getAudio("cj-recording-day5")
+    getAudio(recordingKey)
       .then((d) => { if (d) { setAudioData(d); setHasRecording(true); } })
       .catch(() => {});
-  }, []);
+  }, [recordingKey]);
   const [toast, setToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
   useEffect(() => {
@@ -2906,7 +2908,7 @@ function DayFive({ sourceText, sourceTitle, addVocab, level, savedCorrections, r
       <div className="rounded-lg border border-[var(--border)] bg-[var(--fill-muted)] p-4">
         <p className="cj-mono mb-1 text-[10px] uppercase tracking-wider text-[#B08D57]">{t("v95", "Votre présentation")}</p>
         <p className="mb-3 text-xs text-[var(--text-muted)]">{t("v96", "Enregistrez votre présentation à voix haute.")}</p>
-        <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={`cj-recording-day5-${resourceSegment(sourceId)}`} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
+        <Recorder label={t("v97", "Enregistrer ma présentation")} persistKey={recordingKey} onRecorded={(url) => { setHasRecording(Boolean(url)); setAudioResult(null); }} onAudioData={setAudioData} />
         {hasRecording && (
           <div className="mt-4 border-t border-[var(--border)] pt-4">
             {!audioResult ? (
